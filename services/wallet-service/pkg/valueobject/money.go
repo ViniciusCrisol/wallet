@@ -18,7 +18,7 @@ func NewMoney(amountInCents int) (Money, error) {
 	return Money{amountInCents: amountInCents}, nil
 }
 
-func (money Money) GetAmount() int {
+func (money Money) Amount() int {
 	return money.amountInCents
 }
 

@@ -15,19 +15,19 @@ func TestAggregateRoot_NewAggregateRoot(t *testing.T) {
 	t.Run("It should return an aggregate root with the given ID when a valid ID is provided", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
-		assert.Equal(t, id, ar.GetID())
+		assert.Equal(t, id, ar.ID())
 	})
 
 	t.Run("It should initialize version as -1 when a new aggregate root is created", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
-		assert.Equal(t, -1, ar.GetVersion())
+		assert.Equal(t, -1, ar.Version())
 	})
 
 	t.Run("It should initialize with no uncommitted events when a new aggregate root is created", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
-		assert.Empty(t, ar.GetUncommittedEvents())
+		assert.Empty(t, ar.UncommittedEvents())
 	})
 }
 
@@ -39,7 +39,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 
 		ar.Record(event)
 
-		assert.Equal(t, []Event{event}, ar.GetUncommittedEvents())
+		assert.Equal(t, []Event{event}, ar.UncommittedEvents())
 	})
 
 	t.Run("It should increment the version by one when an event is recorded", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 
 		ar.Record(stubEvent{name: "created"})
 
-		assert.Equal(t, 0, ar.GetVersion())
+		assert.Equal(t, 0, ar.Version())
 	})
 
 	t.Run("It should increment version for each event recorded when multiple events are recorded", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 		ar.Record(stubEvent{name: "updated"})
 		ar.Record(stubEvent{name: "deleted"})
 
-		assert.Equal(t, 2, ar.GetVersion())
+		assert.Equal(t, 2, ar.Version())
 	})
 
 	t.Run("It should accumulate all events in order when multiple events are recorded", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 		ar.Record(e1)
 		ar.Record(e2)
 
-		assert.Equal(t, []Event{e1, e2}, ar.GetUncommittedEvents())
+		assert.Equal(t, []Event{e1, e2}, ar.UncommittedEvents())
 	})
 }
 
@@ -84,7 +84,7 @@ func TestAggregateRoot_Commit(t *testing.T) {
 
 		ar.Commit()
 
-		assert.Empty(t, ar.GetUncommittedEvents())
+		assert.Empty(t, ar.UncommittedEvents())
 	})
 
 	t.Run("It should preserve the version after commit when events were previously recorded", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestAggregateRoot_Commit(t *testing.T) {
 
 		ar.Commit()
 
-		assert.Equal(t, 1, ar.GetVersion())
+		assert.Equal(t, 1, ar.Version())
 	})
 
 	t.Run("It should have no effect when commit is called on a fresh aggregate root", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestAggregateRoot_Commit(t *testing.T) {
 
 		ar.Commit()
 
-		assert.Empty(t, ar.GetUncommittedEvents())
-		assert.Equal(t, -1, ar.GetVersion())
+		assert.Empty(t, ar.UncommittedEvents())
+		assert.Equal(t, -1, ar.Version())
 	})
 }

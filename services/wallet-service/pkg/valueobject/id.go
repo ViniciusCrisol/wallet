@@ -21,6 +21,6 @@ func GenerateID() ID {
 	return ID{value: pkg.NewUUID()}
 }
 
-func (id ID) ToString() string {
+func (id ID) String() string {
 	return id.value
 }

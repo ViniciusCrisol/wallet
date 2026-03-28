@@ -38,9 +38,9 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 	if wallet.balance.Compare(command.Amount) == -1 {
 		slog.Warn(
 			"insufficient balance",
-			slog.String("wallet_id", wallet.GetID().ToString()),
-			slog.Int("amount_in_cents", command.Amount.GetAmount()),
-			slog.Int("balance_in_cents", wallet.balance.GetAmount()),
+			slog.String("wallet_id", wallet.ID().String()),
+			slog.Int("amount_in_cents", command.Amount.Amount()),
+			slog.Int("balance_in_cents", wallet.balance.Amount()),
 		)
 		return pkg.ErrInsufficientBalance
 	}
@@ -49,7 +49,7 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 		Amount:       command.Amount,
 		TransferID:   command.TransferID,
 		ToWalletID:   command.ToWalletID,
-		FromWalletID: wallet.GetID(),
+		FromWalletID: wallet.ID(),
 		Timestamp:    command.Timestamp,
 	}
 	wallet.applyFundsTransferred(event)
@@ -69,16 +69,16 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 	if newBalance.Compare(maxBalance) > 0 {
 		slog.Warn(
 			"balance limit would be exceeded",
-			slog.String("wallet_id", wallet.GetID().ToString()),
-			slog.Int("amount_in_cents", command.Amount.GetAmount()),
-			slog.Int("current_balance_in_cents", wallet.balance.GetAmount()),
+			slog.String("wallet_id", wallet.ID().String()),
+			slog.Int("amount_in_cents", command.Amount.Amount()),
+			slog.Int("current_balance_in_cents", wallet.balance.Amount()),
 		)
 		return pkg.ErrBalanceLimitExceeded
 	}
 
 	event := FundsTransferReceivedEvent{
 		Amount:       command.Amount,
-		WalletID:     wallet.GetID(),
+		WalletID:     wallet.ID(),
 		TransferID:   command.TransferID,
 		FromWalletID: command.FromWalletID,
 		Timestamp:    command.Timestamp,
@@ -119,18 +119,18 @@ func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEven
 	wallet.updatedAt = event.Timestamp
 }
 
-func (wallet *Wallet) GetBalance() valueobject.Money {
+func (wallet *Wallet) Balance() valueobject.Money {
 	return wallet.balance
 }
 
-func (wallet *Wallet) GetHolderID() valueobject.ID {
+func (wallet *Wallet) HolderID() valueobject.ID {
 	return wallet.holderID
 }
 
-func (wallet *Wallet) GetCreatedAt() time.Time {
+func (wallet *Wallet) CreatedAt() time.Time {
 	return wallet.createdAt
 }
 
-func (wallet *Wallet) GetUpdatedAt() time.Time {
+func (wallet *Wallet) UpdatedAt() time.Time {
 	return wallet.updatedAt
 }

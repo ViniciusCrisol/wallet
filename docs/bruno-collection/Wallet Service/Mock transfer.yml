@@ -4,8 +4,8 @@ info:
     seq: 3
 
 http:
-    url: http://localhost:8080/wallets/00000000-0000-0000-0000-000000000001/mock-transfer
     method: post
+    url: http://localhost:8080/wallets/11111111-1111-1111-1111-111111111111/mock-transfer
     headers:
         - name: Content-Type
           value: application/json
@@ -20,7 +20,7 @@ http:
     auth: inherit
 
 settings:
-    timeout: 0
     encodeUrl: false
-    maxRedirects: 5
+    timeout: 0
     followRedirects: true
+    maxRedirects: 5

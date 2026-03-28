@@ -4,8 +4,8 @@ info:
     seq: 1
 
 http:
-    url: http://localhost:8080/wallets
     method: post
+    url: http://localhost:8080/wallets
     headers:
         - name: Content-Type
           value: application/json
@@ -19,7 +19,7 @@ http:
     auth: inherit
 
 settings:
-    timeout: 0
     encodeUrl: false
-    maxRedirects: 5
+    timeout: 0
     followRedirects: true
+    maxRedirects: 5

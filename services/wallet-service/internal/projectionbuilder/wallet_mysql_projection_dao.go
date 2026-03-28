@@ -1,4 +1,4 @@
-package persistence
+package projectionbuilder
 
 import (
 	"database/sql"
@@ -7,19 +7,17 @@ import (
 	"wallet/wallet-service/pkg"
 )
 
-const projectionName = "wallet_projection"
-
-type WalletMysqlDAO struct {
+type WalletMySQLProjectionDAO struct {
 	db *sql.DB
 }
 
-func NewWalletMysqlDAO(db *sql.DB) *WalletMysqlDAO {
-	return &WalletMysqlDAO{
+func NewWalletMySQLProjectionDAO(db *sql.DB) *WalletMySQLProjectionDAO {
+	return &WalletMySQLProjectionDAO{
 		db: db,
 	}
 }
 
-func (dao *WalletMysqlDAO) CreateWallet(event pkg.WalletCreatedEvent) error {
+func (dao *WalletMySQLProjectionDAO) CreateWallet(event pkg.WalletCreatedEvent) error {
 	_, err := dao.db.Exec(
 		"INSERT INTO wallet_projections (wallet_id, holder_id, balance_in_cents, created_at, updated_at) VALUES (?, ?, 0, ?, ?)",
 		event.WalletID,
@@ -28,13 +26,13 @@ func (dao *WalletMysqlDAO) CreateWallet(event pkg.WalletCreatedEvent) error {
 		event.UpdatedAt,
 	)
 	if err != nil {
-		slog.Error("failed to insert wallet", slog.String("wallet_id", event.WalletID), slog.String("error", err.Error()))
+		slog.Error("failed to insert wallet projection", slog.String("wallet_id", event.WalletID), slog.String("error", err.Error()))
 		return err
 	}
 	return nil
 }
 
-func (dao *WalletMysqlDAO) ApplyFundsTransferred(event pkg.FundsTransferredEvent) error {
+func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(event pkg.FundsTransferredEvent) error {
 	_, err := dao.db.Exec(
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents - ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
@@ -43,9 +41,9 @@ func (dao *WalletMysqlDAO) ApplyFundsTransferred(event pkg.FundsTransferredEvent
 	)
 	if err != nil {
 		slog.Error(
-			"failed to update balance",
+			"failed to debit wallet projection",
 			slog.String("transfer_id", event.TransferID),
-			slog.String("wallet_id", event.ToWalletID),
+			slog.String("wallet_id", event.FromWalletID),
 			slog.Int("amount", event.AmountInCents),
 			slog.String("error", err.Error()),
 		)
@@ -54,7 +52,7 @@ func (dao *WalletMysqlDAO) ApplyFundsTransferred(event pkg.FundsTransferredEvent
 	return nil
 }
 
-func (dao *WalletMysqlDAO) ApplyFundsTransferReceived(event pkg.FundsTransferReceivedEvent) error {
+func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(event pkg.FundsTransferReceivedEvent) error {
 	_, err := dao.db.Exec(
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents + ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
@@ -63,7 +61,7 @@ func (dao *WalletMysqlDAO) ApplyFundsTransferReceived(event pkg.FundsTransferRec
 	)
 	if err != nil {
 		slog.Error(
-			"failed to update balance",
+			"failed to credit wallet projection",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.WalletID),
 			slog.Int("amount", event.AmountInCents),

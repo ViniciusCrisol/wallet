@@ -1,4 +1,4 @@
-package controller
+package persistence
 
 import (
 	"os"
@@ -8,6 +8,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	godotenv.Load("../../../.env.test")
+	godotenv.Load("../../../../.env.test")
+
 	os.Exit(m.Run())
 }

@@ -6,7 +6,7 @@ import (
 	"io"
 	"log/slog"
 
-	"wallet/wallet-service/internal/domain"
+	"wallet/wallet-service/internal/commandside/domain"
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/eventsourcing"
 	"wallet/wallet-service/pkg/valueobject"
@@ -14,18 +14,18 @@ import (
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
 
-type WalletKurrentESHandler struct {
+type WalletKurrentDBESHandler struct {
 	client *kurrentdb.Client
 }
 
-func NewWalletKurrentESHandler(client *kurrentdb.Client) *WalletKurrentESHandler {
-	return &WalletKurrentESHandler{
+func NewWalletKurrentDBESHandler(client *kurrentdb.Client) *WalletKurrentDBESHandler {
+	return &WalletKurrentDBESHandler{
 		client: client,
 	}
 }
 
-func (esHandler *WalletKurrentESHandler) Save(wallet domain.Wallet) error {
-	uncommittedEvents := wallet.GetUncommittedEvents()
+func (esHandler *WalletKurrentDBESHandler) Save(wallet domain.Wallet) error {
+	uncommittedEvents := wallet.UncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil
 	}
@@ -48,7 +48,7 @@ func (esHandler *WalletKurrentESHandler) Save(wallet domain.Wallet) error {
 		})
 	}
 
-	expectedRevision := wallet.GetVersion() - len(uncommittedEvents)
+	expectedRevision := wallet.Version() - len(uncommittedEvents)
 	var streamState kurrentdb.StreamState
 	if expectedRevision < 0 {
 		streamState = kurrentdb.NoStream{}
@@ -58,20 +58,20 @@ func (esHandler *WalletKurrentESHandler) Save(wallet domain.Wallet) error {
 
 	if _, err := esHandler.client.AppendToStream(
 		context.Background(),
-		esHandler.buildStreamName(wallet.GetID()),
+		esHandler.buildStreamName(wallet.ID()),
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
 	); err != nil {
 		if eventsourcing.IsKurrentDBConcurrencyError(err) {
 			slog.Warn(
 				"concurrency conflict appending to stream",
-				slog.String("wallet_id", wallet.GetID().ToString()),
+				slog.String("wallet_id", wallet.ID().String()),
 				slog.String("error", err.Error()),
 			)
 			return pkg.ErrConflict
 		}
 		slog.Error(
 			"failed to append events to stream",
-			slog.String("wallet_id", wallet.GetID().ToString()),
+			slog.String("wallet_id", wallet.ID().String()),
 			slog.String("error", err.Error()),
 		)
 		return err
@@ -80,7 +80,7 @@ func (esHandler *WalletKurrentESHandler) Save(wallet domain.Wallet) error {
 	return nil
 }
 
-func (esHandler *WalletKurrentESHandler) Find(id valueobject.ID) (domain.Wallet, bool, error) {
+func (esHandler *WalletKurrentDBESHandler) Find(id valueobject.ID) (domain.Wallet, bool, error) {
 	stream, err := esHandler.client.ReadStream(
 		context.Background(),
 		esHandler.buildStreamName(id),
@@ -112,7 +112,7 @@ func (esHandler *WalletKurrentESHandler) Find(id valueobject.ID) (domain.Wallet,
 				return domain.Wallet{}, false, nil
 			}
 			slog.Error(
-				"failed to receive event",
+				"failed to read event from stream",
 				slog.String("error", err.Error()),
 				slog.String("stream", esHandler.buildStreamName(id)),
 			)
@@ -131,6 +131,6 @@ func (esHandler *WalletKurrentESHandler) Find(id valueobject.ID) (domain.Wallet,
 	return wallet, true, nil
 }
 
-func (esHandler *WalletKurrentESHandler) buildStreamName(id valueobject.ID) string {
-	return "wallet-" + id.ToString()
+func (esHandler *WalletKurrentDBESHandler) buildStreamName(id valueobject.ID) string {
+	return "wallet-" + id.String()
 }

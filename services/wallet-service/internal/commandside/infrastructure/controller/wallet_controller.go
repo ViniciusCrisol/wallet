@@ -5,19 +5,19 @@ import (
 	"log/slog"
 	"net/http"
 
-	"wallet/wallet-service/internal/domain"
-	"wallet/wallet-service/internal/infrastructure/persistence"
+	"wallet/wallet-service/internal/commandside/domain"
+	"wallet/wallet-service/internal/commandside/infrastructure/persistence"
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/valueobject"
 )
 
 type WalletController struct {
-	walletKurrentESHandler *persistence.WalletKurrentESHandler
+	esHandler *persistence.WalletKurrentDBESHandler
 }
 
-func NewWalletController(esHandler *persistence.WalletKurrentESHandler) *WalletController {
+func NewWalletController(esHandler *persistence.WalletKurrentDBESHandler) *WalletController {
 	return &WalletController{
-		walletKurrentESHandler: esHandler,
+		esHandler: esHandler,
 	}
 }
 
@@ -28,14 +28,14 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
-	command, err := dto.ToCreateWalletCommand()
+	command, err := dto.CreateWalletCommand()
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
 
 	wallet := domain.NewWallet(command)
-	if err := controller.walletKurrentESHandler.Save(wallet); err != nil {
+	if err := controller.esHandler.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
@@ -55,13 +55,13 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 		pkg.RespondWithError(response, err)
 		return
 	}
-	command, err := dto.ToTransferFundsCommand()
+	command, err := dto.TransferFundsCommand()
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
 
-	wallet, found, err := controller.walletKurrentESHandler.Find(walletID)
+	wallet, found, err := controller.esHandler.Find(walletID)
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
@@ -74,7 +74,7 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.walletKurrentESHandler.Save(wallet); err != nil {
+	if err := controller.esHandler.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
@@ -94,13 +94,13 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		pkg.RespondWithError(response, err)
 		return
 	}
-	command, err := dto.ToReceiveFundsTransferCommand()
+	command, err := dto.ReceiveFundsTransferCommand()
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
 
-	wallet, found, err := controller.walletKurrentESHandler.Find(walletID)
+	wallet, found, err := controller.esHandler.Find(walletID)
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
@@ -113,7 +113,7 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.walletKurrentESHandler.Save(wallet); err != nil {
+	if err := controller.esHandler.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}

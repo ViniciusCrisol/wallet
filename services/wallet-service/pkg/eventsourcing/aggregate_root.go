@@ -29,14 +29,14 @@ func (aggregateRoot *AggregateRoot) IncrementVersion() {
 	aggregateRoot.version++
 }
 
-func (aggregateRoot *AggregateRoot) GetID() valueobject.ID {
+func (aggregateRoot *AggregateRoot) ID() valueobject.ID {
 	return aggregateRoot.id
 }
 
-func (aggregateRoot *AggregateRoot) GetVersion() int {
+func (aggregateRoot *AggregateRoot) Version() int {
 	return aggregateRoot.version
 }
 
-func (aggregateRoot *AggregateRoot) GetUncommittedEvents() []Event {
+func (aggregateRoot *AggregateRoot) UncommittedEvents() []Event {
 	return aggregateRoot.uncommittedEvents
 }

@@ -3,7 +3,7 @@ package controller
 import (
 	"time"
 
-	"wallet/wallet-service/internal/domain"
+	"wallet/wallet-service/internal/commandside/domain"
 	"wallet/wallet-service/pkg/valueobject"
 )
 
@@ -12,7 +12,7 @@ type CreateWalletDTO struct {
 	HolderID string `json:"holder_id"`
 }
 
-func (dto CreateWalletDTO) ToCreateWalletCommand() (domain.CreateWalletCommand, error) {
+func (dto CreateWalletDTO) CreateWalletCommand() (domain.CreateWalletCommand, error) {
 	walletID, err := valueobject.NewID(dto.WalletID)
 	if err != nil {
 		return domain.CreateWalletCommand{}, err
@@ -34,7 +34,7 @@ type TransferFundsDTO struct {
 	ToWalletID    string `json:"to_wallet_id"`
 }
 
-func (dto TransferFundsDTO) ToTransferFundsCommand() (domain.TransferFundsCommand, error) {
+func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand, error) {
 	transferID, err := valueobject.NewID(dto.TransferID)
 	if err != nil {
 		return domain.TransferFundsCommand{}, err
@@ -62,7 +62,7 @@ type MockTransferDTO struct {
 	FromWalletID  string `json:"from_wallet_id"`
 }
 
-func (dto MockTransferDTO) ToReceiveFundsTransferCommand() (domain.ReceiveFundsTransferCommand, error) {
+func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTransferCommand, error) {
 	transferID, err := valueobject.NewID(dto.TransferID)
 	if err != nil {
 		return domain.ReceiveFundsTransferCommand{}, err

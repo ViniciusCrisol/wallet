@@ -56,21 +56,21 @@ func TestNewWallet(t *testing.T) {
 
 		wallet := NewWallet(cmd)
 
-		assert.Equal(t, walletID.ToString(), wallet.GetID().ToString())
-		assert.Equal(t, holderID.ToString(), wallet.holderID.ToString())
-		assert.Equal(t, now, wallet.GetCreatedAt())
-		assert.Equal(t, now, wallet.GetUpdatedAt())
-		assert.Equal(t, 0, wallet.balance.GetAmount())
+		assert.Equal(t, walletID.String(), wallet.ID().String())
+		assert.Equal(t, holderID.String(), wallet.holderID.String())
+		assert.Equal(t, now, wallet.CreatedAt())
+		assert.Equal(t, now, wallet.UpdatedAt())
+		assert.Equal(t, 0, wallet.balance.Amount())
 	})
 
 	t.Run("It should set version to zero when wallet is created", func(t *testing.T) {
 		wallet := newTestWallet(t)
-		assert.Equal(t, 0, wallet.GetVersion())
+		assert.Equal(t, 0, wallet.Version())
 	})
 
 	t.Run("It should log one uncommitted event when wallet is created", func(t *testing.T) {
 		wallet := newTestWallet(t)
-		events := wallet.GetUncommittedEvents()
+		events := wallet.UncommittedEvents()
 
 		assert.Len(t, events, 1)
 		assert.IsType(t, WalletCreatedEvent{}, events[0])
@@ -102,10 +102,10 @@ func TestWallet_TransferFunds(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		events := wallet.GetUncommittedEvents()
+		events := wallet.UncommittedEvents()
 		assert.Len(t, events, 1)
 		assert.IsType(t, FundsTransferredEvent{}, events[0])
-		assert.Equal(t, 200, wallet.GetBalance().GetAmount())
+		assert.Equal(t, 200, wallet.Balance().Amount())
 	})
 
 	t.Run("It should set balance to zero when transferring the entire balance", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, 0, wallet.GetBalance().GetAmount())
+		assert.Equal(t, 0, wallet.Balance().Amount())
 	})
 
 	t.Run("It should update updatedAt when funds are transferred", func(t *testing.T) {
@@ -134,7 +134,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, transferTime, wallet.GetUpdatedAt())
+		assert.Equal(t, transferTime, wallet.UpdatedAt())
 	})
 }
 
@@ -151,10 +151,10 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		events := wallet.GetUncommittedEvents()
+		events := wallet.UncommittedEvents()
 		assert.Len(t, events, 1)
 		assert.IsType(t, FundsTransferReceivedEvent{}, events[0])
-		assert.Equal(t, 500, wallet.GetBalance().GetAmount())
+		assert.Equal(t, 500, wallet.Balance().Amount())
 	})
 
 	t.Run("It should return an error when new balance would exceed the limit", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, MaxBalanceInCents, wallet.GetBalance().GetAmount())
+		assert.Equal(t, MaxBalanceInCents, wallet.Balance().Amount())
 	})
 
 	t.Run("It should update updatedAt when funds are received", func(t *testing.T) {
@@ -197,7 +197,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, receiveTime, wallet.GetUpdatedAt())
+		assert.Equal(t, receiveTime, wallet.UpdatedAt())
 	})
 }
 
@@ -215,11 +215,11 @@ func TestWallet_Replay(t *testing.T) {
 			UpdatedAt: now,
 		})
 
-		assert.Equal(t, walletID.ToString(), wallet.GetID().ToString())
-		assert.Equal(t, holderID.ToString(), wallet.holderID.ToString())
-		assert.Equal(t, now, wallet.GetCreatedAt())
-		assert.Equal(t, now, wallet.GetUpdatedAt())
-		assert.Equal(t, 0, wallet.balance.GetAmount())
+		assert.Equal(t, walletID.String(), wallet.ID().String())
+		assert.Equal(t, holderID.String(), wallet.holderID.String())
+		assert.Equal(t, now, wallet.CreatedAt())
+		assert.Equal(t, now, wallet.UpdatedAt())
+		assert.Equal(t, 0, wallet.balance.Amount())
 	})
 
 	t.Run("It should apply FundsTransferredEvent and deduct balance when replayed", func(t *testing.T) {
@@ -230,12 +230,12 @@ func TestWallet_Replay(t *testing.T) {
 			Amount:       newMoney(t, 200),
 			TransferID:   valueobject.GenerateID(),
 			ToWalletID:   valueobject.GenerateID(),
-			FromWalletID: wallet.GetID(),
+			FromWalletID: wallet.ID(),
 			Timestamp:    transferTime,
 		})
 
-		assert.Equal(t, 300, wallet.GetBalance().GetAmount())
-		assert.Equal(t, transferTime, wallet.GetUpdatedAt())
+		assert.Equal(t, 300, wallet.Balance().Amount())
+		assert.Equal(t, transferTime, wallet.UpdatedAt())
 	})
 
 	t.Run("It should apply FundsTransferReceivedEvent and update balance when replayed", func(t *testing.T) {
@@ -244,14 +244,14 @@ func TestWallet_Replay(t *testing.T) {
 
 		wallet.Replay(FundsTransferReceivedEvent{
 			Amount:       newMoney(t, 750),
-			WalletID:     wallet.GetID(),
+			WalletID:     wallet.ID(),
 			TransferID:   valueobject.GenerateID(),
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    receiveTime,
 		})
 
-		assert.Equal(t, 750, wallet.GetBalance().GetAmount())
-		assert.Equal(t, receiveTime, wallet.GetUpdatedAt())
+		assert.Equal(t, 750, wallet.Balance().Amount())
+		assert.Equal(t, receiveTime, wallet.UpdatedAt())
 	})
 
 	t.Run("It should increment version when event is replayed", func(t *testing.T) {
@@ -264,23 +264,23 @@ func TestWallet_Replay(t *testing.T) {
 			UpdatedAt: time.Now(),
 		})
 
-		assert.Equal(t, 0, wallet.GetVersion())
+		assert.Equal(t, 0, wallet.Version())
 	})
 }
 
-func TestWallet_GetBalance(t *testing.T) {
+func TestWallet_Balance(t *testing.T) {
 	t.Run("It should return zero balance when wallet is first created", func(t *testing.T) {
 		wallet := newTestWallet(t)
-		assert.Equal(t, 0, wallet.GetBalance().GetAmount())
+		assert.Equal(t, 0, wallet.Balance().Amount())
 	})
 
 	t.Run("It should return updated balance after funds are received", func(t *testing.T) {
 		wallet := newTestWalletWithBalance(t, 250)
-		assert.Equal(t, 250, wallet.GetBalance().GetAmount())
+		assert.Equal(t, 250, wallet.Balance().Amount())
 	})
 }
 
-func TestWallet_GetHolderID(t *testing.T) {
+func TestWallet_HolderID(t *testing.T) {
 	t.Run("It should return the holder ID provided at creation", func(t *testing.T) {
 		holderID := valueobject.GenerateID()
 		wallet := NewWallet(CreateWalletCommand{
@@ -289,11 +289,11 @@ func TestWallet_GetHolderID(t *testing.T) {
 			Timestamp: time.Now(),
 		})
 
-		assert.Equal(t, holderID.ToString(), wallet.GetHolderID().ToString())
+		assert.Equal(t, holderID.String(), wallet.HolderID().String())
 	})
 }
 
-func TestWallet_GetCreatedAt(t *testing.T) {
+func TestWallet_CreatedAt(t *testing.T) {
 	t.Run("It should return the timestamp provided at creation", func(t *testing.T) {
 		now := time.Now()
 		wallet := NewWallet(CreateWalletCommand{
@@ -302,11 +302,11 @@ func TestWallet_GetCreatedAt(t *testing.T) {
 			Timestamp: now,
 		})
 
-		assert.Equal(t, now, wallet.GetCreatedAt())
+		assert.Equal(t, now, wallet.CreatedAt())
 	})
 }
 
-func TestWallet_GetUpdatedAt(t *testing.T) {
+func TestWallet_UpdatedAt(t *testing.T) {
 	t.Run("It should return the creation timestamp when wallet has not been updated", func(t *testing.T) {
 		now := time.Now()
 		wallet := NewWallet(CreateWalletCommand{
@@ -315,7 +315,7 @@ func TestWallet_GetUpdatedAt(t *testing.T) {
 			Timestamp: now,
 		})
 
-		assert.Equal(t, now, wallet.GetUpdatedAt())
+		assert.Equal(t, now, wallet.UpdatedAt())
 	})
 
 	t.Run("It should return the latest timestamp after funds are received", func(t *testing.T) {
@@ -336,6 +336,6 @@ func TestWallet_GetUpdatedAt(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.Equal(t, updatedAt, wallet.GetUpdatedAt())
+		assert.Equal(t, updatedAt, wallet.UpdatedAt())
 	})
 }

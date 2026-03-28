@@ -13,7 +13,7 @@ func TestNewMoney(t *testing.T) {
 	t.Run("It should return a valid Money when amount is positive", func(t *testing.T) {
 		money, err := NewMoney(100)
 		assert.NoError(t, err)
-		assert.Equal(t, 100, money.GetAmount())
+		assert.Equal(t, 100, money.Amount())
 	})
 
 	t.Run("It should return an error when amount is zero", func(t *testing.T) {
@@ -32,10 +32,10 @@ func TestNewMoney(t *testing.T) {
 	})
 }
 
-func TestMoney_GetAmount(t *testing.T) {
+func TestMoney_Amount(t *testing.T) {
 	t.Run("It should return the amount when money is created with a valid amount", func(t *testing.T) {
 		money, _ := NewMoney(250)
-		assert.Equal(t, 250, money.GetAmount())
+		assert.Equal(t, 250, money.Amount())
 	})
 }
 
@@ -45,7 +45,7 @@ func TestMoney_Sum(t *testing.T) {
 		b, _ := NewMoney(200)
 		result, err := a.Sum(b)
 		assert.NoError(t, err)
-		assert.Equal(t, 300, result.GetAmount())
+		assert.Equal(t, 300, result.Amount())
 	})
 
 	t.Run("It should return an error when result exceeds max int", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestMoney_Sub(t *testing.T) {
 		b, _ := NewMoney(100)
 		result, err := a.Sub(b)
 		assert.NoError(t, err)
-		assert.Equal(t, 200, result.GetAmount())
+		assert.Equal(t, 200, result.Amount())
 	})
 
 	t.Run("It should return an error when result is zero", func(t *testing.T) {

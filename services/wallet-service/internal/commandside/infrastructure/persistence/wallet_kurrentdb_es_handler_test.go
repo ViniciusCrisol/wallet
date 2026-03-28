@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/domain"
+	"wallet/wallet-service/internal/commandside/domain"
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/valueobject"
 
@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestESHandler(t *testing.T) *WalletKurrentESHandler {
+func newTestESHandler(t *testing.T) *WalletKurrentDBESHandler {
 	t.Helper()
 
 	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
@@ -26,7 +26,7 @@ func newTestESHandler(t *testing.T) *WalletKurrentESHandler {
 	if err != nil {
 		t.Fatalf("failed to create kurrentdb client: %v", err)
 	}
-	return NewWalletKurrentESHandler(db)
+	return NewWalletKurrentDBESHandler(db)
 }
 
 func newWallet(t *testing.T) domain.Wallet {
@@ -39,7 +39,7 @@ func newWallet(t *testing.T) domain.Wallet {
 	})
 }
 
-func TestWalletKurrentESHandler_Save(t *testing.T) {
+func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should save successfully when wallet has uncommitted events", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestWalletKurrentESHandler_Save(t *testing.T) {
 		assert.NoError(t, esHandler.Save(wallet))
 
 		conflictWallet := domain.NewWallet(domain.CreateWalletCommand{
-			WalletID:  wallet.GetID(),
+			WalletID:  wallet.ID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
@@ -91,7 +91,7 @@ func TestWalletKurrentESHandler_Save(t *testing.T) {
 	})
 }
 
-func TestWalletKurrentESHandler_Find(t *testing.T) {
+func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should return false when wallet stream does not exist", func(t *testing.T) {
@@ -113,11 +113,11 @@ func TestWalletKurrentESHandler_Find(t *testing.T) {
 		wallet := newWallet(t)
 		assert.NoError(t, esHandler.Save(wallet))
 
-		result, found, err := esHandler.Find(wallet.GetID())
+		result, found, err := esHandler.Find(wallet.ID())
 
 		assert.NoError(t, err)
 		assert.True(t, found)
-		assert.Equal(t, wallet.GetID().ToString(), result.GetID().ToString())
+		assert.Equal(t, wallet.ID().String(), result.ID().String())
 	})
 
 	t.Run("It should reconstruct the correct balance when funds were received before saving", func(t *testing.T) {
@@ -135,11 +135,11 @@ func TestWalletKurrentESHandler_Find(t *testing.T) {
 		}))
 		assert.NoError(t, esHandler.Save(wallet))
 
-		result, found, err := esHandler.Find(wallet.GetID())
+		result, found, err := esHandler.Find(wallet.ID())
 
 		assert.NoError(t, err)
 		assert.True(t, found)
-		assert.Equal(t, 750, result.GetBalance().GetAmount())
+		assert.Equal(t, 750, result.Balance().Amount())
 	})
 
 	t.Run("It should reconstruct the correct balance after a receive and transfer cycle", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestWalletKurrentESHandler_Find(t *testing.T) {
 		}))
 		assert.NoError(t, esHandler.Save(wallet))
 
-		reloaded, found, err := esHandler.Find(wallet.GetID())
+		reloaded, found, err := esHandler.Find(wallet.ID())
 		assert.NoError(t, err)
 		require.True(t, found)
 
@@ -172,17 +172,17 @@ func TestWalletKurrentESHandler_Find(t *testing.T) {
 		}))
 		assert.NoError(t, esHandler.Save(reloaded))
 
-		result, found, err := esHandler.Find(wallet.GetID())
+		result, found, err := esHandler.Find(wallet.ID())
 		assert.NoError(t, err)
 		assert.True(t, found)
-		assert.Equal(t, 600, result.GetBalance().GetAmount())
+		assert.Equal(t, 600, result.Balance().Amount())
 	})
 }
 
-func TestWalletKurrentESHandler_buildStreamName(t *testing.T) {
+func TestWalletKurrentDBESHandler_buildStreamName(t *testing.T) {
 	t.Run("It should return a stream name prefixed with 'wallet-' when given a valid ID", func(t *testing.T) {
 		id, _ := valueobject.NewID("550e8400-e29b-41d4-a716-446655440000")
-		esHandler := &WalletKurrentESHandler{}
+		esHandler := &WalletKurrentDBESHandler{}
 		result := esHandler.buildStreamName(id)
 		assert.Equal(t, "wallet-550e8400-e29b-41d4-a716-446655440000", result)
 	})

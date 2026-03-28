@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/domain"
-	"wallet/wallet-service/internal/infrastructure/persistence"
+	"wallet/wallet-service/internal/commandside/domain"
+	"wallet/wallet-service/internal/commandside/infrastructure/persistence"
 	"wallet/wallet-service/pkg/valueobject"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -29,7 +29,7 @@ func newTestController(t *testing.T) *WalletController {
 		t.Fatalf("failed to create kurrentdb client: %v", err)
 	}
 	return &WalletController{
-		walletKurrentESHandler: persistence.NewWalletKurrentESHandler(db),
+		esHandler: persistence.NewWalletKurrentDBESHandler(db),
 	}
 }
 
@@ -69,8 +69,8 @@ func TestWalletController_Create(t *testing.T) {
 
 		ctrl := newTestController(t)
 		body := marshalBody(t, CreateWalletDTO{
-			WalletID: valueobject.GenerateID().ToString(),
-			HolderID: valueobject.GenerateID().ToString(),
+			WalletID: valueobject.GenerateID().String(),
+			HolderID: valueobject.GenerateID().String(),
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
 		rec := httptest.NewRecorder()
@@ -96,7 +96,7 @@ func TestWalletController_Create(t *testing.T) {
 		ctrl := newTestController(t)
 		body := marshalBody(t, CreateWalletDTO{
 			WalletID: "not-a-uuid",
-			HolderID: valueobject.GenerateID().ToString(),
+			HolderID: valueobject.GenerateID().String(),
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
 		rec := httptest.NewRecorder()
@@ -110,7 +110,7 @@ func TestWalletController_Create(t *testing.T) {
 
 		ctrl := newTestController(t)
 		body := marshalBody(t, CreateWalletDTO{
-			WalletID: valueobject.GenerateID().ToString(),
+			WalletID: valueobject.GenerateID().String(),
 			HolderID: "not-a-uuid",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
@@ -125,8 +125,8 @@ func TestWalletController_Create(t *testing.T) {
 
 		ctrl := newTestController(t)
 		dto := CreateWalletDTO{
-			WalletID: valueobject.GenerateID().ToString(),
-			HolderID: valueobject.GenerateID().ToString(),
+			WalletID: valueobject.GenerateID().String(),
+			HolderID: valueobject.GenerateID().String(),
 		}
 
 		req1 := httptest.NewRequest(http.MethodPost, "/wallets", marshalBody(t, dto))
@@ -164,14 +164,14 @@ func TestWalletController_TransferFunds(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(wallet))
 
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 500,
-			TransferID:    valueobject.GenerateID().ToString(),
-			ToWalletID:    valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			ToWalletID:    valueobject.GenerateID().String(),
 		})
-		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.GetID().ToString()+"/transfer", body)
+		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", body)
 		rec := httptest.NewRecorder()
 		newTransferMux(ctrl).ServeHTTP(rec, req)
 
@@ -182,7 +182,7 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/transfer", bytes.NewBufferString("invalid"))
 		rec := httptest.NewRecorder()
@@ -197,8 +197,8 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		ctrl := newTestController(t)
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 100,
-			TransferID:    valueobject.GenerateID().ToString(),
-			ToWalletID:    valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			ToWalletID:    valueobject.GenerateID().String(),
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/not-a-uuid/transfer", body)
@@ -212,11 +212,11 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 0,
-			TransferID:    valueobject.GenerateID().ToString(),
-			ToWalletID:    valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			ToWalletID:    valueobject.GenerateID().String(),
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/transfer", body)
@@ -230,11 +230,11 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 100,
-			TransferID:    valueobject.GenerateID().ToString(),
-			ToWalletID:    valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			ToWalletID:    valueobject.GenerateID().String(),
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/transfer", body)
@@ -253,14 +253,14 @@ func TestWalletController_TransferFunds(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(wallet))
 
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 500,
-			TransferID:    valueobject.GenerateID().ToString(),
-			ToWalletID:    valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			ToWalletID:    valueobject.GenerateID().String(),
 		})
-		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.GetID().ToString()+"/transfer", body)
+		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", body)
 		rec := httptest.NewRecorder()
 		newTransferMux(ctrl).ServeHTTP(rec, req)
 
@@ -280,14 +280,14 @@ func TestWalletController_MockTransfer(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(wallet))
 
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 500,
-			TransferID:    valueobject.GenerateID().ToString(),
-			FromWalletID:  valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			FromWalletID:  valueobject.GenerateID().String(),
 		})
-		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.GetID().ToString()+"/mock-transfer", body)
+		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
 		newMockTransferMux(ctrl).ServeHTTP(rec, req)
 
@@ -298,7 +298,7 @@ func TestWalletController_MockTransfer(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", bytes.NewBufferString("invalid"))
 		rec := httptest.NewRecorder()
 		newMockTransferMux(ctrl).ServeHTTP(rec, req)
@@ -312,8 +312,8 @@ func TestWalletController_MockTransfer(t *testing.T) {
 		ctrl := newTestController(t)
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 100,
-			TransferID:    valueobject.GenerateID().ToString(),
-			FromWalletID:  valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			FromWalletID:  valueobject.GenerateID().String(),
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/not-a-uuid/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -326,11 +326,11 @@ func TestWalletController_MockTransfer(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 100,
 			TransferID:    "not-a-uuid",
-			FromWalletID:  valueobject.GenerateID().ToString(),
+			FromWalletID:  valueobject.GenerateID().String(),
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -343,10 +343,10 @@ func TestWalletController_MockTransfer(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 100,
-			TransferID:    valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
 			FromWalletID:  "not-a-uuid",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
@@ -360,11 +360,11 @@ func TestWalletController_MockTransfer(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 0,
-			TransferID:    valueobject.GenerateID().ToString(),
-			FromWalletID:  valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			FromWalletID:  valueobject.GenerateID().String(),
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -377,11 +377,11 @@ func TestWalletController_MockTransfer(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		nonExistentID := valueobject.GenerateID().ToString()
+		nonExistentID := valueobject.GenerateID().String()
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 100,
-			TransferID:    valueobject.GenerateID().ToString(),
-			FromWalletID:  valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			FromWalletID:  valueobject.GenerateID().String(),
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -409,14 +409,14 @@ func TestWalletController_MockTransfer(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(wallet))
 
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 2,
-			TransferID:    valueobject.GenerateID().ToString(),
-			FromWalletID:  valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().String(),
+			FromWalletID:  valueobject.GenerateID().String(),
 		})
-		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.GetID().ToString()+"/mock-transfer", body)
+		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
 		newMockTransferMux(ctrl).ServeHTTP(rec, req)
 
