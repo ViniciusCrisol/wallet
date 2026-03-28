@@ -45,6 +45,12 @@ func newTransferMux(ctrl *WalletController) *http.ServeMux {
 	return mux
 }
 
+func newMockTransferMux(ctrl *WalletController) *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /wallets/mock-transfer", ctrl.MockTransfer)
+	return mux
+}
+
 func marshalBody(t *testing.T, v any) *bytes.Buffer {
 	t.Helper()
 
@@ -257,6 +263,164 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.GetID().ToString()+"/transfer", body)
 		rec := httptest.NewRecorder()
 		newTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+}
+
+func TestWalletController_MockTransfer(t *testing.T) {
+	t.Parallel()
+
+	t.Run("It should return 204 when wallet exists and balance limit is not exceeded", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		wallet := domain.NewWallet(domain.CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: time.Now(),
+		})
+		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
+
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 500,
+			WalletID:      wallet.GetID().ToString(),
+			TransferID:    valueobject.GenerateID().ToString(),
+			FromWalletID:  valueobject.GenerateID().ToString(),
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+	})
+
+	t.Run("It should return 422 when request body is invalid JSON", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", bytes.NewBufferString("invalid"))
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+	})
+
+	t.Run("It should return 400 when wallet_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 100,
+			WalletID:      "not-a-uuid",
+			TransferID:    valueobject.GenerateID().ToString(),
+			FromWalletID:  valueobject.GenerateID().ToString(),
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 400 when transfer_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 100,
+			WalletID:      valueobject.GenerateID().ToString(),
+			TransferID:    "not-a-uuid",
+			FromWalletID:  valueobject.GenerateID().ToString(),
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 400 when from_wallet_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 100,
+			WalletID:      valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().ToString(),
+			FromWalletID:  "not-a-uuid",
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 400 when amount_in_cents is zero", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 0,
+			WalletID:      valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().ToString(),
+			FromWalletID:  valueobject.GenerateID().ToString(),
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 404 when wallet does not exist", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 100,
+			WalletID:      valueobject.GenerateID().ToString(),
+			TransferID:    valueobject.GenerateID().ToString(),
+			FromWalletID:  valueobject.GenerateID().ToString(),
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("It should return 400 when receiving funds would exceed the balance limit", func(t *testing.T) {
+		t.Parallel()
+
+		ctrl := newTestController(t)
+		wallet := domain.NewWallet(domain.CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: time.Now(),
+		})
+
+		nearMaxAmount, err := valueobject.NewMoney(99_999_999)
+		assert.NoError(t, err)
+		err = wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
+			Amount:       nearMaxAmount,
+			TransferID:   valueobject.GenerateID(),
+			FromWalletID: valueobject.GenerateID(),
+			Timestamp:    time.Now(),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
+
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 2,
+			WalletID:      wallet.GetID().ToString(),
+			TransferID:    valueobject.GenerateID().ToString(),
+			FromWalletID:  valueobject.GenerateID().ToString(),
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(ctrl).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})

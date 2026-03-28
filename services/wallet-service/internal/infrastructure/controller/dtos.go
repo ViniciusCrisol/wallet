@@ -54,3 +54,31 @@ func (dto TransferFundsDTO) ToTransferFundsCommand() (domain.TransferFundsComman
 		Timestamp:  time.Now(),
 	}, nil
 }
+
+type MockTransferDTO struct {
+	AmountInCents int    `json:"amount_in_cents"`
+	WalletID      string `json:"wallet_id"`
+	TransferID    string `json:"transfer_id"`
+	FromWalletID  string `json:"from_wallet_id"`
+}
+
+func (dto MockTransferDTO) ToReceiveFundsTransferCommand() (domain.ReceiveFundsTransferCommand, error) {
+	transferID, err := valueobject.NewID(dto.TransferID)
+	if err != nil {
+		return domain.ReceiveFundsTransferCommand{}, err
+	}
+	fromWalletID, err := valueobject.NewID(dto.FromWalletID)
+	if err != nil {
+		return domain.ReceiveFundsTransferCommand{}, err
+	}
+	amount, err := valueobject.NewMoney(dto.AmountInCents)
+	if err != nil {
+		return domain.ReceiveFundsTransferCommand{}, err
+	}
+	return domain.ReceiveFundsTransferCommand{
+		Amount:       amount,
+		TransferID:   transferID,
+		FromWalletID: fromWalletID,
+		Timestamp:    time.Now(),
+	}, nil
+}

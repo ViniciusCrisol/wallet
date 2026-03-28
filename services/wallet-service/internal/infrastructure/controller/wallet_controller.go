@@ -81,3 +81,42 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 
 	response.WriteHeader(http.StatusNoContent)
 }
+
+func (controller *WalletController) MockTransfer(response http.ResponseWriter, request *http.Request) {
+	var dto MockTransferDTO
+	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
+		slog.Warn("failed to decode mock transfer request", slog.String("error", err.Error()))
+		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
+		return
+	}
+	walletID, err := valueobject.NewID(dto.WalletID)
+	if err != nil {
+		pkg.RespondWithError(response, err)
+		return
+	}
+	command, err := dto.ToReceiveFundsTransferCommand()
+	if err != nil {
+		pkg.RespondWithError(response, err)
+		return
+	}
+
+	wallet, found, err := controller.walletKurrentDBDAO.Find(walletID)
+	if err != nil {
+		pkg.RespondWithError(response, err)
+		return
+	}
+	if !found {
+		pkg.RespondWithError(response, pkg.ErrWalletNotFound)
+		return
+	}
+	if err := wallet.ReceiveFundsTransfer(command); err != nil {
+		pkg.RespondWithError(response, err)
+		return
+	}
+	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
+		pkg.RespondWithError(response, err)
+		return
+	}
+
+	response.WriteHeader(http.StatusNoContent)
+}
