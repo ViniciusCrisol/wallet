@@ -31,8 +31,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets", ctrl.Create)
-	mux.HandleFunc("POST /wallets/mock-transfer", ctrl.MockTransfer)
 	mux.HandleFunc("POST /wallets/{id}/transfer", ctrl.TransferFunds)
+	mux.HandleFunc("POST /wallets/{id}/mock-transfer", ctrl.MockTransfer)
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatalf("server error: %v", err)

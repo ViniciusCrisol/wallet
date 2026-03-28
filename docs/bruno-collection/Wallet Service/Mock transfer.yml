@@ -4,7 +4,7 @@ info:
     seq: 3
 
 http:
-    url: http://localhost:8080/wallets/mock-transfer
+    url: http://localhost:8080/wallets/00000000-0000-0000-0000-000000000001/mock-transfer
     method: post
     headers:
         - name: Content-Type
@@ -14,7 +14,6 @@ http:
         data: |-
             {
               "amount_in_cents": 1000,
-              "wallet_id": "00000000-0000-0000-0000-000000000001",
               "transfer_id": "00000000-0000-0000-0000-000000000002",
               "from_wallet_id": "00000000-0000-0000-0000-000000000003"
             }

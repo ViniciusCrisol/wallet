@@ -89,7 +89,7 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
-	walletID, err := valueobject.NewID(dto.WalletID)
+	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
