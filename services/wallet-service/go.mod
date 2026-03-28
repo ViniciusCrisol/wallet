@@ -4,6 +4,7 @@ go 1.25.7
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/kurrent-io/KurrentDB-Client-Go v1.1.2
 	github.com/stretchr/testify v1.11.1
 )

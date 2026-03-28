@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/domain"
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/valueobject"
@@ -15,7 +16,8 @@ import (
 
 func newTestDAO(t *testing.T) *KurrentdbWalletDAO {
 	t.Helper()
-	settings, err := kurrentdb.ParseConnectionString("kurrentdb://localhost:2113?tls=false")
+
+	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
 	if err != nil {
 		t.Fatalf("failed to parse connection string: %v", err)
 	}
@@ -28,6 +30,7 @@ func newTestDAO(t *testing.T) *KurrentdbWalletDAO {
 
 func newWallet(t *testing.T) domain.Wallet {
 	t.Helper()
+
 	wallet, err := domain.NewWallet(domain.CreateWalletCommand{
 		WalletID:  valueobject.GenerateID(),
 		HolderID:  valueobject.GenerateID(),
