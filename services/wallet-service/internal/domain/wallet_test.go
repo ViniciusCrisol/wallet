@@ -232,3 +232,91 @@ func TestWallet_Replay(t *testing.T) {
 		assert.ErrorIs(t, err, pkg.ErrInsufficientBalance)
 	})
 }
+
+func TestWallet_GetBalance(t *testing.T) {
+	t.Run("It should return zero balance when wallet is first created", func(t *testing.T) {
+		wallet, _ := NewWallet(CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: time.Now(),
+		})
+
+		assert.Equal(t, 0, wallet.GetBalance().GetAmount())
+	})
+
+	t.Run("It should return updated balance after funds are received", func(t *testing.T) {
+		wallet, _ := NewWallet(CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: time.Now(),
+		})
+		amount, _ := valueobject.NewMoney(250)
+		_ = wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
+			Amount:       amount,
+			TransferID:   valueobject.GenerateID(),
+			FromWalletID: valueobject.GenerateID(),
+			Timestamp:    time.Now(),
+		})
+
+		assert.Equal(t, 250, wallet.GetBalance().GetAmount())
+	})
+}
+
+func TestWallet_GetHolderID(t *testing.T) {
+	t.Run("It should return the holder ID provided at creation", func(t *testing.T) {
+		holderID := valueobject.GenerateID()
+		wallet, _ := NewWallet(CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  holderID,
+			Timestamp: time.Now(),
+		})
+
+		assert.Equal(t, holderID.ToString(), wallet.GetHolderID().ToString())
+	})
+}
+
+func TestWallet_GetCreatedAt(t *testing.T) {
+	t.Run("It should return the timestamp provided at creation", func(t *testing.T) {
+		now := time.Now()
+		wallet, _ := NewWallet(CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: now,
+		})
+
+		assert.Equal(t, now, wallet.GetCreatedAt())
+	})
+}
+
+func TestWallet_GetUpdatedAt(t *testing.T) {
+	t.Run("It should return the creation timestamp when wallet has not been updated", func(t *testing.T) {
+		now := time.Now()
+		wallet, _ := NewWallet(CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: now,
+		})
+
+		assert.Equal(t, now, wallet.GetUpdatedAt())
+	})
+
+	t.Run("It should return the latest timestamp after funds are received", func(t *testing.T) {
+		createdAt := time.Now()
+		wallet, _ := NewWallet(CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: createdAt,
+		})
+
+		updatedAt := createdAt.Add(time.Hour)
+		amount, _ := valueobject.NewMoney(100)
+		_ = wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
+			Amount:       amount,
+			TransferID:   valueobject.GenerateID(),
+			FromWalletID: valueobject.GenerateID(),
+			Timestamp:    updatedAt,
+		})
+
+		assert.Equal(t, updatedAt, wallet.GetUpdatedAt())
+	})
+}

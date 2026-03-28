@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseWalletEvent(t *testing.T) {
+func TestWalletDomainToIntegrationEvent(t *testing.T) {
 	now := time.Now()
 	walletID := valueobject.GenerateID()
 	holderID := valueobject.GenerateID()
@@ -27,7 +28,7 @@ func TestParseWalletEvent(t *testing.T) {
 			UpdatedAt: now,
 		}
 
-		result, err := ParseWalletEvent(event)
+		result, err := WalletDomainToIntegrationEvent(event)
 
 		assert.NoError(t, err)
 		assert.Equal(t, pkg.WalletCreatedEvent{
@@ -48,7 +49,7 @@ func TestParseWalletEvent(t *testing.T) {
 			Timestamp:    now,
 		}
 
-		result, err := ParseWalletEvent(event)
+		result, err := WalletDomainToIntegrationEvent(event)
 
 		assert.NoError(t, err)
 		assert.Equal(t, pkg.FundsTransferredEvent{
@@ -70,7 +71,7 @@ func TestParseWalletEvent(t *testing.T) {
 			Timestamp:    now,
 		}
 
-		result, err := ParseWalletEvent(event)
+		result, err := WalletDomainToIntegrationEvent(event)
 
 		assert.NoError(t, err)
 		assert.Equal(t, pkg.FundsTransferReceivedEvent{
@@ -85,7 +86,158 @@ func TestParseWalletEvent(t *testing.T) {
 
 	t.Run("It should return an error when event type is unknown", func(t *testing.T) {
 		type unknownEvent struct{}
-		_, err := ParseWalletEvent(unknownEvent{})
+		_, err := WalletDomainToIntegrationEvent(unknownEvent{})
+		assert.ErrorIs(t, err, pkg.ErrUnknownEventType)
+	})
+}
+
+func TestWalletIntegrationToDomainEvent(t *testing.T) {
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	walletID := valueobject.GenerateID()
+	holderID := valueobject.GenerateID()
+	transferID := valueobject.GenerateID()
+	fromWalletID := valueobject.GenerateID()
+
+	t.Run("It should return a WalletCreatedEvent when event name is WalletCreatedEventName and body is valid", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.WalletCreatedEvent{
+			WalletID:  walletID.ToString(),
+			HolderID:  holderID.ToString(),
+			CreatedAt: now,
+			UpdatedAt: now,
+		})
+
+		result, err := WalletIntegrationToDomainEvent(body, pkg.WalletCreatedEventName)
+
+		assert.NoError(t, err)
+		event, ok := result.(domain.WalletCreatedEvent)
+		assert.True(t, ok)
+		assert.Equal(t, walletID.ToString(), event.WalletID.ToString())
+		assert.Equal(t, holderID.ToString(), event.HolderID.ToString())
+		assert.Equal(t, now, event.CreatedAt)
+		assert.Equal(t, now, event.UpdatedAt)
+	})
+
+	t.Run("It should return an error when event name is WalletCreatedEventName and body is invalid JSON", func(t *testing.T) {
+		_, err := WalletIntegrationToDomainEvent([]byte("invalid"), pkg.WalletCreatedEventName)
+		assert.Error(t, err)
+	})
+
+	t.Run("It should return an error when event name is WalletCreatedEventName and WalletID is not a valid UUID", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.WalletCreatedEvent{
+			WalletID: "not-a-uuid",
+			HolderID: holderID.ToString(),
+		})
+		_, err := WalletIntegrationToDomainEvent(body, pkg.WalletCreatedEventName)
+		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+	})
+
+	t.Run("It should return an error when event name is WalletCreatedEventName and HolderID is not a valid UUID", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.WalletCreatedEvent{
+			WalletID: walletID.ToString(),
+			HolderID: "not-a-uuid",
+		})
+		_, err := WalletIntegrationToDomainEvent(body, pkg.WalletCreatedEventName)
+		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+	})
+
+	t.Run("It should return a FundsTransferredEvent when event name is FundsTransferredEventName and body is valid", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.FundsTransferredEvent{
+			TransferID:    transferID.ToString(),
+			ToWalletID:    walletID.ToString(),
+			FromWalletID:  fromWalletID.ToString(),
+			AmountInCents: 500,
+			Timestamp:     now,
+		})
+
+		result, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferredEventName)
+
+		assert.NoError(t, err)
+		event, ok := result.(domain.FundsTransferredEvent)
+		assert.True(t, ok)
+		assert.Equal(t, transferID.ToString(), event.TransferID.ToString())
+		assert.Equal(t, walletID.ToString(), event.ToWalletID.ToString())
+		assert.Equal(t, fromWalletID.ToString(), event.FromWalletID.ToString())
+		assert.Equal(t, 500, event.Amount.GetAmount())
+		assert.Equal(t, now, event.Timestamp)
+	})
+
+	t.Run("It should return an error when event name is FundsTransferredEventName and body is invalid JSON", func(t *testing.T) {
+		_, err := WalletIntegrationToDomainEvent([]byte("invalid"), pkg.FundsTransferredEventName)
+		assert.Error(t, err)
+	})
+
+	t.Run("It should return an error when event name is FundsTransferredEventName and TransferID is not a valid UUID", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.FundsTransferredEvent{
+			TransferID:    "not-a-uuid",
+			ToWalletID:    walletID.ToString(),
+			FromWalletID:  fromWalletID.ToString(),
+			AmountInCents: 500,
+		})
+		_, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferredEventName)
+		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+	})
+
+	t.Run("It should return an error when event name is FundsTransferredEventName and amount is invalid", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.FundsTransferredEvent{
+			TransferID:    transferID.ToString(),
+			ToWalletID:    walletID.ToString(),
+			FromWalletID:  fromWalletID.ToString(),
+			AmountInCents: 0,
+		})
+		_, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferredEventName)
+		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
+	})
+
+	t.Run("It should return a FundsTransferReceivedEvent when event name is FundsTransferReceivedEventName and body is valid", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.FundsTransferReceivedEvent{
+			WalletID:      walletID.ToString(),
+			TransferID:    transferID.ToString(),
+			FromWalletID:  fromWalletID.ToString(),
+			AmountInCents: 300,
+			Timestamp:     now,
+		})
+
+		result, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferReceivedEventName)
+
+		assert.NoError(t, err)
+		event, ok := result.(domain.FundsTransferReceivedEvent)
+		assert.True(t, ok)
+		assert.Equal(t, walletID.ToString(), event.WalletID.ToString())
+		assert.Equal(t, transferID.ToString(), event.TransferID.ToString())
+		assert.Equal(t, fromWalletID.ToString(), event.FromWalletID.ToString())
+		assert.Equal(t, 300, event.Amount.GetAmount())
+		assert.Equal(t, now, event.Timestamp)
+	})
+
+	t.Run("It should return an error when event name is FundsTransferReceivedEventName and body is invalid JSON", func(t *testing.T) {
+		_, err := WalletIntegrationToDomainEvent([]byte("invalid"), pkg.FundsTransferReceivedEventName)
+		assert.Error(t, err)
+	})
+
+	t.Run("It should return an error when event name is FundsTransferReceivedEventName and WalletID is not a valid UUID", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.FundsTransferReceivedEvent{
+			WalletID:      "not-a-uuid",
+			TransferID:    transferID.ToString(),
+			FromWalletID:  fromWalletID.ToString(),
+			AmountInCents: 300,
+		})
+		_, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferReceivedEventName)
+		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+	})
+
+	t.Run("It should return an error when event name is FundsTransferReceivedEventName and amount is invalid", func(t *testing.T) {
+		body, _ := json.Marshal(pkg.FundsTransferReceivedEvent{
+			WalletID:      walletID.ToString(),
+			TransferID:    transferID.ToString(),
+			FromWalletID:  fromWalletID.ToString(),
+			AmountInCents: 0,
+		})
+		_, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferReceivedEventName)
+		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
+	})
+
+	t.Run("It should return an error when event name is unknown", func(t *testing.T) {
+		_, err := WalletIntegrationToDomainEvent([]byte("{}"), "unknown:event")
 		assert.ErrorIs(t, err, pkg.ErrUnknownEventType)
 	})
 }
