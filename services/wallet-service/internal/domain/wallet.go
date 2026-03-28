@@ -36,6 +36,12 @@ func NewWallet(command CreateWalletCommand) (Wallet, error) {
 
 func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 	if wallet.balance.Compare(command.Amount) == -1 {
+		slog.Warn(
+			"insufficient balance",
+			slog.String("wallet_id", wallet.GetID().ToString()),
+			slog.Int("amount_in_cents", command.Amount.GetAmount()),
+			slog.Int("balance_in_cents", wallet.balance.GetAmount()),
+		)
 		return pkg.ErrInsufficientBalance
 	}
 
@@ -61,6 +67,12 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 		return err
 	}
 	if newBalance.Compare(maxBalance) > 0 {
+		slog.Warn(
+			"balance limit would be exceeded",
+			slog.String("wallet_id", wallet.GetID().ToString()),
+			slog.Int("amount_in_cents", command.Amount.GetAmount()),
+			slog.Int("current_balance_in_cents", wallet.balance.GetAmount()),
+		)
 		return pkg.ErrBalanceLimitExceeded
 	}
 

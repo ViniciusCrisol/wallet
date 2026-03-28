@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 
 	"wallet/wallet-service/internal/domain"
 	"wallet/wallet-service/pkg"
@@ -61,8 +62,18 @@ func (dao *WalletKurrentDBDAO) Save(wallet domain.Wallet) error {
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
 	); err != nil {
 		if eventsourcing.IsKurrentDBConcurrencyError(err) {
+			slog.Warn(
+				"concurrency conflict appending to stream",
+				slog.String("wallet_id", wallet.GetID().ToString()),
+				slog.String("error", err.Error()),
+			)
 			return pkg.ErrConflict
 		}
+		slog.Error(
+			"failed to append events to stream",
+			slog.String("wallet_id", wallet.GetID().ToString()),
+			slog.String("error", err.Error()),
+		)
 		return err
 	}
 	wallet.Commit()
@@ -81,6 +92,11 @@ func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 		if eventsourcing.IsKurrentDBNotFoundError(err) {
 			return domain.Wallet{}, false, nil
 		}
+		slog.Error(
+			"failed to read stream",
+			slog.String("error", err.Error()),
+			slog.String("stream", dao.buildStreamName(id)),
+		)
 		return domain.Wallet{}, false, err
 	}
 	defer stream.Close()
@@ -95,6 +111,11 @@ func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 			if eventsourcing.IsKurrentDBNotFoundError(err) {
 				return domain.Wallet{}, false, nil
 			}
+			slog.Error(
+				"failed to receive event",
+				slog.String("error", err.Error()),
+				slog.String("stream", dao.buildStreamName(id)),
+			)
 			return domain.Wallet{}, false, err
 		}
 		domainEvent, err := WalletIntegrationToDomainEvent(

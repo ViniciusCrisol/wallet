@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"wallet/wallet-service/internal/domain"
@@ -23,6 +24,7 @@ func NewWalletController(dao *persistence.WalletKurrentDBDAO) *WalletController 
 func (controller *WalletController) Create(response http.ResponseWriter, request *http.Request) {
 	var dto CreateWalletDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
+		slog.Warn("failed to decode create wallet request", slog.String("error", err.Error()))
 		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
@@ -48,6 +50,7 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 func (controller *WalletController) TransferFunds(response http.ResponseWriter, request *http.Request) {
 	var dto TransferFundsDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
+		slog.Warn("failed to decode transfer funds request", slog.String("error", err.Error()))
 		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}

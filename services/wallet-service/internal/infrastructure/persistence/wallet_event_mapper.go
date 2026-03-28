@@ -71,14 +71,25 @@ func WalletIntegrationToDomainEvent(
 func walletCreatedToDomain(body []byte) (eventsourcing.Event, error) {
 	var event pkg.WalletCreatedEvent
 	if err := json.Unmarshal(body, &event); err != nil {
+		slog.Error("failed to unmarshal wallet created event", slog.String("error", err.Error()))
 		return nil, err
 	}
 	walletID, err := valueobject.NewID(event.WalletID)
 	if err != nil {
+		slog.Error(
+			"invalid wallet_id in wallet created event",
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	holderID, err := valueobject.NewID(event.HolderID)
 	if err != nil {
+		slog.Error(
+			"invalid holder_id in wallet created event",
+			slog.String("holder_id", event.HolderID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	return domain.WalletCreatedEvent{
@@ -92,22 +103,43 @@ func walletCreatedToDomain(body []byte) (eventsourcing.Event, error) {
 func fundsTransferredToDomain(body []byte) (eventsourcing.Event, error) {
 	var event pkg.FundsTransferredEvent
 	if err := json.Unmarshal(body, &event); err != nil {
+		slog.Error("failed to unmarshal funds transferred event", slog.String("error", err.Error()))
 		return nil, err
 	}
 	transferID, err := valueobject.NewID(event.TransferID)
 	if err != nil {
+		slog.Error(
+			"invalid transfer_id in funds transferred event",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	toWalletID, err := valueobject.NewID(event.ToWalletID)
 	if err != nil {
+		slog.Error(
+			"invalid to_wallet_id in funds transferred event",
+			slog.String("to_wallet_id", event.ToWalletID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	fromWalletID, err := valueobject.NewID(event.FromWalletID)
 	if err != nil {
+		slog.Error(
+			"invalid from_wallet_id in funds transferred event",
+			slog.String("from_wallet_id", event.FromWalletID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	amount, err := valueobject.NewMoney(event.AmountInCents)
 	if err != nil {
+		slog.Error(
+			"invalid amount in funds transferred event",
+			slog.Int("amount_in_cents", event.AmountInCents),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	return domain.FundsTransferredEvent{
@@ -122,22 +154,43 @@ func fundsTransferredToDomain(body []byte) (eventsourcing.Event, error) {
 func fundsTransferReceivedToDomain(body []byte) (eventsourcing.Event, error) {
 	var event pkg.FundsTransferReceivedEvent
 	if err := json.Unmarshal(body, &event); err != nil {
+		slog.Error("failed to unmarshal funds transfer received event", slog.String("error", err.Error()))
 		return nil, err
 	}
 	walletID, err := valueobject.NewID(event.WalletID)
 	if err != nil {
+		slog.Error(
+			"invalid wallet_id in funds transfer received event",
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	transferID, err := valueobject.NewID(event.TransferID)
 	if err != nil {
+		slog.Error(
+			"invalid transfer_id in funds transfer received event",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	fromWalletID, err := valueobject.NewID(event.FromWalletID)
 	if err != nil {
+		slog.Error(
+			"invalid from_wallet_id in funds transfer received event",
+			slog.String("from_wallet_id", event.FromWalletID),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	amount, err := valueobject.NewMoney(event.AmountInCents)
 	if err != nil {
+		slog.Error(
+			"invalid amount in funds transfer received event",
+			slog.Int("amount_in_cents", event.AmountInCents),
+			slog.String("error", err.Error()),
+		)
 		return nil, err
 	}
 	return domain.FundsTransferReceivedEvent{
