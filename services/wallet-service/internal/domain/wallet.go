@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	"wallet/wallet-service/pkg"
@@ -80,6 +82,8 @@ func (wallet *Wallet) Replay(event eventsourcing.Event) {
 		wallet.applyFundsTransferred(e)
 	case FundsTransferReceivedEvent:
 		wallet.applyFundsTransferReceived(e)
+	default:
+		slog.Error("unknown event type", slog.String("type", fmt.Sprintf("%T", event)), slog.Any("event", event))
 	}
 }
 
