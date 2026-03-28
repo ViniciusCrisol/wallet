@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"wallet/wallet-service/internal"
+	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/eventsourcing"
 )
 
@@ -18,10 +18,10 @@ type Wallet struct {
 
 func NewWallet(command CreateWalletCommand) (Wallet, error) {
 	if command.WalletID == "" {
-		return Wallet{}, internal.ErrInvalidID
+		return Wallet{}, pkg.ErrInvalidID
 	}
 	if command.HolderID == "" {
-		return Wallet{}, internal.ErrInvalidID
+		return Wallet{}, pkg.ErrInvalidID
 	}
 
 	var wallet Wallet
@@ -36,19 +36,12 @@ func NewWallet(command CreateWalletCommand) (Wallet, error) {
 	return wallet, nil
 }
 
-func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
-	wallet.holderID = event.HolderID
-	wallet.createdAt = event.CreatedAt
-	wallet.updatedAt = event.UpdatedAt
-	wallet.AggregateRoot = eventsourcing.NewAggregateRoot(event.WalletID)
-}
-
 func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 	if command.Amount <= 0 {
-		return internal.ErrInvalidAmount
+		return pkg.ErrInvalidAmount
 	}
 	if wallet.balance < command.Amount {
-		return internal.ErrInsufficientBalance
+		return pkg.ErrInsufficientBalance
 	}
 
 	event := FundsTransferredEvent{
@@ -63,17 +56,12 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 	return nil
 }
 
-func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) {
-	wallet.balance -= event.Amount
-	wallet.updatedAt = event.Timestamp
-}
-
 func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) error {
 	if command.Amount <= 0 {
-		return internal.ErrInvalidAmount
+		return pkg.ErrInvalidAmount
 	}
 	if wallet.balance+command.Amount > 1_000_000 {
-		return internal.ErrBalanceLimitExceeded
+		return pkg.ErrBalanceLimitExceeded
 	}
 
 	event := FundsTransferReceivedEvent{
@@ -86,6 +74,29 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 	wallet.applyFundsTransferReceived(event)
 	wallet.Log(event)
 	return nil
+}
+
+func (wallet *Wallet) Replay(event eventsourcing.Event) {
+	switch e := event.(type) {
+	case WalletCreatedEvent:
+		wallet.applyWalletCreated(e)
+	case FundsTransferredEvent:
+		wallet.applyFundsTransferred(e)
+	case FundsTransferReceivedEvent:
+		wallet.applyFundsTransferReceived(e)
+	}
+}
+
+func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
+	wallet.holderID = event.HolderID
+	wallet.createdAt = event.CreatedAt
+	wallet.updatedAt = event.UpdatedAt
+	wallet.AggregateRoot = eventsourcing.NewAggregateRoot(event.WalletID)
+}
+
+func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) {
+	wallet.balance -= event.Amount
+	wallet.updatedAt = event.Timestamp
 }
 
 func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) {
@@ -107,15 +118,4 @@ func (wallet *Wallet) GetCreatedAt() time.Time {
 
 func (wallet *Wallet) GetUpdatedAt() time.Time {
 	return wallet.updatedAt
-}
-
-func (wallet *Wallet) Replay(event eventsourcing.Event) {
-	switch e := event.(type) {
-	case WalletCreatedEvent:
-		wallet.applyWalletCreated(e)
-	case FundsTransferredEvent:
-		wallet.applyFundsTransferred(e)
-	case FundsTransferReceivedEvent:
-		wallet.applyFundsTransferReceived(e)
-	}
 }
