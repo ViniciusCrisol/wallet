@@ -1,4 +1,20 @@
 services:
+    wallet-mysql:
+        image: mysql:8.0
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: wallet
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - wallet-mysql-data:/var/lib/mysql
+            - ./create-wallet-tables.sql:/docker-entrypoint-initdb.d/create-wallet-tables.sql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
+        restart: always
+
     wallet-kurrentdb:
         image: kurrentplatform/kurrentdb:latest
         ports:
@@ -15,5 +31,6 @@ services:
         restart: always
 
 volumes:
+    wallet-mysql-data:
     wallet-kurrentdb-data:
     wallet-kurrentdb-logs:

@@ -3,11 +3,15 @@ package config
 import "os"
 
 type Config struct {
-	KurrentDBConnectionString string
+	MySQLConnectionString        string
+	KurrentDBConnectionString    string
+	WalletProjectionSubscription string
 }
 
 func Load() Config {
 	return Config{
-		KurrentDBConnectionString: os.Getenv("KURRENTDB_CONNECTION_STRING"),
+		MySQLConnectionString:        os.Getenv("MYSQL_CONNECTION_STRING"),
+		KurrentDBConnectionString:    os.Getenv("KURRENTDB_CONNECTION_STRING"),
+		WalletProjectionSubscription: os.Getenv("WALLET_PROJECTION_SUBSCRIPTION"),
 	}
 }

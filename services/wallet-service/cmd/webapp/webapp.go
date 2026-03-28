@@ -20,13 +20,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to parse kurrentdb connection string: %v", err)
 	}
-	db, err := kurrentdb.NewClient(settings)
+	client, err := kurrentdb.NewClient(settings)
 	if err != nil {
 		log.Fatalf("failed to connect to kurrentdb: %v", err)
 	}
-	defer db.Close()
+	defer client.Close()
 
-	esHandler := persistence.NewWalletKurrentESHandler(db)
+	esHandler := persistence.NewWalletKurrentESHandler(client)
 	ctrl := controller.NewWalletController(esHandler)
 
 	mux := http.NewServeMux()
