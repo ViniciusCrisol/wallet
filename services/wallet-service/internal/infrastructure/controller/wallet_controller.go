@@ -11,28 +11,34 @@ import (
 )
 
 type WalletController struct {
-	wallletKurrentdbDAO *persistence.WalletKurrentdbDAO
+	walletKurrentDBDAO *persistence.WalletKurrentDBDAO
+}
+
+func NewWalletController(dao *persistence.WalletKurrentDBDAO) *WalletController {
+	return &WalletController{
+		walletKurrentDBDAO: dao,
+	}
 }
 
 func (controller *WalletController) Create(response http.ResponseWriter, request *http.Request) {
 	var dto CreateWalletDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		pkg.RespondWithError(pkg.ErrUnprocessableEntity, response)
+		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
 	command, err := dto.ToCreateWalletCommand()
 	if err != nil {
-		pkg.RespondWithError(err, response)
+		pkg.RespondWithError(response, err)
 		return
 	}
 
 	wallet, err := domain.NewWallet(command)
 	if err != nil {
-		pkg.RespondWithError(err, response)
+		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.wallletKurrentdbDAO.Save(wallet); err != nil {
-		pkg.RespondWithError(err, response)
+	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
+		pkg.RespondWithError(response, err)
 		return
 	}
 
@@ -42,35 +48,35 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 func (controller *WalletController) TransferFunds(response http.ResponseWriter, request *http.Request) {
 	var dto TransferFundsDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		pkg.RespondWithError(pkg.ErrUnprocessableEntity, response)
+		pkg.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
 	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
-		pkg.RespondWithError(err, response)
+		pkg.RespondWithError(response, err)
 		return
 	}
 	command, err := dto.ToTransferFundsCommand()
 	if err != nil {
-		pkg.RespondWithError(err, response)
+		pkg.RespondWithError(response, err)
 		return
 	}
 
-	wallet, found, err := controller.wallletKurrentdbDAO.Find(walletID)
+	wallet, found, err := controller.walletKurrentDBDAO.Find(walletID)
 	if err != nil {
-		pkg.RespondWithError(err, response)
+		pkg.RespondWithError(response, err)
 		return
 	}
 	if !found {
-		pkg.RespondWithError(pkg.ErrWalletNotFound, response)
+		pkg.RespondWithError(response, pkg.ErrWalletNotFound)
 		return
 	}
 	if err := wallet.TransferFunds(command); err != nil {
-		pkg.RespondWithError(err, response)
+		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.wallletKurrentdbDAO.Save(wallet); err != nil {
-		pkg.RespondWithError(err, response)
+	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
+		pkg.RespondWithError(response, err)
 		return
 	}
 

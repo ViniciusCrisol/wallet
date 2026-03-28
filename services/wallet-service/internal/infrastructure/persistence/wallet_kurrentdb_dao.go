@@ -10,27 +10,26 @@ import (
 	"wallet/wallet-service/pkg/eventsourcing"
 	"wallet/wallet-service/pkg/valueobject"
 
-	"github.com/google/uuid"
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
 
-type WalletKurrentdbDAO struct {
+type WalletKurrentDBDAO struct {
 	client *kurrentdb.Client
 }
 
-func NewWalletKurrentdbDAO(client *kurrentdb.Client) *WalletKurrentdbDAO {
-	return &WalletKurrentdbDAO{
+func NewWalletKurrentDBDAO(client *kurrentdb.Client) *WalletKurrentDBDAO {
+	return &WalletKurrentDBDAO{
 		client: client,
 	}
 }
 
-func (dao *WalletKurrentdbDAO) Save(wallet domain.Wallet) error {
+func (dao *WalletKurrentDBDAO) Save(wallet domain.Wallet) error {
 	uncommittedEvents := wallet.GetUncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil
 	}
 
-	var unprocessedEvents []kurrentdb.EventData
+	var eventDataList []kurrentdb.EventData
 	for _, event := range uncommittedEvents {
 		integrationEvent, err := WalletDomainToIntegrationEvent(event)
 		if err != nil {
@@ -40,10 +39,10 @@ func (dao *WalletKurrentdbDAO) Save(wallet domain.Wallet) error {
 		if err != nil {
 			return err
 		}
-		unprocessedEvents = append(unprocessedEvents, kurrentdb.EventData{
+		eventDataList = append(eventDataList, kurrentdb.EventData{
 			ContentType: kurrentdb.ContentTypeJson,
 			EventType:   integrationEvent.Name,
-			EventID:     uuid.New(),
+			EventID:     pkg.NewUUIDValue(),
 			Data:        data,
 		})
 	}
@@ -59,8 +58,9 @@ func (dao *WalletKurrentdbDAO) Save(wallet domain.Wallet) error {
 	if _, err := dao.client.AppendToStream(
 		context.Background(),
 		dao.buildStreamName(wallet.GetID()),
-		kurrentdb.AppendToStreamOptions{StreamState: streamState}, unprocessedEvents...); err != nil {
-		if eventsourcing.IsKurrentdbConcurrencyError(err) {
+		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
+	); err != nil {
+		if eventsourcing.IsKurrentDBConcurrencyError(err) {
 			return pkg.ErrConflict
 		}
 		return err
@@ -69,7 +69,7 @@ func (dao *WalletKurrentdbDAO) Save(wallet domain.Wallet) error {
 	return nil
 }
 
-func (dao *WalletKurrentdbDAO) Find(id valueobject.ID) (domain.Wallet, bool, error) {
+func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, error) {
 	stream, err := dao.client.ReadStream(
 		context.Background(),
 		dao.buildStreamName(id),
@@ -78,7 +78,7 @@ func (dao *WalletKurrentdbDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 			Direction: kurrentdb.Forwards,
 		}, ^uint64(0))
 	if err != nil {
-		if eventsourcing.IsKurrentdbNotFoundError(err) {
+		if eventsourcing.IsKurrentDBNotFoundError(err) {
 			return domain.Wallet{}, false, nil
 		}
 		return domain.Wallet{}, false, err
@@ -87,31 +87,29 @@ func (dao *WalletKurrentdbDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 
 	var wallet domain.Wallet
 	for {
-		integrationEvent, err := stream.Recv()
+		resolvedEvent, err := stream.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			if eventsourcing.IsKurrentdbNotFoundError(err) {
+			if eventsourcing.IsKurrentDBNotFoundError(err) {
 				return domain.Wallet{}, false, nil
 			}
 			return domain.Wallet{}, false, err
 		}
-
 		domainEvent, err := WalletIntegrationToDomainEvent(
-			integrationEvent.Event.Data,
-			integrationEvent.Event.EventType,
+			resolvedEvent.Event.Data,
+			resolvedEvent.Event.EventType,
 		)
 		if err != nil {
 			return domain.Wallet{}, false, err
 		}
 		wallet.Replay(domainEvent)
-		wallet.Log(domainEvent)
 	}
 	wallet.Commit()
 	return wallet, true, nil
 }
 
-func (dao *WalletKurrentdbDAO) buildStreamName(id valueobject.ID) string {
+func (dao *WalletKurrentDBDAO) buildStreamName(id valueobject.ID) string {
 	return "wallet-" + id.ToString()
 }

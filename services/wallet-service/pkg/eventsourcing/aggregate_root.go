@@ -20,9 +20,13 @@ func (aggregateRoot *AggregateRoot) Commit() {
 	aggregateRoot.uncommittedEvents = []Event{}
 }
 
-func (aggregateRoot *AggregateRoot) Log(event Event) {
+func (aggregateRoot *AggregateRoot) Record(event Event) {
 	aggregateRoot.version++
 	aggregateRoot.uncommittedEvents = append(aggregateRoot.uncommittedEvents, event)
+}
+
+func (aggregateRoot *AggregateRoot) IncrementVersion() {
+	aggregateRoot.version++
 }
 
 func (aggregateRoot *AggregateRoot) GetID() valueobject.ID {

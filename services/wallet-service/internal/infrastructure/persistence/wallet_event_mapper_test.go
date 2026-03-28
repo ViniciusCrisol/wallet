@@ -185,7 +185,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			AmountInCents: 0,
 		})
 		_, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferredEventName)
-		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
+		assert.ErrorIs(t, err, pkg.ErrNegativeOrZeroAmount)
 	})
 
 	t.Run("It should return a FundsTransferReceivedEvent when event name is FundsTransferReceivedEventName and body is valid", func(t *testing.T) {
@@ -233,7 +233,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			AmountInCents: 0,
 		})
 		_, err := WalletIntegrationToDomainEvent(body, pkg.FundsTransferReceivedEventName)
-		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
+		assert.ErrorIs(t, err, pkg.ErrNegativeOrZeroAmount)
 	})
 
 	t.Run("It should return an error when event name is unknown", func(t *testing.T) {

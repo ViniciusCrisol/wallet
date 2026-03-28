@@ -10,13 +10,15 @@ import (
 	"wallet/wallet-service/pkg/valueobject"
 )
 
+const MaxBalanceInCents = 100_000_000
+
 type Wallet struct {
+	eventsourcing.AggregateRoot
+
 	balance   valueobject.Money
 	holderID  valueobject.ID
 	createdAt time.Time
 	updatedAt time.Time
-
-	eventsourcing.AggregateRoot
 }
 
 func NewWallet(command CreateWalletCommand) (Wallet, error) {
@@ -28,7 +30,7 @@ func NewWallet(command CreateWalletCommand) (Wallet, error) {
 		UpdatedAt: command.Timestamp,
 	}
 	wallet.applyWalletCreated(event)
-	wallet.Log(event)
+	wallet.Record(event)
 	return wallet, nil
 }
 
@@ -45,7 +47,7 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 		Timestamp:    command.Timestamp,
 	}
 	wallet.applyFundsTransferred(event)
-	wallet.Log(event)
+	wallet.Record(event)
 	return nil
 }
 
@@ -54,7 +56,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 	if err != nil {
 		return err
 	}
-	maxBalance, err := valueobject.NewMoney(100_000_000)
+	maxBalance, err := valueobject.NewMoney(MaxBalanceInCents)
 	if err != nil {
 		return err
 	}
@@ -70,7 +72,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 		Timestamp:    command.Timestamp,
 	}
 	wallet.applyFundsTransferReceived(event)
-	wallet.Log(event)
+	wallet.Record(event)
 	return nil
 }
 
@@ -85,6 +87,7 @@ func (wallet *Wallet) Replay(event eventsourcing.Event) {
 	default:
 		slog.Error("unknown event type", slog.String("type", fmt.Sprintf("%T", event)), slog.Any("event", event))
 	}
+	wallet.IncrementVersion()
 }
 
 func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {

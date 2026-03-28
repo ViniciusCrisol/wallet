@@ -31,45 +31,45 @@ func TestAggregateRoot_NewAggregateRoot(t *testing.T) {
 	})
 }
 
-func TestAggregateRoot_Log(t *testing.T) {
-	t.Run("It should append the event to uncommitted events when an event is logged", func(t *testing.T) {
+func TestAggregateRoot_Record(t *testing.T) {
+	t.Run("It should append the event to uncommitted events when an event is recorded", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
 		event := stubEvent{name: "created"}
 
-		ar.Log(event)
+		ar.Record(event)
 
 		assert.Equal(t, []Event{event}, ar.GetUncommittedEvents())
 	})
 
-	t.Run("It should increment the version by one when an event is logged", func(t *testing.T) {
+	t.Run("It should increment the version by one when an event is recorded", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
 
-		ar.Log(stubEvent{name: "created"})
+		ar.Record(stubEvent{name: "created"})
 
 		assert.Equal(t, 0, ar.GetVersion())
 	})
 
-	t.Run("It should increment version for each event logged when multiple events are logged", func(t *testing.T) {
+	t.Run("It should increment version for each event recorded when multiple events are recorded", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
 
-		ar.Log(stubEvent{name: "created"})
-		ar.Log(stubEvent{name: "updated"})
-		ar.Log(stubEvent{name: "deleted"})
+		ar.Record(stubEvent{name: "created"})
+		ar.Record(stubEvent{name: "updated"})
+		ar.Record(stubEvent{name: "deleted"})
 
 		assert.Equal(t, 2, ar.GetVersion())
 	})
 
-	t.Run("It should accumulate all events in order when multiple events are logged", func(t *testing.T) {
+	t.Run("It should accumulate all events in order when multiple events are recorded", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
 		e1 := stubEvent{name: "created"}
 		e2 := stubEvent{name: "updated"}
 
-		ar.Log(e1)
-		ar.Log(e2)
+		ar.Record(e1)
+		ar.Record(e2)
 
 		assert.Equal(t, []Event{e1, e2}, ar.GetUncommittedEvents())
 	})
@@ -79,19 +79,19 @@ func TestAggregateRoot_Commit(t *testing.T) {
 	t.Run("It should clear all uncommitted events when commit is called", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
-		ar.Log(stubEvent{name: "created"})
-		ar.Log(stubEvent{name: "updated"})
+		ar.Record(stubEvent{name: "created"})
+		ar.Record(stubEvent{name: "updated"})
 
 		ar.Commit()
 
 		assert.Empty(t, ar.GetUncommittedEvents())
 	})
 
-	t.Run("It should preserve the version after commit when events were previously logged", func(t *testing.T) {
+	t.Run("It should preserve the version after commit when events were previously recorded", func(t *testing.T) {
 		id := valueobject.GenerateID()
 		ar := NewAggregateRoot(id)
-		ar.Log(stubEvent{name: "created"})
-		ar.Log(stubEvent{name: "updated"})
+		ar.Record(stubEvent{name: "created"})
+		ar.Record(stubEvent{name: "updated"})
 
 		ar.Commit()
 

@@ -92,7 +92,7 @@ func TestTransferFundsDTO_ToTransferFundsCommand(t *testing.T) {
 
 		_, err := dto.ToTransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
+		assert.ErrorIs(t, err, pkg.ErrNegativeOrZeroAmount)
 	})
 
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
@@ -100,6 +100,6 @@ func TestTransferFundsDTO_ToTransferFundsCommand(t *testing.T) {
 
 		_, err := dto.ToTransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
+		assert.ErrorIs(t, err, pkg.ErrNegativeOrZeroAmount)
 	})
 }

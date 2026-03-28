@@ -6,10 +6,7 @@ import (
 	"net/http"
 )
 
-func RespondWithError(
-	err error,
-	response http.ResponseWriter,
-) {
+func RespondWithError(response http.ResponseWriter, err error) {
 	response.Header().Set("Content-Type", "application/json")
 
 	var status int

@@ -13,7 +13,7 @@ type Money struct {
 
 func NewMoney(amountInCents int) (Money, error) {
 	if amountInCents <= 0 || amountInCents >= math.MaxInt {
-		return Money{}, pkg.ErrInvalidAmount
+		return Money{}, pkg.ErrNegativeOrZeroAmount
 	}
 	return Money{amountInCents: amountInCents}, nil
 }

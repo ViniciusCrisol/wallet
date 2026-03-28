@@ -12,9 +12,10 @@ import (
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func newTestDAO(t *testing.T) *WalletKurrentdbDAO {
+func newTestDAO(t *testing.T) *WalletKurrentDBDAO {
 	t.Helper()
 
 	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
@@ -25,7 +26,7 @@ func newTestDAO(t *testing.T) *WalletKurrentdbDAO {
 	if err != nil {
 		t.Fatalf("failed to create kurrentdb client: %v", err)
 	}
-	return NewWalletKurrentdbDAO(db)
+	return NewWalletKurrentDBDAO(db)
 }
 
 func newWallet(t *testing.T) domain.Wallet {
@@ -42,11 +43,12 @@ func newWallet(t *testing.T) domain.Wallet {
 	return wallet
 }
 
-func TestWalletKurrentdbDAO_Save(t *testing.T) {
+func TestWalletKurrentDBDAO_Save(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should save successfully when wallet has uncommitted events", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
 		assert.NoError(t, dao.Save(wallet))
@@ -54,6 +56,7 @@ func TestWalletKurrentdbDAO_Save(t *testing.T) {
 
 	t.Run("It should return nil when wallet has no uncommitted events", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
 		wallet.Commit()
@@ -62,38 +65,43 @@ func TestWalletKurrentdbDAO_Save(t *testing.T) {
 
 	t.Run("It should save multiple events when wallet has multiple uncommitted events", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
-		amount, _ := valueobject.NewMoney(500)
-		wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
+		amount, err := valueobject.NewMoney(500)
+		assert.NoError(t, err)
+		assert.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       amount,
 			TransferID:   valueobject.GenerateID(),
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
-		})
+		}))
 		assert.NoError(t, dao.Save(wallet))
 	})
 
 	t.Run("It should return an error when saving the same wallet stream twice with conflicting revisions", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
 		assert.NoError(t, dao.Save(wallet))
 
-		conflictWallet, _ := domain.NewWallet(domain.CreateWalletCommand{
+		conflictWallet, err := domain.NewWallet(domain.CreateWalletCommand{
 			WalletID:  wallet.GetID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
+		assert.NoError(t, err)
 		assert.True(t, errors.Is(dao.Save(conflictWallet), pkg.ErrConflict))
 	})
 }
 
-func TestWalletKurrentdbDAO_Find(t *testing.T) {
+func TestWalletKurrentDBDAO_Find(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should return false when wallet stream does not exist", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		nonExistentID := valueobject.GenerateID()
 
@@ -105,9 +113,10 @@ func TestWalletKurrentdbDAO_Find(t *testing.T) {
 
 	t.Run("It should return the wallet and true when wallet was previously saved", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
-		dao.Save(wallet)
+		assert.NoError(t, dao.Save(wallet))
 
 		result, found, err := dao.Find(wallet.GetID())
 
@@ -118,16 +127,18 @@ func TestWalletKurrentdbDAO_Find(t *testing.T) {
 
 	t.Run("It should reconstruct the correct balance when funds were received before saving", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
-		amount, _ := valueobject.NewMoney(750)
-		wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
+		amount, err := valueobject.NewMoney(750)
+		assert.NoError(t, err)
+		assert.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       amount,
 			TransferID:   valueobject.GenerateID(),
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
-		})
-		dao.Save(wallet)
+		}))
+		assert.NoError(t, dao.Save(wallet))
 
 		result, found, err := dao.Find(wallet.GetID())
 
@@ -138,39 +149,45 @@ func TestWalletKurrentdbDAO_Find(t *testing.T) {
 
 	t.Run("It should reconstruct the correct balance after a receive and transfer cycle", func(t *testing.T) {
 		t.Parallel()
+
 		dao := newTestDAO(t)
 		wallet := newWallet(t)
-		received, _ := valueobject.NewMoney(1000)
-		wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
+
+		received, err := valueobject.NewMoney(1000)
+		assert.NoError(t, err)
+		assert.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       received,
 			TransferID:   valueobject.GenerateID(),
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
-		})
-		dao.Save(wallet)
+		}))
+		assert.NoError(t, dao.Save(wallet))
 
-		reloaded, _, _ := dao.Find(wallet.GetID())
-		transferred, _ := valueobject.NewMoney(400)
-		reloaded.TransferFunds(domain.TransferFundsCommand{
+		reloaded, found, err := dao.Find(wallet.GetID())
+		assert.NoError(t, err)
+		require.True(t, found)
+
+		transferred, err := valueobject.NewMoney(400)
+		assert.NoError(t, err)
+		assert.NoError(t, reloaded.TransferFunds(domain.TransferFundsCommand{
 			Amount:     transferred,
 			TransferID: valueobject.GenerateID(),
 			ToWalletID: valueobject.GenerateID(),
 			Timestamp:  time.Now(),
-		})
-		dao.Save(reloaded)
+		}))
+		assert.NoError(t, dao.Save(reloaded))
 
 		result, found, err := dao.Find(wallet.GetID())
-
 		assert.NoError(t, err)
 		assert.True(t, found)
 		assert.Equal(t, 600, result.GetBalance().GetAmount())
 	})
 }
 
-func TestWalletKurrentdbDAO_buildStreamName(t *testing.T) {
+func TestWalletKurrentDBDAO_buildStreamName(t *testing.T) {
 	t.Run("It should return a stream name prefixed with 'wallet-' when given a valid ID", func(t *testing.T) {
 		id, _ := valueobject.NewID("550e8400-e29b-41d4-a716-446655440000")
-		dao := &WalletKurrentdbDAO{}
+		dao := &WalletKurrentDBDAO{}
 		result := dao.buildStreamName(id)
 		assert.Equal(t, "wallet-550e8400-e29b-41d4-a716-446655440000", result)
 	})

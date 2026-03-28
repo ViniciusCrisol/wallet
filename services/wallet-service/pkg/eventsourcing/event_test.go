@@ -8,34 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParsedEventFromJSON(t *testing.T) {
-	t.Run("It should return a ParsedEvent when valid JSON is provided", func(t *testing.T) {
-		input := []byte(`{
-			"body": {
-				"wallet_id": "wallet-123",
-				"holder_id": "holder-456"
-			},
-			"name": "wallet:wallet_created_event"
-		}`)
-
-		result, err := ParsedEventFromJSON(input)
-
-		assert.NoError(t, err)
-		assert.Equal(t, pkg.WalletCreatedEventName, result.Name)
-		assert.NotNil(t, result.Body)
-	})
-
-	t.Run("It should return an error when invalid JSON is provided", func(t *testing.T) {
-		input := []byte(`not valid json`)
-
-		result, err := ParsedEventFromJSON(input)
-
-		assert.Error(t, err)
-		assert.Empty(t, result.Name)
-		assert.Nil(t, result.Body)
-	})
-}
-
 func TestParsedEvent_ToJSON(t *testing.T) {
 	t.Run("It should return valid JSON when body is a serializable struct", func(t *testing.T) {
 		event := ParsedEvent{

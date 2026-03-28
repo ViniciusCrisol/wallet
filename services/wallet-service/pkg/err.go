@@ -6,16 +6,18 @@ import (
 )
 
 var (
-	ErrNotFound            = errors.New("not found")
+	ErrNotFound            = errors.New("")
+	ErrValidation          = errors.New("")
 	ErrConflict            = errors.New("conflict")
-	ErrValidation          = errors.New("validation")
 	ErrUnprocessableEntity = errors.New("unprocessable entity")
 	ErrInternalServerError = errors.New("internal server error")
 
-	ErrInvalidUUID          = fmt.Errorf("%w: id is not a valid uuid", ErrValidation)
-	ErrInvalidAmount        = fmt.Errorf("%w: amount must be a positive integer", ErrValidation)
-	ErrInsufficientBalance  = fmt.Errorf("%w: insufficient balance to complete the transfer", ErrValidation)
-	ErrBalanceLimitExceeded = fmt.Errorf("%w: transfer would exceed the maximum allowed balance", ErrValidation)
-	ErrWalletNotFound       = fmt.Errorf("%w: wallet not found", ErrNotFound)
-	ErrUnknownEventType     = fmt.Errorf("%wunknown event type", ErrInternalServerError)
+	ErrInvalidUUID = fmt.Errorf("%wid must be a valid UUID", ErrValidation)
+
+	ErrWalletNotFound       = fmt.Errorf("%wwallet not found", ErrNotFound)
+	ErrInsufficientBalance  = fmt.Errorf("%winsufficient balance", ErrValidation)
+	ErrBalanceLimitExceeded = fmt.Errorf("%wbalance limit would be exceeded", ErrValidation)
+	ErrNegativeOrZeroAmount = fmt.Errorf("%wamount must be a positive non-zero integer", ErrValidation)
+
+	ErrUnknownEventType = fmt.Errorf("%wunknown event type", ErrInternalServerError)
 )

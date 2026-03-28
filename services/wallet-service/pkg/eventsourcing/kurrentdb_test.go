@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newKurrentdbError(code kurrentdb.ErrorCode) error {
+func newKurrentDBError(code kurrentdb.ErrorCode) error {
 	e := &kurrentdb.Error{}
 	rv := reflect.ValueOf(e).Elem()
 	field := rv.FieldByName("code")
@@ -19,52 +19,52 @@ func newKurrentdbError(code kurrentdb.ErrorCode) error {
 	return e
 }
 
-func TestIsKurrentdbNotFoundError(t *testing.T) {
+func TestIsKurrentDBNotFoundError(t *testing.T) {
 	t.Run("It should return false when the error is nil", func(t *testing.T) {
-		result := IsKurrentdbNotFoundError(nil)
+		result := IsKurrentDBNotFoundError(nil)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return false when the error is a generic Go error", func(t *testing.T) {
 		err := errors.New("some unexpected error")
-		result := IsKurrentdbNotFoundError(err)
+		result := IsKurrentDBNotFoundError(err)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return true when the error is a KurrentDB ResourceNotFound error", func(t *testing.T) {
-		err := newKurrentdbError(kurrentdb.ErrorCodeResourceNotFound)
-		result := IsKurrentdbNotFoundError(err)
+		err := newKurrentDBError(kurrentdb.ErrorCodeResourceNotFound)
+		result := IsKurrentDBNotFoundError(err)
 		assert.True(t, result)
 	})
 
 	t.Run("It should return false when the error is a KurrentDB error with a different error code", func(t *testing.T) {
-		err := newKurrentdbError(kurrentdb.ErrorCodeUnknown)
-		result := IsKurrentdbNotFoundError(err)
+		err := newKurrentDBError(kurrentdb.ErrorCodeUnknown)
+		result := IsKurrentDBNotFoundError(err)
 		assert.False(t, result)
 	})
 }
 
-func TestIsKurrentdbConcurrencyError(t *testing.T) {
+func TestIsKurrentDBConcurrencyError(t *testing.T) {
 	t.Run("It should return false when the error is nil", func(t *testing.T) {
-		result := IsKurrentdbConcurrencyError(nil)
+		result := IsKurrentDBConcurrencyError(nil)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return false when the error is a generic Go error", func(t *testing.T) {
 		err := errors.New("some unexpected error")
-		result := IsKurrentdbConcurrencyError(err)
+		result := IsKurrentDBConcurrencyError(err)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return true when the error is a KurrentDB WrongExpectedVersion error", func(t *testing.T) {
-		err := newKurrentdbError(kurrentdb.ErrorCodeWrongExpectedVersion)
-		result := IsKurrentdbConcurrencyError(err)
+		err := newKurrentDBError(kurrentdb.ErrorCodeWrongExpectedVersion)
+		result := IsKurrentDBConcurrencyError(err)
 		assert.True(t, result)
 	})
 
 	t.Run("It should return false when the error is a KurrentDB error with a different error code", func(t *testing.T) {
-		err := newKurrentdbError(kurrentdb.ErrorCodeUnknown)
-		result := IsKurrentdbConcurrencyError(err)
+		err := newKurrentDBError(kurrentdb.ErrorCodeUnknown)
+		result := IsKurrentDBConcurrencyError(err)
 		assert.False(t, result)
 	})
 }
