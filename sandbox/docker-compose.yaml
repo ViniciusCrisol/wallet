@@ -1,0 +1,19 @@
+services:
+    wallet-kurrentdb:
+        image: kurrentplatform/kurrentdb:latest
+        ports:
+            - "2113:2113"
+            - "1113:1113"
+        environment:
+            # Required for development, runs in insecure mode without SSL
+            - EVENTSTORE_INSECURE=true
+            - EVENTSTORE_RUN_PROJECTIONS=All
+            - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+        volumes:
+            - wallet-kurrentdb-data:/var/lib/eventstore
+            - wallet-kurrentdb-logs:/var/log/eventstore
+        restart: always
+
+volumes:
+    wallet-kurrentdb-data:
+    wallet-kurrentdb-logs:

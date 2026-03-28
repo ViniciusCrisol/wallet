@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	ErrInternal   = errors.New("")
-	ErrNotFound   = errors.New("")
-	ErrValidation = errors.New("")
+	ErrInternal    = errors.New("")
+	ErrNotFound    = errors.New("")
+	ErrValidation  = errors.New("")
+	ErrConcurrency = errors.New("")
 
 	ErrUnknownEventType = fmt.Errorf("%wunknown event type", ErrInternal)
 
