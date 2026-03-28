@@ -29,7 +29,7 @@ func newTestController(t *testing.T) *WalletController {
 		t.Fatalf("failed to create kurrentdb client: %v", err)
 	}
 	return &WalletController{
-		walletKurrentDBDAO: persistence.NewWalletKurrentDBDAO(db),
+		walletKurrentESHandler: persistence.NewWalletKurrentESHandler(db),
 	}
 }
 
@@ -164,7 +164,7 @@ func TestWalletController_TransferFunds(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
+		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
 
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 500,
@@ -253,7 +253,7 @@ func TestWalletController_TransferFunds(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
+		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
 
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 500,
@@ -280,7 +280,7 @@ func TestWalletController_MockTransfer(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
+		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
 
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 500,
@@ -409,7 +409,7 @@ func TestWalletController_MockTransfer(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
+		assert.NoError(t, ctrl.walletKurrentESHandler.Save(wallet))
 
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 2,

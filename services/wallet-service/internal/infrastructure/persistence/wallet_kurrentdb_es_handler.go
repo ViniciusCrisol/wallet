@@ -14,17 +14,17 @@ import (
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
 
-type WalletKurrentDBDAO struct {
+type WalletKurrentESHandler struct {
 	client *kurrentdb.Client
 }
 
-func NewWalletKurrentDBDAO(client *kurrentdb.Client) *WalletKurrentDBDAO {
-	return &WalletKurrentDBDAO{
+func NewWalletKurrentESHandler(client *kurrentdb.Client) *WalletKurrentESHandler {
+	return &WalletKurrentESHandler{
 		client: client,
 	}
 }
 
-func (dao *WalletKurrentDBDAO) Save(wallet domain.Wallet) error {
+func (esHandler *WalletKurrentESHandler) Save(wallet domain.Wallet) error {
 	uncommittedEvents := wallet.GetUncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil
@@ -56,9 +56,9 @@ func (dao *WalletKurrentDBDAO) Save(wallet domain.Wallet) error {
 		streamState = kurrentdb.StreamRevision{Value: uint64(expectedRevision)}
 	}
 
-	if _, err := dao.client.AppendToStream(
+	if _, err := esHandler.client.AppendToStream(
 		context.Background(),
-		dao.buildStreamName(wallet.GetID()),
+		esHandler.buildStreamName(wallet.GetID()),
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
 	); err != nil {
 		if eventsourcing.IsKurrentDBConcurrencyError(err) {
@@ -80,10 +80,10 @@ func (dao *WalletKurrentDBDAO) Save(wallet domain.Wallet) error {
 	return nil
 }
 
-func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, error) {
-	stream, err := dao.client.ReadStream(
+func (esHandler *WalletKurrentESHandler) Find(id valueobject.ID) (domain.Wallet, bool, error) {
+	stream, err := esHandler.client.ReadStream(
 		context.Background(),
-		dao.buildStreamName(id),
+		esHandler.buildStreamName(id),
 		kurrentdb.ReadStreamOptions{
 			From:      kurrentdb.Start{},
 			Direction: kurrentdb.Forwards,
@@ -95,7 +95,7 @@ func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 		slog.Error(
 			"failed to read stream",
 			slog.String("error", err.Error()),
-			slog.String("stream", dao.buildStreamName(id)),
+			slog.String("stream", esHandler.buildStreamName(id)),
 		)
 		return domain.Wallet{}, false, err
 	}
@@ -114,7 +114,7 @@ func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 			slog.Error(
 				"failed to receive event",
 				slog.String("error", err.Error()),
-				slog.String("stream", dao.buildStreamName(id)),
+				slog.String("stream", esHandler.buildStreamName(id)),
 			)
 			return domain.Wallet{}, false, err
 		}
@@ -131,6 +131,6 @@ func (dao *WalletKurrentDBDAO) Find(id valueobject.ID) (domain.Wallet, bool, err
 	return wallet, true, nil
 }
 
-func (dao *WalletKurrentDBDAO) buildStreamName(id valueobject.ID) string {
+func (esHandler *WalletKurrentESHandler) buildStreamName(id valueobject.ID) string {
 	return "wallet-" + id.ToString()
 }

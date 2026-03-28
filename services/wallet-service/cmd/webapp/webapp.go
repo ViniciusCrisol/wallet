@@ -26,8 +26,8 @@ func main() {
 	}
 	defer db.Close()
 
-	dao := persistence.NewWalletKurrentDBDAO(db)
-	ctrl := controller.NewWalletController(dao)
+	esHandler := persistence.NewWalletKurrentESHandler(db)
+	ctrl := controller.NewWalletController(esHandler)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets", ctrl.Create)

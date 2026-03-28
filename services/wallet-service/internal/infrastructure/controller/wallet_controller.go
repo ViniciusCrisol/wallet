@@ -12,12 +12,12 @@ import (
 )
 
 type WalletController struct {
-	walletKurrentDBDAO *persistence.WalletKurrentDBDAO
+	walletKurrentESHandler *persistence.WalletKurrentESHandler
 }
 
-func NewWalletController(dao *persistence.WalletKurrentDBDAO) *WalletController {
+func NewWalletController(esHandler *persistence.WalletKurrentESHandler) *WalletController {
 	return &WalletController{
-		walletKurrentDBDAO: dao,
+		walletKurrentESHandler: esHandler,
 	}
 }
 
@@ -35,7 +35,7 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 	}
 
 	wallet := domain.NewWallet(command)
-	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
+	if err := controller.walletKurrentESHandler.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
@@ -61,7 +61,7 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 		return
 	}
 
-	wallet, found, err := controller.walletKurrentDBDAO.Find(walletID)
+	wallet, found, err := controller.walletKurrentESHandler.Find(walletID)
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
@@ -74,7 +74,7 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
+	if err := controller.walletKurrentESHandler.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
@@ -100,7 +100,7 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		return
 	}
 
-	wallet, found, err := controller.walletKurrentDBDAO.Find(walletID)
+	wallet, found, err := controller.walletKurrentESHandler.Find(walletID)
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
@@ -113,7 +113,7 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
+	if err := controller.walletKurrentESHandler.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
