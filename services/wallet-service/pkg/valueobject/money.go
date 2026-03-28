@@ -1,6 +1,7 @@
 package valueobject
 
 import (
+	"cmp"
 	"math"
 
 	"wallet/wallet-service/pkg"
@@ -27,4 +28,8 @@ func (money Money) Sum(other Money) (Money, error) {
 
 func (money Money) Sub(other Money) (Money, error) {
 	return NewMoney(money.amountInCents - other.amountInCents)
+}
+
+func (money Money) Compare(other Money) int {
+	return cmp.Compare(money.amountInCents, other.amountInCents)
 }

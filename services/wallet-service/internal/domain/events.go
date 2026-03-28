@@ -1,26 +1,30 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"wallet/wallet-service/pkg/valueobject"
+)
 
 type WalletCreatedEvent struct {
-	WalletID  string
-	HolderID  string
+	WalletID  valueobject.ID
+	HolderID  valueobject.ID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 type FundsTransferredEvent struct {
-	Amount       int
-	TransferID   string
-	ToWalletID   string
-	FromWalletID string
+	Amount       valueobject.Money
+	TransferID   valueobject.ID
+	ToWalletID   valueobject.ID
+	FromWalletID valueobject.ID
 	Timestamp    time.Time
 }
 
 type FundsTransferReceivedEvent struct {
-	Amount       int
-	WalletID     string
-	TransferID   string
-	FromWalletID string
+	Amount       valueobject.Money
+	WalletID     valueobject.ID
+	TransferID   valueobject.ID
+	FromWalletID valueobject.ID
 	Timestamp    time.Time
 }

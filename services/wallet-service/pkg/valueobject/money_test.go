@@ -79,3 +79,23 @@ func TestMoney_Sub(t *testing.T) {
 		assert.ErrorIs(t, err, pkg.ErrInvalidAmount)
 	})
 }
+
+func TestMoney_Compare(t *testing.T) {
+	t.Run("It should return zero when both amounts are equal", func(t *testing.T) {
+		a, _ := NewMoney(100)
+		b, _ := NewMoney(100)
+		assert.Equal(t, 0, a.Compare(b))
+	})
+
+	t.Run("It should return a negative value when amount is less than other", func(t *testing.T) {
+		a, _ := NewMoney(50)
+		b, _ := NewMoney(100)
+		assert.Less(t, a.Compare(b), 0)
+	})
+
+	t.Run("It should return a positive value when amount is greater than other", func(t *testing.T) {
+		a, _ := NewMoney(200)
+		b, _ := NewMoney(100)
+		assert.Greater(t, a.Compare(b), 0)
+	})
+}

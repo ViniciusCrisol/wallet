@@ -1,23 +1,27 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"wallet/wallet-service/pkg/valueobject"
+)
 
 type CreateWalletCommand struct {
-	WalletID  string
-	HolderID  string
+	WalletID  valueobject.ID
+	HolderID  valueobject.ID
 	Timestamp time.Time
 }
 
 type TransferFundsCommand struct {
-	Amount     int
-	TransferID string
-	ToWalletID string
+	Amount     valueobject.Money
+	TransferID valueobject.ID
+	ToWalletID valueobject.ID
 	Timestamp  time.Time
 }
 
 type ReceiveFundsTransferCommand struct {
-	Amount       int
-	TransferID   string
-	FromWalletID string
+	Amount       valueobject.Money
+	TransferID   valueobject.ID
+	FromWalletID valueobject.ID
 	Timestamp    time.Time
 }

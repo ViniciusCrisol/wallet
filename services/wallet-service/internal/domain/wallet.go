@@ -5,11 +5,12 @@ import (
 
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/eventsourcing"
+	"wallet/wallet-service/pkg/valueobject"
 )
 
 type Wallet struct {
-	balance   int
-	holderID  string
+	balance   valueobject.Money
+	holderID  valueobject.ID
 	createdAt time.Time
 	updatedAt time.Time
 
@@ -17,13 +18,6 @@ type Wallet struct {
 }
 
 func NewWallet(command CreateWalletCommand) (Wallet, error) {
-	if command.WalletID == "" {
-		return Wallet{}, pkg.ErrInvalidID
-	}
-	if command.HolderID == "" {
-		return Wallet{}, pkg.ErrInvalidID
-	}
-
 	var wallet Wallet
 	event := WalletCreatedEvent{
 		WalletID:  command.WalletID,
@@ -37,10 +31,7 @@ func NewWallet(command CreateWalletCommand) (Wallet, error) {
 }
 
 func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
-	if command.Amount <= 0 {
-		return pkg.ErrInvalidAmount
-	}
-	if wallet.balance < command.Amount {
+	if wallet.balance.Compare(command.Amount) == -1 {
 		return pkg.ErrInsufficientBalance
 	}
 
@@ -57,10 +48,15 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 }
 
 func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) error {
-	if command.Amount <= 0 {
-		return pkg.ErrInvalidAmount
+	newBalance, err := wallet.balance.Sum(command.Amount)
+	if err != nil {
+		return err
 	}
-	if wallet.balance+command.Amount > 1_000_000 {
+	maxBalance, err := valueobject.NewMoney(100_000_000)
+	if err != nil {
+		return err
+	}
+	if newBalance.Compare(maxBalance) > 0 {
 		return pkg.ErrBalanceLimitExceeded
 	}
 
@@ -88,27 +84,27 @@ func (wallet *Wallet) Replay(event eventsourcing.Event) {
 }
 
 func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
+	wallet.AggregateRoot = eventsourcing.NewAggregateRoot(event.WalletID)
 	wallet.holderID = event.HolderID
 	wallet.createdAt = event.CreatedAt
 	wallet.updatedAt = event.UpdatedAt
-	wallet.AggregateRoot = eventsourcing.NewAggregateRoot(event.WalletID)
 }
 
 func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) {
-	wallet.balance -= event.Amount
+	wallet.balance, _ = wallet.balance.Sub(event.Amount)
 	wallet.updatedAt = event.Timestamp
 }
 
 func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) {
-	wallet.balance += event.Amount
+	wallet.balance, _ = wallet.balance.Sum(event.Amount)
 	wallet.updatedAt = event.Timestamp
 }
 
-func (wallet *Wallet) GetBalance() int {
+func (wallet *Wallet) GetBalance() valueobject.Money {
 	return wallet.balance
 }
 
-func (wallet *Wallet) GetHolderID() string {
+func (wallet *Wallet) GetHolderID() valueobject.ID {
 	return wallet.holderID
 }
 
