@@ -142,12 +142,11 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		wallet, err := domain.NewWallet(domain.CreateWalletCommand{
+		wallet := domain.NewWallet(domain.CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, err)
 
 		amount, err := valueobject.NewMoney(1000)
 		assert.NoError(t, err)
@@ -243,12 +242,11 @@ func TestWalletController_TransferFunds(t *testing.T) {
 		t.Parallel()
 
 		ctrl := newTestController(t)
-		wallet, err := domain.NewWallet(domain.CreateWalletCommand{
+		wallet := domain.NewWallet(domain.CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, err)
 		assert.NoError(t, ctrl.walletKurrentDBDAO.Save(wallet))
 
 		body := marshalBody(t, TransferFundsDTO{

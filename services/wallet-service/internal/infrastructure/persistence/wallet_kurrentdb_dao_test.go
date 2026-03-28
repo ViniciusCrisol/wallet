@@ -32,15 +32,11 @@ func newTestDAO(t *testing.T) *WalletKurrentDBDAO {
 func newWallet(t *testing.T) domain.Wallet {
 	t.Helper()
 
-	wallet, err := domain.NewWallet(domain.CreateWalletCommand{
+	return domain.NewWallet(domain.CreateWalletCommand{
 		WalletID:  valueobject.GenerateID(),
 		HolderID:  valueobject.GenerateID(),
 		Timestamp: time.Now(),
 	})
-	if err != nil {
-		t.Fatalf("failed to create wallet: %v", err)
-	}
-	return wallet
 }
 
 func TestWalletKurrentDBDAO_Save(t *testing.T) {
@@ -86,12 +82,11 @@ func TestWalletKurrentDBDAO_Save(t *testing.T) {
 		wallet := newWallet(t)
 		assert.NoError(t, dao.Save(wallet))
 
-		conflictWallet, err := domain.NewWallet(domain.CreateWalletCommand{
+		conflictWallet := domain.NewWallet(domain.CreateWalletCommand{
 			WalletID:  wallet.GetID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, err)
 		assert.True(t, errors.Is(dao.Save(conflictWallet), pkg.ErrConflict))
 	})
 }

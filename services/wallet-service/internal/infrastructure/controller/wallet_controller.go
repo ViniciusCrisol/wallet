@@ -34,11 +34,7 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 		return
 	}
 
-	wallet, err := domain.NewWallet(command)
-	if err != nil {
-		pkg.RespondWithError(response, err)
-		return
-	}
+	wallet := domain.NewWallet(command)
 	if err := controller.walletKurrentDBDAO.Save(wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return

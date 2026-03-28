@@ -21,13 +21,11 @@ func newMoney(t *testing.T, amountInCents int) valueobject.Money {
 func newTestWallet(t *testing.T) Wallet {
 	t.Helper()
 
-	wallet, err := NewWallet(CreateWalletCommand{
+	return NewWallet(CreateWalletCommand{
 		WalletID:  valueobject.GenerateID(),
 		HolderID:  valueobject.GenerateID(),
 		Timestamp: time.Now(),
 	})
-	assert.NoError(t, err)
-	return wallet
 }
 
 func newTestWalletWithBalance(t *testing.T, amountInCents int) Wallet {
@@ -56,9 +54,8 @@ func TestNewWallet(t *testing.T) {
 			Timestamp: now,
 		}
 
-		wallet, err := NewWallet(cmd)
+		wallet := NewWallet(cmd)
 
-		assert.NoError(t, err)
 		assert.Equal(t, walletID.ToString(), wallet.GetID().ToString())
 		assert.Equal(t, holderID.ToString(), wallet.holderID.ToString())
 		assert.Equal(t, now, wallet.GetCreatedAt())
@@ -286,12 +283,11 @@ func TestWallet_GetBalance(t *testing.T) {
 func TestWallet_GetHolderID(t *testing.T) {
 	t.Run("It should return the holder ID provided at creation", func(t *testing.T) {
 		holderID := valueobject.GenerateID()
-		wallet, err := NewWallet(CreateWalletCommand{
+		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  holderID,
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, err)
 
 		assert.Equal(t, holderID.ToString(), wallet.GetHolderID().ToString())
 	})
@@ -300,12 +296,11 @@ func TestWallet_GetHolderID(t *testing.T) {
 func TestWallet_GetCreatedAt(t *testing.T) {
 	t.Run("It should return the timestamp provided at creation", func(t *testing.T) {
 		now := time.Now()
-		wallet, err := NewWallet(CreateWalletCommand{
+		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: now,
 		})
-		assert.NoError(t, err)
 
 		assert.Equal(t, now, wallet.GetCreatedAt())
 	})
@@ -314,12 +309,11 @@ func TestWallet_GetCreatedAt(t *testing.T) {
 func TestWallet_GetUpdatedAt(t *testing.T) {
 	t.Run("It should return the creation timestamp when wallet has not been updated", func(t *testing.T) {
 		now := time.Now()
-		wallet, err := NewWallet(CreateWalletCommand{
+		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: now,
 		})
-		assert.NoError(t, err)
 
 		assert.Equal(t, now, wallet.GetUpdatedAt())
 	})
@@ -328,14 +322,13 @@ func TestWallet_GetUpdatedAt(t *testing.T) {
 		createdAt := time.Now()
 		updatedAt := createdAt.Add(time.Hour)
 
-		wallet, err := NewWallet(CreateWalletCommand{
+		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: createdAt,
 		})
-		assert.NoError(t, err)
 
-		err = wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
+		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 100),
 			TransferID:   valueobject.GenerateID(),
 			FromWalletID: valueobject.GenerateID(),

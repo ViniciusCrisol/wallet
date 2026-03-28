@@ -21,7 +21,7 @@ type Wallet struct {
 	updatedAt time.Time
 }
 
-func NewWallet(command CreateWalletCommand) (Wallet, error) {
+func NewWallet(command CreateWalletCommand) Wallet {
 	var wallet Wallet
 	event := WalletCreatedEvent{
 		WalletID:  command.WalletID,
@@ -31,7 +31,7 @@ func NewWallet(command CreateWalletCommand) (Wallet, error) {
 	}
 	wallet.applyWalletCreated(event)
 	wallet.Record(event)
-	return wallet, nil
+	return wallet
 }
 
 func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {

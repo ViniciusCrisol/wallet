@@ -12,7 +12,7 @@ type ParsedEvent struct {
 	Name string `json:"name"`
 }
 
-func (event *ParsedEvent) ToJSON() ([]byte, error) {
+func (event ParsedEvent) ToJSON() ([]byte, error) {
 	j, err := json.Marshal(event.Body)
 	if err != nil {
 		slog.Error(
