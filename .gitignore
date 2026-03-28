@@ -1,0 +1,30 @@
+### Mac OS ###
+**/.DS_Store
+
+### VS Code ###
+**/.vscode/
+
+### Eclipse ###
+**/.classpath
+**/.factorypath
+**/.apt_generated
+**/.project
+**/.settings
+**/.sts4-cache
+**/.springBeans
+
+### NetBeans ###
+**/dist/
+**/build/
+**/nbdist/
+**/nbbuild/
+**/.nb-gradle/
+**/nbproject/private/
+**/!**/src/main/**/build/
+**/!**/src/test/**/build/
+
+### IntelliJ IDEA ###
+**/*.iws
+**/*.iml
+**/*.ipr
+**/.idea/*
