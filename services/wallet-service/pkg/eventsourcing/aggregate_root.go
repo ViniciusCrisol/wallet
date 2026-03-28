@@ -2,8 +2,6 @@ package eventsourcing
 
 import "wallet/wallet-service/pkg/valueobject"
 
-type Event any
-
 type AggregateRoot struct {
 	id                valueobject.ID
 	version           int
