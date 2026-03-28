@@ -1,0 +1,26 @@
+info:
+    name: Transfer funds
+    type: http
+    seq: 2
+
+http:
+    url: http://localhost:8080/wallets/11111111-1111-1111-1111-111111111111/transfer
+    method: post
+    headers:
+        - name: Content-Type
+          value: application/json
+    body:
+        type: json
+        data: |-
+            {
+              "transfer_id": "33333333-3333-3333-3333-333333333333",
+              "to_wallet_id": "44444444-4444-4444-4444-444444444444",
+              "amount_in_cents": 1000
+            }
+    auth: inherit
+
+settings:
+    timeout: 0
+    encodeUrl: false
+    maxRedirects: 5
+    followRedirects: true
