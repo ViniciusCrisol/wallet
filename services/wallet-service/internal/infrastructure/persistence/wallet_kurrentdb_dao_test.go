@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestDAO(t *testing.T) *KurrentdbWalletDAO {
+func newTestDAO(t *testing.T) *WalletKurrentdbDAO {
 	t.Helper()
 
 	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
@@ -25,7 +25,7 @@ func newTestDAO(t *testing.T) *KurrentdbWalletDAO {
 	if err != nil {
 		t.Fatalf("failed to create kurrentdb client: %v", err)
 	}
-	return NewKurrentdbWalletDAO(db)
+	return NewWalletKurrentdbDAO(db)
 }
 
 func newWallet(t *testing.T) domain.Wallet {
@@ -42,7 +42,7 @@ func newWallet(t *testing.T) domain.Wallet {
 	return wallet
 }
 
-func TestKurrentdbWalletDAO_Save(t *testing.T) {
+func TestWalletKurrentdbDAO_Save(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should save successfully when wallet has uncommitted events", func(t *testing.T) {
@@ -85,11 +85,11 @@ func TestKurrentdbWalletDAO_Save(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.True(t, errors.Is(dao.Save(conflictWallet), pkg.ErrConcurrency))
+		assert.True(t, errors.Is(dao.Save(conflictWallet), pkg.ErrConflict))
 	})
 }
 
-func TestKurrentdbWalletDAO_Find(t *testing.T) {
+func TestWalletKurrentdbDAO_Find(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should return false when wallet stream does not exist", func(t *testing.T) {
@@ -167,10 +167,10 @@ func TestKurrentdbWalletDAO_Find(t *testing.T) {
 	})
 }
 
-func TestKurrentdbWalletDAO_buildStreamName(t *testing.T) {
+func TestWalletKurrentdbDAO_buildStreamName(t *testing.T) {
 	t.Run("It should return a stream name prefixed with 'wallet-' when given a valid ID", func(t *testing.T) {
 		id, _ := valueobject.NewID("550e8400-e29b-41d4-a716-446655440000")
-		dao := &KurrentdbWalletDAO{}
+		dao := &WalletKurrentdbDAO{}
 		result := dao.buildStreamName(id)
 		assert.Equal(t, "wallet-550e8400-e29b-41d4-a716-446655440000", result)
 	})
