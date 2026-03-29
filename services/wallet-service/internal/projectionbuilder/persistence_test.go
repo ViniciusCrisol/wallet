@@ -6,14 +6,19 @@ import (
 	"testing"
 	"time"
 
+	"wallet/wallet-service/config"
 	"wallet/wallet-service/pkg"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 	"github.com/stretchr/testify/assert"
 )
 
-var db *sql.DB
+var (
+	db              *sql.DB
+	kurrentDBClient *kurrentdb.Client
+)
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../.env.test")
@@ -26,6 +31,16 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	db = d
+
+	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
+	if err != nil {
+		panic(err)
+	}
+	kurrentDBClient, err = kurrentdb.NewClient(settings)
+	if err != nil {
+		panic(err)
+	}
+	defer kurrentDBClient.Close()
 
 	os.Exit(m.Run())
 }
