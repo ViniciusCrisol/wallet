@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/infrastructure/consumer"
@@ -15,6 +16,7 @@ import (
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/internal/projection"
 	"wallet/wallet-service/internal/query"
+	"wallet/wallet-service/pkg/eventsourcing"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -51,16 +53,32 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	kurrentDBClient.CreatePersistentSubscriptionToAll(
+	if err := kurrentDBClient.CreatePersistentSubscriptionToAll(
 		ctx,
 		cfg.WalletProjectionGroupName,
-		kurrentdb.PersistentAllSubscriptionOptions{},
-	)
-	kurrentDBClient.CreatePersistentSubscriptionToAll(
+		kurrentdb.PersistentAllSubscriptionOptions{
+			Filter: &kurrentdb.SubscriptionFilter{
+				Type:     kurrentdb.EventFilterType,
+				Prefixes: []string{"wallet:"},
+			},
+		},
+	); err != nil && !eventsourcing.IsKurrentDBAlreadyExistsError(err) {
+		slog.Error("failed to create projection subscription", slog.String("group", cfg.WalletProjectionGroupName), slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	if err := kurrentDBClient.CreatePersistentSubscriptionToAll(
 		ctx,
 		cfg.WalletCommandGroupName,
-		kurrentdb.PersistentAllSubscriptionOptions{},
-	)
+		kurrentdb.PersistentAllSubscriptionOptions{
+			Filter: &kurrentdb.SubscriptionFilter{
+				Type:     kurrentdb.EventFilterType,
+				Prefixes: []string{"wallet:funds_transferred_event"},
+			},
+		},
+	); err != nil && !eventsourcing.IsKurrentDBAlreadyExistsError(err) {
+		slog.Error("failed to create command subscription", slog.String("group", cfg.WalletCommandGroupName), slog.String("error", err.Error()))
+		os.Exit(1)
+	}
 
 	walletESHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
 	walletCommandController := controller.NewWalletCommandController(walletESHandler)
@@ -73,19 +91,21 @@ func main() {
 	mux.HandleFunc("GET /wallets/{id}", walletQueryController.FindByID)
 	mux.HandleFunc("GET /wallets", walletQueryController.FindByHolderID)
 
-	walletConsumer := consumer.NewWalletKurrentDBConsumer(kurrentDBClient, walletESHandler)
+	walletConsumer := consumer.NewWalletKurrentDBConsumer(kurrentDBClient, walletESHandler, cfg.WalletCommandGroupName)
 	go walletConsumer.Start(ctx)
 
 	projectionDAO := projection.NewWalletMySQLProjectionDAO(mySQLDB)
-	projectionConsumer := projection.NewWalletKurrentDBProjectionConsumer(kurrentDBClient, projectionDAO)
+	projectionConsumer := projection.NewWalletKurrentDBProjectionConsumer(kurrentDBClient, projectionDAO, cfg.WalletProjectionGroupName)
 	go projectionConsumer.Start(ctx)
 
-	server := &http.Server{Addr: ":8080", Handler: mux}
+	server := &http.Server{Addr: cfg.ServerAddress, Handler: mux}
 	go func() {
 		<-ctx.Done()
-		server.Shutdown(ctx)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		server.Shutdown(shutdownCtx)
 	}()
-	slog.Info("http server starting", slog.String("addr", ":8080"))
+	slog.Info("http server starting", slog.String("addr", cfg.ServerAddress))
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("http server error", slog.String("error", err.Error()))
 		os.Exit(1)

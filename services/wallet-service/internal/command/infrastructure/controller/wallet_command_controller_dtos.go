@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/internal/command/domain"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/valueobject"
 )
 
@@ -47,6 +48,9 @@ func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand,
 	if err != nil {
 		return domain.TransferFundsCommand{}, err
 	}
+	if amount.Amount() == 0 {
+		return domain.TransferFundsCommand{}, apperr.ErrNonPositiveAmount
+	}
 	return domain.TransferFundsCommand{
 		Amount:     amount,
 		TransferID: transferID,
@@ -57,7 +61,6 @@ func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand,
 
 type MockTransferDTO struct {
 	AmountInCents int    `json:"amount_in_cents"`
-	WalletID      string `json:"wallet_id"`
 	TransferID    string `json:"transfer_id"`
 	FromWalletID  string `json:"from_wallet_id"`
 }
@@ -74,6 +77,9 @@ func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTra
 	amount, err := valueobject.NewMoney(dto.AmountInCents)
 	if err != nil {
 		return domain.ReceiveFundsTransferCommand{}, err
+	}
+	if amount.Amount() == 0 {
+		return domain.ReceiveFundsTransferCommand{}, apperr.ErrNonPositiveAmount
 	}
 	return domain.ReceiveFundsTransferCommand{
 		Amount:       amount,

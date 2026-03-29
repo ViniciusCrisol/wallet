@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/eventsourcing"
 	"wallet/wallet-service/pkg/valueobject"
 )
@@ -42,7 +42,7 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 			slog.Int("amount_in_cents", command.Amount.Amount()),
 			slog.Int("balance_in_cents", wallet.balance.Amount()),
 		)
-		return pkg.ErrInsufficientBalance
+		return apperr.ErrInsufficientBalance
 	}
 
 	event := FundsTransferredEvent{
@@ -52,7 +52,9 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 		FromWalletID: wallet.ID(),
 		Timestamp:    command.Timestamp,
 	}
-	wallet.applyFundsTransferred(event)
+	if err := wallet.applyFundsTransferred(event); err != nil {
+		return err
+	}
 	wallet.Record(event)
 	return nil
 }
@@ -73,7 +75,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 			slog.Int("amount_in_cents", command.Amount.Amount()),
 			slog.Int("current_balance_in_cents", wallet.balance.Amount()),
 		)
-		return pkg.ErrBalanceLimitExceeded
+		return apperr.ErrBalanceLimitExceeded
 	}
 
 	event := FundsTransferReceivedEvent{
@@ -83,23 +85,31 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 		FromWalletID: command.FromWalletID,
 		Timestamp:    command.Timestamp,
 	}
-	wallet.applyFundsTransferReceived(event)
+	if err := wallet.applyFundsTransferReceived(event); err != nil {
+		return err
+	}
 	wallet.Record(event)
 	return nil
 }
 
-func (wallet *Wallet) Replay(event eventsourcing.Event) {
+func (wallet *Wallet) Replay(event eventsourcing.Event) error {
 	switch e := event.(type) {
 	case WalletCreatedEvent:
 		wallet.applyWalletCreated(e)
 	case FundsTransferredEvent:
-		wallet.applyFundsTransferred(e)
+		if err := wallet.applyFundsTransferred(e); err != nil {
+			return err
+		}
 	case FundsTransferReceivedEvent:
-		wallet.applyFundsTransferReceived(e)
+		if err := wallet.applyFundsTransferReceived(e); err != nil {
+			return err
+		}
 	default:
 		slog.Error("unknown event type", slog.String("type", fmt.Sprintf("%T", event)), slog.Any("event", event))
+		return apperr.ErrUnknownEventType
 	}
 	wallet.IncrementVersion()
+	return nil
 }
 
 func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
@@ -109,14 +119,24 @@ func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
 	wallet.updatedAt = event.UpdatedAt
 }
 
-func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) {
-	wallet.balance, _ = wallet.balance.Sub(event.Amount)
+func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
+	balance, err := wallet.balance.Sub(event.Amount)
+	if err != nil {
+		return fmt.Errorf("applying FundsTransferredEvent to wallet %s: %w", wallet.ID(), err)
+	}
+	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
+	return nil
 }
 
-func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) {
-	wallet.balance, _ = wallet.balance.Sum(event.Amount)
+func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) error {
+	balance, err := wallet.balance.Sum(event.Amount)
+	if err != nil {
+		return fmt.Errorf("applying FundsTransferReceivedEvent to wallet %s: %w", wallet.ID(), err)
+	}
+	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
+	return nil
 }
 
 func (wallet *Wallet) Balance() valueobject.Money {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/integrationevent"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 		walletID := uuid.New().String()
 		holderID := uuid.New().String()
 
-		event := pkg.WalletCreatedEvent{
+		event := integrationevent.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: time.Now(),
@@ -45,14 +45,14 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 		assert.Equal(t, 0, balance)
 	})
 
-	t.Run("It should return an error when wallet_id already exists", func(t *testing.T) {
+	t.Run("It should be idempotent when wallet_id already exists", func(t *testing.T) {
 		t.Parallel()
 
 		dao := NewWalletMySQLProjectionDAO(db)
 		walletID := uuid.New().String()
 		holderID := uuid.New().String()
 
-		event := pkg.WalletCreatedEvent{
+		event := integrationevent.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: time.Now(),
@@ -61,7 +61,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 
 		assert.NoError(t, dao.CreateWallet(context.Background(), event))
 
-		assert.Error(t, dao.CreateWallet(context.Background(), event))
+		assert.NoError(t, dao.CreateWallet(context.Background(), event))
 	})
 
 	t.Run("It should initialize wallet balance as zero", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 		walletID := uuid.New().String()
 		holderID := uuid.New().String()
 
-		event := pkg.WalletCreatedEvent{
+		event := integrationevent.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: time.Now(),
@@ -97,7 +97,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
 
-		event := pkg.FundsTransferredEvent{
+		event := integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
 			FromWalletID:  walletID,
 			ToWalletID:    uuid.New().String(),
@@ -120,7 +120,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 500, walletID)
 
-		event := pkg.FundsTransferredEvent{
+		event := integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
 			FromWalletID:  walletID,
 			ToWalletID:    uuid.New().String(),
@@ -148,7 +148,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET updated_at = ? WHERE wallet_id = ?", oldTime, walletID)
 
-		event := pkg.FundsTransferredEvent{
+		event := integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
 			FromWalletID:  walletID,
 			ToWalletID:    uuid.New().String(),
@@ -178,7 +178,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
 
-		event := pkg.FundsTransferReceivedEvent{
+		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.New().String(),
 			FromWalletID:  uuid.New().String(),
@@ -199,7 +199,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		createTestWallet(t, walletID, holderID, dao)
 
-		event := pkg.FundsTransferReceivedEvent{
+		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.New().String(),
 			FromWalletID:  uuid.New().String(),
@@ -225,7 +225,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET updated_at = ? WHERE wallet_id = ?", oldTime, walletID)
 
-		event := pkg.FundsTransferReceivedEvent{
+		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.New().String(),
 			FromWalletID:  uuid.New().String(),
@@ -249,7 +249,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		createTestWallet(t, walletID, holderID, dao)
 
-		event1 := pkg.FundsTransferReceivedEvent{
+		event1 := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.New().String(),
 			FromWalletID:  uuid.New().String(),
@@ -258,7 +258,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 		}
 		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event1))
 
-		event2 := pkg.FundsTransferReceivedEvent{
+		event2 := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.New().String(),
 			FromWalletID:  uuid.New().String(),

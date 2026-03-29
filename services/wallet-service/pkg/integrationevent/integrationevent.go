@@ -1,8 +1,6 @@
-package pkg
+package integrationevent
 
-import (
-	"time"
-)
+import "time"
 
 const (
 	WalletCreatedEventName         = "wallet:wallet_created_event"

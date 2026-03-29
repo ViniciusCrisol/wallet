@@ -6,48 +6,49 @@ import (
 	"log/slog"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/eventsourcing"
+	"wallet/wallet-service/pkg/integrationevent"
 	"wallet/wallet-service/pkg/valueobject"
 )
 
-func WalletDomainToIntegrationEvent(event eventsourcing.Event) (eventsourcing.ParsedEvent, error) {
+func walletDomainToIntegrationEvent(event eventsourcing.Event) (eventsourcing.ParsedEvent, error) {
 	switch e := event.(type) {
 	case domain.WalletCreatedEvent:
 		return eventsourcing.ParsedEvent{
-			Body: pkg.WalletCreatedEvent{
+			Body: integrationevent.WalletCreatedEvent{
 				WalletID:  e.WalletID.String(),
 				HolderID:  e.HolderID.String(),
 				CreatedAt: e.CreatedAt,
 				UpdatedAt: e.UpdatedAt,
 			},
-			Name: pkg.WalletCreatedEventName,
+			Name: integrationevent.WalletCreatedEventName,
 		}, nil
 	case domain.FundsTransferredEvent:
 		return eventsourcing.ParsedEvent{
-			Body: pkg.FundsTransferredEvent{
+			Body: integrationevent.FundsTransferredEvent{
 				TransferID:    e.TransferID.String(),
 				ToWalletID:    e.ToWalletID.String(),
 				FromWalletID:  e.FromWalletID.String(),
 				AmountInCents: e.Amount.Amount(),
 				Timestamp:     e.Timestamp,
 			},
-			Name: pkg.FundsTransferredEventName,
+			Name: integrationevent.FundsTransferredEventName,
 		}, nil
 	case domain.FundsTransferReceivedEvent:
 		return eventsourcing.ParsedEvent{
-			Body: pkg.FundsTransferReceivedEvent{
+			Body: integrationevent.FundsTransferReceivedEvent{
 				WalletID:      e.WalletID.String(),
 				TransferID:    e.TransferID.String(),
 				FromWalletID:  e.FromWalletID.String(),
 				AmountInCents: e.Amount.Amount(),
 				Timestamp:     e.Timestamp,
 			},
-			Name: pkg.FundsTransferReceivedEventName,
+			Name: integrationevent.FundsTransferReceivedEventName,
 		}, nil
 	default:
 		slog.Error("unknown domain event type", slog.String("type", fmt.Sprintf("%T", event)), slog.Any("event", event))
-		return eventsourcing.ParsedEvent{}, pkg.ErrUnknownEventType
+		return eventsourcing.ParsedEvent{}, fmt.Errorf("%w: %T", apperr.ErrUnknownEventType, event)
 	}
 }
 
@@ -56,41 +57,30 @@ func WalletIntegrationToDomainEvent(
 	eventName string,
 ) (eventsourcing.Event, error) {
 	switch eventName {
-	case pkg.WalletCreatedEventName:
+	case integrationevent.WalletCreatedEventName:
 		return walletCreatedToDomain(eventBody)
-	case pkg.FundsTransferredEventName:
+	case integrationevent.FundsTransferredEventName:
 		return fundsTransferredToDomain(eventBody)
-	case pkg.FundsTransferReceivedEventName:
+	case integrationevent.FundsTransferReceivedEventName:
 		return fundsTransferReceivedToDomain(eventBody)
 	default:
 		slog.Error("unknown integration event type", slog.String("type", eventName), slog.Any("event", string(eventBody)))
-		return nil, pkg.ErrUnknownEventType
+		return nil, fmt.Errorf("%w: %s", apperr.ErrUnknownEventType, eventName)
 	}
 }
 
 func walletCreatedToDomain(body []byte) (eventsourcing.Event, error) {
-	var event pkg.WalletCreatedEvent
+	var event integrationevent.WalletCreatedEvent
 	if err := json.Unmarshal(body, &event); err != nil {
-		slog.Error("failed to unmarshal wallet created event", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("%w: unmarshaling wallet created event: %s", apperr.ErrValidation, err)
 	}
 	walletID, err := valueobject.NewID(event.WalletID)
 	if err != nil {
-		slog.Error(
-			"invalid wallet_id in wallet created event",
-			slog.String("wallet_id", event.WalletID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid wallet_id %q in wallet created event: %w", event.WalletID, err)
 	}
 	holderID, err := valueobject.NewID(event.HolderID)
 	if err != nil {
-		slog.Error(
-			"invalid holder_id in wallet created event",
-			slog.String("holder_id", event.HolderID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid holder_id %q in wallet created event: %w", event.HolderID, err)
 	}
 	return domain.WalletCreatedEvent{
 		WalletID:  walletID,
@@ -101,46 +91,25 @@ func walletCreatedToDomain(body []byte) (eventsourcing.Event, error) {
 }
 
 func fundsTransferredToDomain(body []byte) (eventsourcing.Event, error) {
-	var event pkg.FundsTransferredEvent
+	var event integrationevent.FundsTransferredEvent
 	if err := json.Unmarshal(body, &event); err != nil {
-		slog.Error("failed to unmarshal funds transferred event", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("%w: unmarshaling funds transferred event: %s", apperr.ErrValidation, err)
 	}
 	transferID, err := valueobject.NewID(event.TransferID)
 	if err != nil {
-		slog.Error(
-			"invalid transfer_id in funds transferred event",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid transfer_id %q in funds transferred event: %w", event.TransferID, err)
 	}
 	toWalletID, err := valueobject.NewID(event.ToWalletID)
 	if err != nil {
-		slog.Error(
-			"invalid to_wallet_id in funds transferred event",
-			slog.String("to_wallet_id", event.ToWalletID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid to_wallet_id %q in funds transferred event: %w", event.ToWalletID, err)
 	}
 	fromWalletID, err := valueobject.NewID(event.FromWalletID)
 	if err != nil {
-		slog.Error(
-			"invalid from_wallet_id in funds transferred event",
-			slog.String("from_wallet_id", event.FromWalletID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid from_wallet_id %q in funds transferred event: %w", event.FromWalletID, err)
 	}
 	amount, err := valueobject.NewMoney(event.AmountInCents)
 	if err != nil {
-		slog.Error(
-			"invalid amount in funds transferred event",
-			slog.Int("amount_in_cents", event.AmountInCents),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid amount %d in funds transferred event: %w", event.AmountInCents, err)
 	}
 	return domain.FundsTransferredEvent{
 		Amount:       amount,
@@ -152,46 +121,25 @@ func fundsTransferredToDomain(body []byte) (eventsourcing.Event, error) {
 }
 
 func fundsTransferReceivedToDomain(body []byte) (eventsourcing.Event, error) {
-	var event pkg.FundsTransferReceivedEvent
+	var event integrationevent.FundsTransferReceivedEvent
 	if err := json.Unmarshal(body, &event); err != nil {
-		slog.Error("failed to unmarshal funds transfer received event", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("%w: unmarshaling funds transfer received event: %s", apperr.ErrValidation, err)
 	}
 	walletID, err := valueobject.NewID(event.WalletID)
 	if err != nil {
-		slog.Error(
-			"invalid wallet_id in funds transfer received event",
-			slog.String("wallet_id", event.WalletID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid wallet_id %q in funds transfer received event: %w", event.WalletID, err)
 	}
 	transferID, err := valueobject.NewID(event.TransferID)
 	if err != nil {
-		slog.Error(
-			"invalid transfer_id in funds transfer received event",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid transfer_id %q in funds transfer received event: %w", event.TransferID, err)
 	}
 	fromWalletID, err := valueobject.NewID(event.FromWalletID)
 	if err != nil {
-		slog.Error(
-			"invalid from_wallet_id in funds transfer received event",
-			slog.String("from_wallet_id", event.FromWalletID),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid from_wallet_id %q in funds transfer received event: %w", event.FromWalletID, err)
 	}
 	amount, err := valueobject.NewMoney(event.AmountInCents)
 	if err != nil {
-		slog.Error(
-			"invalid amount in funds transfer received event",
-			slog.Int("amount_in_cents", event.AmountInCents),
-			slog.String("error", err.Error()),
-		)
-		return nil, err
+		return nil, fmt.Errorf("invalid amount %d in funds transfer received event: %w", event.AmountInCents, err)
 	}
 	return domain.FundsTransferReceivedEvent{
 		Amount:       amount,

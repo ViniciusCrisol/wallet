@@ -3,7 +3,7 @@ package valueobject
 import (
 	"testing"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -19,12 +19,12 @@ func TestNewID(t *testing.T) {
 
 	t.Run("It should return an error when value is an empty string", func(t *testing.T) {
 		_, err := NewID("")
-		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return an error when value is not a valid UUID", func(t *testing.T) {
 		_, err := NewID("not-a-uuid")
-		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
 	})
 }
 

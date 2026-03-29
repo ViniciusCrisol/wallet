@@ -8,7 +8,7 @@ import (
 
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/valueobject"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -88,7 +88,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.True(t, errors.Is(esHandler.Save(context.Background(), conflictWallet), pkg.ErrConflict))
+		assert.True(t, errors.Is(esHandler.Save(context.Background(), conflictWallet), apperr.ErrConflict))
 	})
 }
 

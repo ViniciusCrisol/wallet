@@ -3,11 +3,12 @@ package projection
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
-	"wallet/wallet-service/config"
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/eventsourcing"
+	"wallet/wallet-service/pkg/integrationevent"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
@@ -15,21 +16,23 @@ import (
 type WalletKurrentDBProjectionConsumer struct {
 	client        *kurrentdb.Client
 	projectionDAO *WalletMySQLProjectionDAO
+	groupName     string
 }
 
 func NewWalletKurrentDBProjectionConsumer(
 	client *kurrentdb.Client,
 	projectionDAO *WalletMySQLProjectionDAO,
+	groupName string,
 ) *WalletKurrentDBProjectionConsumer {
 	return &WalletKurrentDBProjectionConsumer{
 		client:        client,
 		projectionDAO: projectionDAO,
+		groupName:     groupName,
 	}
 }
 
 func (consumer *WalletKurrentDBProjectionConsumer) Start(ctx context.Context) {
-	groupName := config.Load().WalletProjectionGroupName
-	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, groupName)
+	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, consumer.groupName)
 }
 
 func (consumer *WalletKurrentDBProjectionConsumer) handle(
@@ -38,27 +41,24 @@ func (consumer *WalletKurrentDBProjectionConsumer) handle(
 	eventName string,
 ) error {
 	switch eventName {
-	case pkg.WalletCreatedEventName:
-		var event pkg.WalletCreatedEvent
+	case integrationevent.WalletCreatedEventName:
+		var event integrationevent.WalletCreatedEvent
 		if err := json.Unmarshal(eventBody, &event); err != nil {
-			slog.Error("failed to unmarshal wallet created event", slog.String("error", err.Error()))
-			return err
+			return fmt.Errorf("%w: unmarshaling %s: %s", apperr.ErrValidation, eventName, err)
 		}
 		return consumer.projectionDAO.CreateWallet(ctx, event)
 
-	case pkg.FundsTransferredEventName:
-		var event pkg.FundsTransferredEvent
+	case integrationevent.FundsTransferredEventName:
+		var event integrationevent.FundsTransferredEvent
 		if err := json.Unmarshal(eventBody, &event); err != nil {
-			slog.Error("failed to unmarshal funds transferred event", slog.String("error", err.Error()))
-			return err
+			return fmt.Errorf("%w: unmarshaling %s: %s", apperr.ErrValidation, eventName, err)
 		}
 		return consumer.projectionDAO.ApplyFundsTransferred(ctx, event)
 
-	case pkg.FundsTransferReceivedEventName:
-		var event pkg.FundsTransferReceivedEvent
+	case integrationevent.FundsTransferReceivedEventName:
+		var event integrationevent.FundsTransferReceivedEvent
 		if err := json.Unmarshal(eventBody, &event); err != nil {
-			slog.Error("failed to unmarshal funds transfer received event", slog.String("error", err.Error()))
-			return err
+			return fmt.Errorf("%w: unmarshaling %s: %s", apperr.ErrValidation, eventName, err)
 		}
 		return consumer.projectionDAO.ApplyFundsTransferReceived(ctx, event)
 

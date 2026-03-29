@@ -3,7 +3,7 @@ package eventsourcing
 import (
 	"testing"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/integrationevent"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -11,11 +11,11 @@ import (
 func TestParsedEvent_ToJSON(t *testing.T) {
 	t.Run("It should return valid JSON when body is a serializable struct", func(t *testing.T) {
 		event := ParsedEvent{
-			Body: pkg.WalletCreatedEvent{
+			Body: integrationevent.WalletCreatedEvent{
 				WalletID: "wallet-123",
 				HolderID: "holder-456",
 			},
-			Name: pkg.WalletCreatedEventName,
+			Name: integrationevent.WalletCreatedEventName,
 		}
 
 		result, err := event.ToJSON()

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/valueobject"
 
 	"github.com/stretchr/testify/assert"
@@ -88,7 +88,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Timestamp:  time.Now(),
 		})
 
-		assert.ErrorIs(t, err, pkg.ErrInsufficientBalance)
+		assert.ErrorIs(t, err, apperr.ErrInsufficientBalance)
 	})
 
 	t.Run("It should deduct balance and log an event when funds are transferred", func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 
-		assert.ErrorIs(t, err, pkg.ErrBalanceLimitExceeded)
+		assert.ErrorIs(t, err, apperr.ErrBalanceLimitExceeded)
 	})
 
 	t.Run("It should accept funds when new balance equals the limit", func(t *testing.T) {
@@ -208,12 +208,12 @@ func TestWallet_Replay(t *testing.T) {
 		walletID := valueobject.GenerateID()
 		holderID := valueobject.GenerateID()
 
-		wallet.Replay(WalletCreatedEvent{
+		assert.NoError(t, wallet.Replay(WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: now,
 			UpdatedAt: now,
-		})
+		}))
 
 		assert.Equal(t, walletID.String(), wallet.ID().String())
 		assert.Equal(t, holderID.String(), wallet.holderID.String())
@@ -226,13 +226,13 @@ func TestWallet_Replay(t *testing.T) {
 		wallet := newTestWalletWithBalance(t, 500)
 		transferTime := time.Now().Add(time.Hour)
 
-		wallet.Replay(FundsTransferredEvent{
+		assert.NoError(t, wallet.Replay(FundsTransferredEvent{
 			Amount:       newMoney(t, 200),
 			TransferID:   valueobject.GenerateID(),
 			ToWalletID:   valueobject.GenerateID(),
 			FromWalletID: wallet.ID(),
 			Timestamp:    transferTime,
-		})
+		}))
 
 		assert.Equal(t, 300, wallet.Balance().Amount())
 		assert.Equal(t, transferTime, wallet.UpdatedAt())
@@ -242,13 +242,13 @@ func TestWallet_Replay(t *testing.T) {
 		wallet := newTestWallet(t)
 		receiveTime := time.Now().Add(time.Hour)
 
-		wallet.Replay(FundsTransferReceivedEvent{
+		assert.NoError(t, wallet.Replay(FundsTransferReceivedEvent{
 			Amount:       newMoney(t, 750),
 			WalletID:     wallet.ID(),
 			TransferID:   valueobject.GenerateID(),
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    receiveTime,
-		})
+		}))
 
 		assert.Equal(t, 750, wallet.Balance().Amount())
 		assert.Equal(t, receiveTime, wallet.UpdatedAt())
@@ -257,12 +257,12 @@ func TestWallet_Replay(t *testing.T) {
 	t.Run("It should increment version when event is replayed", func(t *testing.T) {
 		var wallet Wallet
 
-		wallet.Replay(WalletCreatedEvent{
+		assert.NoError(t, wallet.Replay(WalletCreatedEvent{
 			WalletID:  valueobject.GenerateID(),
 			HolderID:  valueobject.GenerateID(),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
-		})
+		}))
 
 		assert.Equal(t, 0, wallet.Version())
 	})

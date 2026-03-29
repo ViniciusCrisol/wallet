@@ -2,13 +2,14 @@ package consumer
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
-	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/eventsourcing"
+	"wallet/wallet-service/pkg/integrationevent"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
@@ -16,21 +17,23 @@ import (
 type WalletKurrentDBConsumer struct {
 	client    *kurrentdb.Client
 	esHandler *persistence.WalletKurrentDBESHandler
+	groupName string
 }
 
 func NewWalletKurrentDBConsumer(
 	client *kurrentdb.Client,
 	esHandler *persistence.WalletKurrentDBESHandler,
+	groupName string,
 ) *WalletKurrentDBConsumer {
 	return &WalletKurrentDBConsumer{
 		client:    client,
 		esHandler: esHandler,
+		groupName: groupName,
 	}
 }
 
 func (consumer *WalletKurrentDBConsumer) Start(ctx context.Context) {
-	groupName := config.Load().WalletCommandGroupName
-	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, groupName)
+	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, consumer.groupName)
 }
 
 func (consumer *WalletKurrentDBConsumer) handle(
@@ -39,7 +42,7 @@ func (consumer *WalletKurrentDBConsumer) handle(
 	eventName string,
 ) error {
 	switch eventName {
-	case pkg.FundsTransferredEventName:
+	case integrationevent.FundsTransferredEventName:
 		domainEvent, err := persistence.WalletIntegrationToDomainEvent(eventBody, eventName)
 		if err != nil {
 			return err
@@ -55,11 +58,10 @@ func (consumer *WalletKurrentDBConsumer) handle(
 func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Context, event domain.FundsTransferredEvent) error {
 	wallet, found, err := consumer.esHandler.Find(ctx, event.ToWalletID)
 	if err != nil {
-		return err
+		return fmt.Errorf("receiving transfer %s for wallet %s: %w", event.TransferID, event.ToWalletID, err)
 	}
 	if !found {
-		slog.Error("wallet not found for funds transfer", slog.String("wallet_id", event.ToWalletID.String()))
-		return pkg.ErrWalletNotFound
+		return fmt.Errorf("receiving transfer %s: %w", event.TransferID, apperr.ErrWalletNotFound)
 	}
 	command := domain.ReceiveFundsTransferCommand{
 		Amount:       event.Amount,
@@ -68,7 +70,10 @@ func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Contex
 		Timestamp:    event.Timestamp,
 	}
 	if err := wallet.ReceiveFundsTransfer(command); err != nil {
-		return err
+		return fmt.Errorf("receiving transfer %s for wallet %s: %w", event.TransferID, event.ToWalletID, err)
 	}
-	return consumer.esHandler.Save(ctx, wallet)
+	if err := consumer.esHandler.Save(ctx, wallet); err != nil {
+		return fmt.Errorf("receiving transfer %s for wallet %s: %w", event.TransferID, event.ToWalletID, err)
+	}
+	return nil
 }

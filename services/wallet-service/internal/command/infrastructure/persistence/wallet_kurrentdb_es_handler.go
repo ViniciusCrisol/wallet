@@ -3,12 +3,14 @@ package persistence
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
-	"log/slog"
+	"math"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/eventsourcing"
+	"wallet/wallet-service/pkg/uuid"
 	"wallet/wallet-service/pkg/valueobject"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -24,7 +26,7 @@ func NewWalletKurrentDBESHandler(client *kurrentdb.Client) *WalletKurrentDBESHan
 	}
 }
 
-func (esHandler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Wallet) error {
+func (h *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Wallet) error {
 	uncommittedEvents := wallet.UncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil
@@ -32,18 +34,18 @@ func (esHandler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet doma
 
 	var eventDataList []kurrentdb.EventData
 	for _, event := range uncommittedEvents {
-		integrationEvent, err := WalletDomainToIntegrationEvent(event)
+		integrationEvent, err := walletDomainToIntegrationEvent(event)
 		if err != nil {
-			return err
+			return fmt.Errorf("saving wallet %s: %w", wallet.ID(), err)
 		}
 		data, err := integrationEvent.ToJSON()
 		if err != nil {
-			return err
+			return fmt.Errorf("saving wallet %s: %w", wallet.ID(), err)
 		}
 		eventDataList = append(eventDataList, kurrentdb.EventData{
 			ContentType: kurrentdb.ContentTypeJson,
 			EventType:   integrationEvent.Name,
-			EventID:     pkg.NewUUIDValue(),
+			EventID:     uuid.NewUUIDValue(),
 			Data:        data,
 		})
 	}
@@ -56,51 +58,35 @@ func (esHandler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet doma
 		streamState = kurrentdb.StreamRevision{Value: uint64(expectedRevision)}
 	}
 
-	if _, err := esHandler.client.AppendToStream(
+	if _, err := h.client.AppendToStream(
 		ctx,
-		esHandler.buildStreamName(wallet.ID()),
+		h.buildStreamName(wallet.ID()),
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
 	); err != nil {
 		if eventsourcing.IsKurrentDBConcurrencyError(err) {
-			slog.Warn(
-				"concurrency conflict appending to stream",
-				slog.String("wallet_id", wallet.ID().String()),
-				slog.String("error", err.Error()),
-			)
-			return pkg.ErrConflict
+			return fmt.Errorf("%w: wallet %s was modified concurrently, retry the operation", apperr.ErrConflict, wallet.ID())
 		}
-		slog.Error(
-			"failed to append events to stream",
-			slog.String("wallet_id", wallet.ID().String()),
-			slog.String("error", err.Error()),
-		)
-		return err
+		return fmt.Errorf("appending events to wallet %s stream: %w", wallet.ID(), err)
 	}
 	wallet.Commit()
 	return nil
 }
 
-func (esHandler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) (domain.Wallet, bool, error) {
-	const readAllEvents = ^uint64(0)
-	streamName := esHandler.buildStreamName(id)
+func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) (domain.Wallet, bool, error) {
+	streamName := h.buildStreamName(id)
 
-	stream, err := esHandler.client.ReadStream(
+	stream, err := h.client.ReadStream(
 		ctx,
 		streamName,
 		kurrentdb.ReadStreamOptions{
 			From:      kurrentdb.Start{},
 			Direction: kurrentdb.Forwards,
-		}, readAllEvents)
+		}, math.MaxUint64)
 	if err != nil {
 		if eventsourcing.IsKurrentDBNotFoundError(err) {
 			return domain.Wallet{}, false, nil
 		}
-		slog.Error(
-			"failed to read stream",
-			slog.String("error", err.Error()),
-			slog.String("stream", streamName),
-		)
-		return domain.Wallet{}, false, err
+		return domain.Wallet{}, false, fmt.Errorf("reading wallet %s stream: %w", id, err)
 	}
 	defer stream.Close()
 
@@ -114,26 +100,23 @@ func (esHandler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobj
 			if eventsourcing.IsKurrentDBNotFoundError(err) {
 				return domain.Wallet{}, false, nil
 			}
-			slog.Error(
-				"failed to read event from stream",
-				slog.String("error", err.Error()),
-				slog.String("stream", streamName),
-			)
-			return domain.Wallet{}, false, err
+			return domain.Wallet{}, false, fmt.Errorf("reading event from wallet %s stream: %w", id, err)
 		}
 		domainEvent, err := WalletIntegrationToDomainEvent(
 			resolvedEvent.Event.Data,
 			resolvedEvent.Event.EventType,
 		)
 		if err != nil {
-			return domain.Wallet{}, false, err
+			return domain.Wallet{}, false, fmt.Errorf("replaying wallet %s: %w", id, err)
 		}
-		wallet.Replay(domainEvent)
+		if err := wallet.Replay(domainEvent); err != nil {
+			return domain.Wallet{}, false, fmt.Errorf("replaying wallet %s: %w", id, err)
+		}
 	}
 	wallet.Commit()
 	return wallet, true, nil
 }
 
-func (esHandler *WalletKurrentDBESHandler) buildStreamName(id valueobject.ID) string {
+func (h *WalletKurrentDBESHandler) buildStreamName(id valueobject.ID) string {
 	return "wallet-" + id.String()
 }

@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -17,11 +18,11 @@ func TestMain(m *testing.M) {
 
 	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	kurrentDBClient, err = kurrentdb.NewClient(settings)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer kurrentDBClient.Close()
 

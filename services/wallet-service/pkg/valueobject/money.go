@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"math"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 )
 
 type Money struct {
@@ -12,8 +12,11 @@ type Money struct {
 }
 
 func NewMoney(amountInCents int) (Money, error) {
-	if amountInCents <= 0 || amountInCents >= math.MaxInt {
-		return Money{}, pkg.ErrNegativeOrZeroAmount
+	if amountInCents < 0 {
+		return Money{}, apperr.ErrNegativeAmount
+	}
+	if amountInCents >= math.MaxInt {
+		return Money{}, apperr.ErrAmountOverflow
 	}
 	return Money{amountInCents: amountInCents}, nil
 }

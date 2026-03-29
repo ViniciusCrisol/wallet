@@ -3,12 +3,14 @@ package query
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg/web"
 )
 
 type WalletResponse struct {
@@ -32,7 +34,7 @@ func NewWalletQueryController(db *sql.DB) *WalletQueryController {
 func (controller *WalletQueryController) FindByID(response http.ResponseWriter, request *http.Request) {
 	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
-		pkg.RespondWithError(response, err)
+		web.RespondWithError(response, err)
 		return
 	}
 
@@ -49,12 +51,12 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 		&wallet.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
-		pkg.RespondWithError(response, pkg.ErrWalletNotFound)
+		web.RespondWithError(response, apperr.ErrWalletNotFound)
 		return
 	}
 	if err != nil {
 		slog.Error("failed to query wallet projection", slog.String("wallet_id", walletID.String()), slog.String("error", err.Error()))
-		pkg.RespondWithError(response, pkg.ErrInternalServerError)
+		web.RespondWithError(response, apperr.ErrInternal)
 		return
 	}
 
@@ -65,12 +67,12 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
 	holderIDParam := request.URL.Query().Get("holder_id")
 	if holderIDParam == "" {
-		pkg.RespondWithError(response, pkg.ErrInvalidUUID)
+		web.RespondWithError(response, fmt.Errorf("%w: holder_id", apperr.ErrMissingRequiredParam))
 		return
 	}
 	holderID, err := valueobject.NewID(holderIDParam)
 	if err != nil {
-		pkg.RespondWithError(response, err)
+		web.RespondWithError(response, err)
 		return
 	}
 
@@ -81,12 +83,12 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 	)
 	if err != nil {
 		slog.Error("failed to query wallet projections by holder", slog.String("holder_id", holderID.String()), slog.String("error", err.Error()))
-		pkg.RespondWithError(response, pkg.ErrInternalServerError)
+		web.RespondWithError(response, apperr.ErrInternal)
 		return
 	}
 	defer rows.Close()
 
-	var wallets []WalletResponse
+	wallets := []WalletResponse{}
 	for rows.Next() {
 		var wallet WalletResponse
 		if err := rows.Scan(
@@ -97,10 +99,15 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 			&wallet.UpdatedAt,
 		); err != nil {
 			slog.Error("failed to scan wallet projection row", slog.String("error", err.Error()))
-			pkg.RespondWithError(response, pkg.ErrInternalServerError)
+			web.RespondWithError(response, apperr.ErrInternal)
 			return
 		}
 		wallets = append(wallets, wallet)
+	}
+	if err := rows.Err(); err != nil {
+		slog.Error("error iterating wallet projection rows", slog.String("error", err.Error()))
+		web.RespondWithError(response, apperr.ErrInternal)
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")

@@ -3,12 +3,13 @@ package projection
 import (
 	"context"
 	"database/sql"
+	"log"
 	"os"
 	"testing"
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/integrationevent"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -26,20 +27,20 @@ func TestMain(m *testing.M) {
 
 	d, err := sql.Open("mysql", os.Getenv("MYSQL_CONNECTION_STRING"))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	if err = d.Ping(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	db = d
 
 	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	kurrentDBClient, err = kurrentdb.NewClient(settings)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer kurrentDBClient.Close()
 
@@ -52,7 +53,7 @@ func createTestWallet(
 	holderID string,
 	walletMySQLProjectionDAO *WalletMySQLProjectionDAO,
 ) {
-	event := pkg.WalletCreatedEvent{
+	event := integrationevent.WalletCreatedEvent{
 		WalletID:  walletID,
 		HolderID:  holderID,
 		CreatedAt: time.Now(),
