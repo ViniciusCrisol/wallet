@@ -14,6 +14,7 @@ import (
 	"wallet/wallet-service/internal/command/infrastructure/controller"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/internal/projection"
+	"wallet/wallet-service/internal/query"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -62,11 +63,15 @@ func main() {
 	)
 
 	walletESHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-	walletController := controller.NewWalletController(walletESHandler)
+	walletCommandController := controller.NewWalletCommandController(walletESHandler)
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /wallets", walletController.Create)
-	mux.HandleFunc("POST /wallets/{id}/transfer", walletController.TransferFunds)
-	mux.HandleFunc("POST /wallets/{id}/mock-transfer", walletController.MockTransfer)
+	mux.HandleFunc("POST /wallets", walletCommandController.Create)
+	mux.HandleFunc("POST /wallets/{id}/transfer", walletCommandController.TransferFunds)
+	mux.HandleFunc("POST /wallets/{id}/mock-transfer", walletCommandController.MockTransfer)
+
+	walletQueryController := query.NewWalletQueryController(mySQLDB)
+	mux.HandleFunc("GET /wallets/{id}", walletQueryController.FindByID)
+	mux.HandleFunc("GET /wallets", walletQueryController.FindByHolderID)
 
 	walletConsumer := consumer.NewWalletKurrentDBConsumer(kurrentDBClient, walletESHandler)
 	go walletConsumer.Start(ctx)

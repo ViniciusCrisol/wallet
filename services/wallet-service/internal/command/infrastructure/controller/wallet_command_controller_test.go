@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newTestController(t *testing.T) *WalletController {
+func newTestController(t *testing.T) *WalletCommandController {
 	t.Helper()
 
 	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
@@ -29,24 +29,24 @@ func newTestController(t *testing.T) *WalletController {
 	if err != nil {
 		t.Fatalf("failed to create kurrentdb client: %v", err)
 	}
-	return &WalletController{
+	return &WalletCommandController{
 		esHandler: persistence.NewWalletKurrentDBESHandler(db),
 	}
 }
 
-func newCreateMux(ctrl *WalletController) *http.ServeMux {
+func newCreateMux(ctrl *WalletCommandController) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets", ctrl.Create)
 	return mux
 }
 
-func newTransferMux(ctrl *WalletController) *http.ServeMux {
+func newTransferMux(ctrl *WalletCommandController) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets/{id}/transfer", ctrl.TransferFunds)
 	return mux
 }
 
-func newMockTransferMux(ctrl *WalletController) *http.ServeMux {
+func newMockTransferMux(ctrl *WalletCommandController) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets/{id}/mock-transfer", ctrl.MockTransfer)
 	return mux
@@ -62,7 +62,7 @@ func marshalBody(t *testing.T, v any) *bytes.Buffer {
 	return bytes.NewBuffer(j)
 }
 
-func TestWalletController_Create(t *testing.T) {
+func TestWalletCommandController_Create(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should return 201 when valid wallet data is provided", func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestWalletController_Create(t *testing.T) {
 	})
 }
 
-func TestWalletController_TransferFunds(t *testing.T) {
+func TestWalletCommandController_TransferFunds(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should return 204 when wallet has sufficient balance for the transfer", func(t *testing.T) {
@@ -269,7 +269,7 @@ func TestWalletController_TransferFunds(t *testing.T) {
 	})
 }
 
-func TestWalletController_MockTransfer(t *testing.T) {
+func TestWalletCommandController_MockTransfer(t *testing.T) {
 	t.Parallel()
 
 	t.Run("It should return 204 when wallet exists and balance limit is not exceeded", func(t *testing.T) {

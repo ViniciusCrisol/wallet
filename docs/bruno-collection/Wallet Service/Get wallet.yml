@@ -1,0 +1,15 @@
+info:
+    name: Get wallet
+    type: http
+    seq: 4
+
+http:
+    method: get
+    url: http://localhost:8080/wallets/11111111-1111-1111-1111-111111111111
+    auth: inherit
+
+settings:
+    encodeUrl: false
+    timeout: 0
+    followRedirects: true
+    maxRedirects: 5

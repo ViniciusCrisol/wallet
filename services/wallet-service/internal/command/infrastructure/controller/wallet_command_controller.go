@@ -11,17 +11,17 @@ import (
 	"wallet/wallet-service/pkg/valueobject"
 )
 
-type WalletController struct {
+type WalletCommandController struct {
 	esHandler *persistence.WalletKurrentDBESHandler
 }
 
-func NewWalletController(esHandler *persistence.WalletKurrentDBESHandler) *WalletController {
-	return &WalletController{
+func NewWalletCommandController(esHandler *persistence.WalletKurrentDBESHandler) *WalletCommandController {
+	return &WalletCommandController{
 		esHandler: esHandler,
 	}
 }
 
-func (controller *WalletController) Create(response http.ResponseWriter, request *http.Request) {
+func (controller *WalletCommandController) Create(response http.ResponseWriter, request *http.Request) {
 	var dto CreateWalletDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
 		slog.Warn("failed to decode create wallet request", slog.String("error", err.Error()))
@@ -43,7 +43,7 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 	response.WriteHeader(http.StatusCreated)
 }
 
-func (controller *WalletController) TransferFunds(response http.ResponseWriter, request *http.Request) {
+func (controller *WalletCommandController) TransferFunds(response http.ResponseWriter, request *http.Request) {
 	var dto TransferFundsDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
 		slog.Warn("failed to decode transfer funds request", slog.String("error", err.Error()))
@@ -82,7 +82,7 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 	response.WriteHeader(http.StatusNoContent)
 }
 
-func (controller *WalletController) MockTransfer(response http.ResponseWriter, request *http.Request) {
+func (controller *WalletCommandController) MockTransfer(response http.ResponseWriter, request *http.Request) {
 	var dto MockTransferDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
 		slog.Warn("failed to decode mock transfer request", slog.String("error", err.Error()))
