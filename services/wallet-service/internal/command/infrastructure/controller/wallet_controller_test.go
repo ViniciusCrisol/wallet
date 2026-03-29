@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/commandside/domain"
-	"wallet/wallet-service/internal/commandside/infrastructure/persistence"
+	"wallet/wallet-service/internal/command/domain"
+	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/pkg/valueobject"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"

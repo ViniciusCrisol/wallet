@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/commandside/domain"
+	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/valueobject"
 

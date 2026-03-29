@@ -1,4 +1,4 @@
-package projectionbuilder
+package projection
 
 import (
 	"context"

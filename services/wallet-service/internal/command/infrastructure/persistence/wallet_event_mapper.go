@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"wallet/wallet-service/internal/commandside/domain"
+	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/pkg"
 	"wallet/wallet-service/pkg/eventsourcing"
 	"wallet/wallet-service/pkg/valueobject"

@@ -10,10 +10,10 @@ import (
 	"syscall"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/commandside/infrastructure/consumer"
-	"wallet/wallet-service/internal/commandside/infrastructure/controller"
-	"wallet/wallet-service/internal/commandside/infrastructure/persistence"
-	"wallet/wallet-service/internal/projectionbuilder"
+	"wallet/wallet-service/internal/command/infrastructure/consumer"
+	"wallet/wallet-service/internal/command/infrastructure/controller"
+	"wallet/wallet-service/internal/command/infrastructure/persistence"
+	"wallet/wallet-service/internal/projection"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -71,8 +71,8 @@ func main() {
 	walletConsumer := consumer.NewWalletKurrentDBConsumer(kurrentDBClient, walletESHandler)
 	go walletConsumer.Start(ctx)
 
-	projectionDAO := projectionbuilder.NewWalletMySQLProjectionDAO(mySQLDB)
-	projectionConsumer := projectionbuilder.NewWalletKurrentDBProjectionConsumer(kurrentDBClient, projectionDAO)
+	projectionDAO := projection.NewWalletMySQLProjectionDAO(mySQLDB)
+	projectionConsumer := projection.NewWalletKurrentDBProjectionConsumer(kurrentDBClient, projectionDAO)
 	go projectionConsumer.Start(ctx)
 
 	server := &http.Server{Addr: ":8080", Handler: mux}
