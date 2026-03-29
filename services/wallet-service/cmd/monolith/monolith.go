@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"wallet/wallet-service/config"
+	"wallet/wallet-service/internal/commandside/infrastructure/consumer"
 	"wallet/wallet-service/internal/commandside/infrastructure/controller"
 	"wallet/wallet-service/internal/commandside/infrastructure/persistence"
 	"wallet/wallet-service/internal/projectionbuilder"
@@ -54,19 +55,33 @@ func main() {
 		cfg.WalletProjectionGroupName,
 		kurrentdb.PersistentAllSubscriptionOptions{},
 	)
+	kurrentDBClient.CreatePersistentSubscriptionToAll(
+		ctx,
+		cfg.WalletCommandGroupName,
+		kurrentdb.PersistentAllSubscriptionOptions{},
+	)
 
-	walletController := controller.NewWalletController(persistence.NewWalletKurrentDBESHandler(kurrentDBClient))
+	walletESHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
+	walletController := controller.NewWalletController(walletESHandler)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets", walletController.Create)
 	mux.HandleFunc("POST /wallets/{id}/transfer", walletController.TransferFunds)
 	mux.HandleFunc("POST /wallets/{id}/mock-transfer", walletController.MockTransfer)
 
+	walletConsumer := consumer.NewWalletKurrentDBConsumer(kurrentDBClient, walletESHandler)
+	go walletConsumer.Start(ctx)
+
 	projectionDAO := projectionbuilder.NewWalletMySQLProjectionDAO(mySQLDB)
 	projectionConsumer := projectionbuilder.NewWalletKurrentDBProjectionConsumer(kurrentDBClient, projectionDAO)
 	go projectionConsumer.Start(ctx)
 
+	server := &http.Server{Addr: ":8080", Handler: mux}
+	go func() {
+		<-ctx.Done()
+		server.Shutdown(ctx)
+	}()
 	slog.Info("http server starting", slog.String("addr", ":8080"))
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("http server error", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
