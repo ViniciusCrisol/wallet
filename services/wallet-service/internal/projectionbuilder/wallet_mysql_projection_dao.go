@@ -1,6 +1,7 @@
 package projectionbuilder
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 
@@ -17,8 +18,8 @@ func NewWalletMySQLProjectionDAO(db *sql.DB) *WalletMySQLProjectionDAO {
 	}
 }
 
-func (dao *WalletMySQLProjectionDAO) CreateWallet(event pkg.WalletCreatedEvent) error {
-	_, err := dao.db.Exec(
+func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event pkg.WalletCreatedEvent) error {
+	_, err := dao.db.ExecContext(ctx,
 		"INSERT INTO wallet_projections (wallet_id, holder_id, balance_in_cents, created_at, updated_at) VALUES (?, ?, 0, ?, ?)",
 		event.WalletID,
 		event.HolderID,
@@ -32,8 +33,8 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(event pkg.WalletCreatedEvent) 
 	return nil
 }
 
-func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(event pkg.FundsTransferredEvent) error {
-	_, err := dao.db.Exec(
+func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, event pkg.FundsTransferredEvent) error {
+	_, err := dao.db.ExecContext(ctx,
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents - ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
@@ -52,8 +53,8 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(event pkg.FundsTransf
 	return nil
 }
 
-func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(event pkg.FundsTransferReceivedEvent) error {
-	_, err := dao.db.Exec(
+func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Context, event pkg.FundsTransferReceivedEvent) error {
+	_, err := dao.db.ExecContext(ctx,
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents + ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,

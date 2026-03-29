@@ -1,6 +1,7 @@
 package projectionbuilder
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
@@ -57,7 +58,7 @@ func createTestWallet(
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	assert.NoError(t, walletMySQLProjectionDAO.CreateWallet(event))
+	assert.NoError(t, walletMySQLProjectionDAO.CreateWallet(context.Background(), event))
 }
 
 func getTestWalletBalance(t *testing.T, walletID string) int {

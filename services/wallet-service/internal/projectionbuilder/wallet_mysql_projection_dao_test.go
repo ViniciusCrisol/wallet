@@ -1,6 +1,7 @@
 package projectionbuilder
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		assert.NoError(t, dao.CreateWallet(event))
+		assert.NoError(t, dao.CreateWallet(context.Background(), event))
 
 		var (
 			retrievedWalletID string
@@ -58,9 +59,9 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 
-		assert.NoError(t, dao.CreateWallet(event))
+		assert.NoError(t, dao.CreateWallet(context.Background(), event))
 
-		assert.Error(t, dao.CreateWallet(event))
+		assert.Error(t, dao.CreateWallet(context.Background(), event))
 	})
 
 	t.Run("It should initialize wallet balance as zero", func(t *testing.T) {
@@ -76,7 +77,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		assert.NoError(t, dao.CreateWallet(event))
+		assert.NoError(t, dao.CreateWallet(context.Background(), event))
 
 		assert.Equal(t, 0, getTestWalletBalance(t, walletID))
 	})
@@ -103,7 +104,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 			AmountInCents: 1000,
 			Timestamp:     time.Now(),
 		}
-		assert.NoError(t, dao.ApplyFundsTransferred(event))
+		assert.NoError(t, dao.ApplyFundsTransferred(context.Background(), event))
 
 		assert.Equal(t, 4000, getTestWalletBalance(t, walletID))
 	})
@@ -126,7 +127,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 			AmountInCents: 1000,
 			Timestamp:     time.Now(),
 		}
-		assert.NoError(t, dao.ApplyFundsTransferred(event))
+		assert.NoError(t, dao.ApplyFundsTransferred(context.Background(), event))
 
 		assert.Equal(t, -500, getTestWalletBalance(t, walletID))
 	})
@@ -154,7 +155,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 			AmountInCents: 200,
 			Timestamp:     newTime,
 		}
-		assert.NoError(t, dao.ApplyFundsTransferred(event))
+		assert.NoError(t, dao.ApplyFundsTransferred(context.Background(), event))
 
 		var updatedAt time.Time
 		db.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&updatedAt)
@@ -184,7 +185,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 			AmountInCents: 500,
 			Timestamp:     time.Now(),
 		}
-		assert.NoError(t, dao.ApplyFundsTransferReceived(event))
+		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event))
 
 		assert.Equal(t, 1500, getTestWalletBalance(t, walletID))
 	})
@@ -205,7 +206,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 			AmountInCents: 2000,
 			Timestamp:     time.Now(),
 		}
-		assert.NoError(t, dao.ApplyFundsTransferReceived(event))
+		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event))
 
 		assert.Equal(t, 2000, getTestWalletBalance(t, walletID))
 	})
@@ -231,7 +232,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 			AmountInCents: 750,
 			Timestamp:     newTime,
 		}
-		assert.NoError(t, dao.ApplyFundsTransferReceived(event))
+		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event))
 
 		var updatedAt time.Time
 		db.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&updatedAt)
@@ -255,7 +256,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 			AmountInCents: 1000,
 			Timestamp:     time.Now(),
 		}
-		assert.NoError(t, dao.ApplyFundsTransferReceived(event1))
+		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event1))
 
 		event2 := pkg.FundsTransferReceivedEvent{
 			WalletID:      walletID,
@@ -264,7 +265,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 			AmountInCents: 500,
 			Timestamp:     time.Now(),
 		}
-		assert.NoError(t, dao.ApplyFundsTransferReceived(event2))
+		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event2))
 
 		assert.Equal(t, 1500, getTestWalletBalance(t, walletID))
 	})

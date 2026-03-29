@@ -198,7 +198,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 		}
 		body, err := json.Marshal(event)
 		assert.NoError(t, err)
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(body, pkg.WalletCreatedEventName))
+		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), body, pkg.WalletCreatedEventName))
 
 		var (
 			retrievedWalletID string
@@ -239,7 +239,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 		}
 		body, err := json.Marshal(event)
 		assert.NoError(t, err)
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(body, pkg.FundsTransferredEventName))
+		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), body, pkg.FundsTransferredEventName))
 
 		assert.Equal(t, 4000, getTestWalletBalance(t, walletID))
 	})
@@ -267,7 +267,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 		}
 		body, err := json.Marshal(event)
 		assert.NoError(t, err)
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(body, pkg.FundsTransferReceivedEventName))
+		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), body, pkg.FundsTransferReceivedEventName))
 
 		assert.Equal(t, 3500, getTestWalletBalance(t, walletID))
 	})
@@ -278,7 +278,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, walletKurrentDBProjectionConsumer.handle(invalidEventBody, pkg.WalletCreatedEventName))
+		assert.Error(t, walletKurrentDBProjectionConsumer.handle(context.Background(), invalidEventBody, pkg.WalletCreatedEventName))
 	})
 
 	t.Run("It should return error when FundsTransferredEvent unmarshal fails", func(t *testing.T) {
@@ -287,7 +287,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, walletKurrentDBProjectionConsumer.handle(invalidEventBody, pkg.FundsTransferredEventName))
+		assert.Error(t, walletKurrentDBProjectionConsumer.handle(context.Background(), invalidEventBody, pkg.FundsTransferredEventName))
 	})
 
 	t.Run("It should return error when FundsTransferReceivedEvent unmarshal fails", func(t *testing.T) {
@@ -296,7 +296,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, walletKurrentDBProjectionConsumer.handle(invalidEventBody, pkg.FundsTransferReceivedEventName))
+		assert.Error(t, walletKurrentDBProjectionConsumer.handle(context.Background(), invalidEventBody, pkg.FundsTransferReceivedEventName))
 	})
 
 	t.Run("It should return nil error when unknown event type is received", func(t *testing.T) {
@@ -305,6 +305,6 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 
 		unknownEventBody := []byte(`{"some": "data"}`)
 
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(unknownEventBody, "unknown:event_type"))
+		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), unknownEventBody, "unknown:event_type"))
 	})
 }

@@ -24,7 +24,7 @@ func NewWalletKurrentDBESHandler(client *kurrentdb.Client) *WalletKurrentDBESHan
 	}
 }
 
-func (esHandler *WalletKurrentDBESHandler) Save(wallet domain.Wallet) error {
+func (esHandler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Wallet) error {
 	uncommittedEvents := wallet.UncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil
@@ -57,7 +57,7 @@ func (esHandler *WalletKurrentDBESHandler) Save(wallet domain.Wallet) error {
 	}
 
 	if _, err := esHandler.client.AppendToStream(
-		context.Background(),
+		ctx,
 		esHandler.buildStreamName(wallet.ID()),
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
 	); err != nil {
@@ -80,14 +80,17 @@ func (esHandler *WalletKurrentDBESHandler) Save(wallet domain.Wallet) error {
 	return nil
 }
 
-func (esHandler *WalletKurrentDBESHandler) Find(id valueobject.ID) (domain.Wallet, bool, error) {
+func (esHandler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) (domain.Wallet, bool, error) {
+	const readAllEvents = ^uint64(0)
+	streamName := esHandler.buildStreamName(id)
+
 	stream, err := esHandler.client.ReadStream(
-		context.Background(),
-		esHandler.buildStreamName(id),
+		ctx,
+		streamName,
 		kurrentdb.ReadStreamOptions{
 			From:      kurrentdb.Start{},
 			Direction: kurrentdb.Forwards,
-		}, ^uint64(0))
+		}, readAllEvents)
 	if err != nil {
 		if eventsourcing.IsKurrentDBNotFoundError(err) {
 			return domain.Wallet{}, false, nil
@@ -95,7 +98,7 @@ func (esHandler *WalletKurrentDBESHandler) Find(id valueobject.ID) (domain.Walle
 		slog.Error(
 			"failed to read stream",
 			slog.String("error", err.Error()),
-			slog.String("stream", esHandler.buildStreamName(id)),
+			slog.String("stream", streamName),
 		)
 		return domain.Wallet{}, false, err
 	}
@@ -114,7 +117,7 @@ func (esHandler *WalletKurrentDBESHandler) Find(id valueobject.ID) (domain.Walle
 			slog.Error(
 				"failed to read event from stream",
 				slog.String("error", err.Error()),
-				slog.String("stream", esHandler.buildStreamName(id)),
+				slog.String("stream", streamName),
 			)
 			return domain.Wallet{}, false, err
 		}

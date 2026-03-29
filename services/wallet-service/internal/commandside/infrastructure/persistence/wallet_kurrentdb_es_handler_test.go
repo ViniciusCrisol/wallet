@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -47,7 +48,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 	})
 
 	t.Run("It should return nil when wallet has no uncommitted events", func(t *testing.T) {
@@ -56,7 +57,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
 		wallet.Commit()
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 	})
 
 	t.Run("It should save multiple events when wallet has multiple uncommitted events", func(t *testing.T) {
@@ -72,7 +73,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 	})
 
 	t.Run("It should return an error when saving the same wallet stream twice with conflicting revisions", func(t *testing.T) {
@@ -80,14 +81,14 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 
 		conflictWallet := domain.NewWallet(domain.CreateWalletCommand{
 			WalletID:  wallet.ID(),
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.True(t, errors.Is(esHandler.Save(conflictWallet), pkg.ErrConflict))
+		assert.True(t, errors.Is(esHandler.Save(context.Background(), conflictWallet), pkg.ErrConflict))
 	})
 }
 
@@ -100,7 +101,7 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 		esHandler := newTestESHandler(t)
 		nonExistentID := valueobject.GenerateID()
 
-		_, found, err := esHandler.Find(nonExistentID)
+		_, found, err := esHandler.Find(context.Background(), nonExistentID)
 
 		assert.NoError(t, err)
 		assert.False(t, found)
@@ -111,9 +112,9 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 
-		result, found, err := esHandler.Find(wallet.ID())
+		result, found, err := esHandler.Find(context.Background(), wallet.ID())
 
 		assert.NoError(t, err)
 		assert.True(t, found)
@@ -133,9 +134,9 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 
-		result, found, err := esHandler.Find(wallet.ID())
+		result, found, err := esHandler.Find(context.Background(), wallet.ID())
 
 		assert.NoError(t, err)
 		assert.True(t, found)
@@ -156,9 +157,9 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
-		assert.NoError(t, esHandler.Save(wallet))
+		assert.NoError(t, esHandler.Save(context.Background(), wallet))
 
-		reloaded, found, err := esHandler.Find(wallet.ID())
+		reloaded, found, err := esHandler.Find(context.Background(), wallet.ID())
 		assert.NoError(t, err)
 		require.True(t, found)
 
@@ -170,9 +171,9 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 			ToWalletID: valueobject.GenerateID(),
 			Timestamp:  time.Now(),
 		}))
-		assert.NoError(t, esHandler.Save(reloaded))
+		assert.NoError(t, esHandler.Save(context.Background(), reloaded))
 
-		result, found, err := esHandler.Find(wallet.ID())
+		result, found, err := esHandler.Find(context.Background(), wallet.ID())
 		assert.NoError(t, err)
 		assert.True(t, found)
 		assert.Equal(t, 600, result.Balance().Amount())

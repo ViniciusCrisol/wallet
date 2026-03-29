@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -164,7 +165,7 @@ func TestWalletController_TransferFunds(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t, ctrl.esHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(context.Background(), wallet))
 
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 500,
@@ -253,7 +254,7 @@ func TestWalletController_TransferFunds(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, ctrl.esHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(context.Background(), wallet))
 
 		body := marshalBody(t, TransferFundsDTO{
 			AmountInCents: 500,
@@ -280,7 +281,7 @@ func TestWalletController_MockTransfer(t *testing.T) {
 			HolderID:  valueobject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.NoError(t, ctrl.esHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(context.Background(), wallet))
 
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 500,
@@ -409,7 +410,7 @@ func TestWalletController_MockTransfer(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
-		assert.NoError(t, ctrl.esHandler.Save(wallet))
+		assert.NoError(t, ctrl.esHandler.Save(context.Background(), wallet))
 
 		body := marshalBody(t, MockTransferDTO{
 			AmountInCents: 2,

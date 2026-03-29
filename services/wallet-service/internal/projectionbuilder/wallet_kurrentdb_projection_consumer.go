@@ -7,6 +7,7 @@ import (
 
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/eventsourcing"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
@@ -28,37 +29,11 @@ func NewWalletKurrentDBProjectionConsumer(
 
 func (consumer *WalletKurrentDBProjectionConsumer) Start(ctx context.Context) {
 	groupName := config.Load().WalletProjectionGroupName
-	subscriptionOptions := kurrentdb.SubscribeToPersistentSubscriptionOptions{}
-	subscription, err := consumer.client.SubscribeToPersistentSubscriptionToAll(ctx, groupName, subscriptionOptions)
-	if err != nil {
-		slog.Error("failed to subscribe to persistent subscription", slog.String("group_name", groupName), slog.String("error", err.Error()))
-		return
-	}
-	defer subscription.Close()
-
-	for {
-		msg := subscription.Recv()
-		if msg.SubscriptionDropped != nil {
-			return
-		}
-		if msg.EventAppeared == nil ||
-			msg.EventAppeared.Event == nil ||
-			msg.EventAppeared.Event.Event == nil {
-			continue
-		}
-		if err := consumer.handle(
-			msg.EventAppeared.Event.Event.Data,
-			msg.EventAppeared.Event.Event.EventType,
-		); err != nil {
-			return
-		}
-		if err := subscription.Ack(msg.EventAppeared.Event); err != nil {
-			return
-		}
-	}
+	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, groupName)
 }
 
 func (consumer *WalletKurrentDBProjectionConsumer) handle(
+	ctx context.Context,
 	eventBody []byte,
 	eventName string,
 ) error {
@@ -69,7 +44,7 @@ func (consumer *WalletKurrentDBProjectionConsumer) handle(
 			slog.Error("failed to unmarshal wallet created event", slog.String("error", err.Error()))
 			return err
 		}
-		return consumer.projectionDAO.CreateWallet(event)
+		return consumer.projectionDAO.CreateWallet(ctx, event)
 
 	case pkg.FundsTransferredEventName:
 		var event pkg.FundsTransferredEvent
@@ -77,7 +52,7 @@ func (consumer *WalletKurrentDBProjectionConsumer) handle(
 			slog.Error("failed to unmarshal funds transferred event", slog.String("error", err.Error()))
 			return err
 		}
-		return consumer.projectionDAO.ApplyFundsTransferred(event)
+		return consumer.projectionDAO.ApplyFundsTransferred(ctx, event)
 
 	case pkg.FundsTransferReceivedEventName:
 		var event pkg.FundsTransferReceivedEvent
@@ -85,7 +60,7 @@ func (consumer *WalletKurrentDBProjectionConsumer) handle(
 			slog.Error("failed to unmarshal funds transfer received event", slog.String("error", err.Error()))
 			return err
 		}
-		return consumer.projectionDAO.ApplyFundsTransferReceived(event)
+		return consumer.projectionDAO.ApplyFundsTransferReceived(ctx, event)
 
 	default:
 		slog.Warn("unhandled event type in projection consumer", slog.String("type", eventName))

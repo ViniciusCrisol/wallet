@@ -35,7 +35,7 @@ func (controller *WalletController) Create(response http.ResponseWriter, request
 	}
 
 	wallet := domain.NewWallet(command)
-	if err := controller.esHandler.Save(wallet); err != nil {
+	if err := controller.esHandler.Save(request.Context(), wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
@@ -61,7 +61,7 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 		return
 	}
 
-	wallet, found, err := controller.esHandler.Find(walletID)
+	wallet, found, err := controller.esHandler.Find(request.Context(), walletID)
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
@@ -74,7 +74,7 @@ func (controller *WalletController) TransferFunds(response http.ResponseWriter, 
 		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.esHandler.Save(wallet); err != nil {
+	if err := controller.esHandler.Save(request.Context(), wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
@@ -100,7 +100,7 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		return
 	}
 
-	wallet, found, err := controller.esHandler.Find(walletID)
+	wallet, found, err := controller.esHandler.Find(request.Context(), walletID)
 	if err != nil {
 		pkg.RespondWithError(response, err)
 		return
@@ -113,7 +113,7 @@ func (controller *WalletController) MockTransfer(response http.ResponseWriter, r
 		pkg.RespondWithError(response, err)
 		return
 	}
-	if err := controller.esHandler.Save(wallet); err != nil {
+	if err := controller.esHandler.Save(request.Context(), wallet); err != nil {
 		pkg.RespondWithError(response, err)
 		return
 	}
