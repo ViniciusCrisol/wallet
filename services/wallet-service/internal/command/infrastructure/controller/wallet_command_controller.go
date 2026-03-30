@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"wallet/wallet-service/internal/command/domain"
@@ -28,7 +27,6 @@ func (controller *WalletCommandController) Create(response http.ResponseWriter, 
 	request.Body = http.MaxBytesReader(response, request.Body, maxRequestBodySize)
 	var dto CreateWalletDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		slog.Warn("failed to decode create wallet request", slog.String("error", err.Error()))
 		web.RespondWithError(response, apperr.ErrUnprocessableEntity)
 		return
 	}
@@ -52,7 +50,6 @@ func (controller *WalletCommandController) TransferFunds(response http.ResponseW
 	request.Body = http.MaxBytesReader(response, request.Body, maxRequestBodySize)
 	var dto TransferFundsDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		slog.Warn("failed to decode transfer funds request", slog.String("error", err.Error()))
 		web.RespondWithError(response, apperr.ErrUnprocessableEntity)
 		return
 	}
@@ -92,7 +89,6 @@ func (controller *WalletCommandController) MockTransfer(response http.ResponseWr
 	request.Body = http.MaxBytesReader(response, request.Body, maxRequestBodySize)
 	var dto MockTransferDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		slog.Warn("failed to decode mock transfer request", slog.String("error", err.Error()))
 		web.RespondWithError(response, apperr.ErrUnprocessableEntity)
 		return
 	}

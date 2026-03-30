@@ -27,12 +27,12 @@ func main() {
 	godotenv.Load()
 	cfg := config.Load()
 
-	settings, err := kurrentdb.ParseConnectionString(cfg.KurrentDBConnectionString)
+	kurrenDBSettings, err := kurrentdb.ParseConnectionString(cfg.KurrentDBConnectionString)
 	if err != nil {
 		slog.Error("failed to parse kurrentdb connection string", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	kurrentDBClient, err := kurrentdb.NewClient(settings)
+	kurrentDBClient, err := kurrentdb.NewClient(kurrenDBSettings)
 	if err != nil {
 		slog.Error("failed to connect to kurrentdb", slog.String("error", err.Error()))
 		os.Exit(1)

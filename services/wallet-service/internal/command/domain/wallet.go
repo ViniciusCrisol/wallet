@@ -122,7 +122,7 @@ func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
 func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
 	balance, err := wallet.balance.Sub(event.Amount)
 	if err != nil {
-		return fmt.Errorf("applying FundsTransferredEvent to wallet %s: %w", wallet.ID(), err)
+		return err
 	}
 	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
@@ -132,7 +132,7 @@ func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
 func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) error {
 	balance, err := wallet.balance.Sum(event.Amount)
 	if err != nil {
-		return fmt.Errorf("applying FundsTransferReceivedEvent to wallet %s: %w", wallet.ID(), err)
+		return err
 	}
 	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp

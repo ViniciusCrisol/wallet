@@ -3,7 +3,6 @@ package query
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -56,7 +55,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 	}
 	if err != nil {
 		slog.Error("failed to query wallet projection", slog.String("wallet_id", walletID.String()), slog.String("error", err.Error()))
-		web.RespondWithError(response, apperr.ErrInternal)
+		web.RespondWithError(response, err)
 		return
 	}
 
@@ -65,12 +64,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 }
 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
-	holderIDParam := request.URL.Query().Get("holder_id")
-	if holderIDParam == "" {
-		web.RespondWithError(response, fmt.Errorf("%w: holder_id", apperr.ErrMissingRequiredParam))
-		return
-	}
-	holderID, err := valueobject.NewID(holderIDParam)
+	holderID, err := valueobject.NewID(request.URL.Query().Get("holder_id"))
 	if err != nil {
 		web.RespondWithError(response, err)
 		return
@@ -83,7 +77,7 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 	)
 	if err != nil {
 		slog.Error("failed to query wallet projections by holder", slog.String("holder_id", holderID.String()), slog.String("error", err.Error()))
-		web.RespondWithError(response, apperr.ErrInternal)
+		web.RespondWithError(response, err)
 		return
 	}
 	defer rows.Close()
@@ -99,14 +93,14 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 			&wallet.UpdatedAt,
 		); err != nil {
 			slog.Error("failed to scan wallet projection row", slog.String("error", err.Error()))
-			web.RespondWithError(response, apperr.ErrInternal)
+			web.RespondWithError(response, err)
 			return
 		}
 		wallets = append(wallets, wallet)
 	}
 	if err := rows.Err(); err != nil {
 		slog.Error("error iterating wallet projection rows", slog.String("error", err.Error()))
-		web.RespondWithError(response, apperr.ErrInternal)
+		web.RespondWithError(response, err)
 		return
 	}
 

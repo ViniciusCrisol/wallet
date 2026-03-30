@@ -2,7 +2,7 @@ package eventsourcing
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 )
 
 type Event any
@@ -15,7 +15,8 @@ type ParsedEvent struct {
 func (event ParsedEvent) ToJSON() ([]byte, error) {
 	j, err := json.Marshal(event.Body)
 	if err != nil {
-		return nil, fmt.Errorf("marshaling event %q to JSON: %w", event.Name, err)
+		slog.Error("failed to marshal event to JSON", slog.String("event_name", event.Name), slog.String("error", err.Error()))
+		return nil, err
 	}
 	return j, nil
 }

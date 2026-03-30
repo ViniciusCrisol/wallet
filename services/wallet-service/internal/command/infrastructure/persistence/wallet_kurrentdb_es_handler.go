@@ -3,8 +3,8 @@ package persistence
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
+	"log/slog"
 	"math"
 
 	"wallet/wallet-service/internal/command/domain"
@@ -36,11 +36,11 @@ func (h *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Walle
 	for _, event := range uncommittedEvents {
 		integrationEvent, err := walletDomainToIntegrationEvent(event)
 		if err != nil {
-			return fmt.Errorf("saving wallet %s: %w", wallet.ID(), err)
+			return err
 		}
 		data, err := integrationEvent.ToJSON()
 		if err != nil {
-			return fmt.Errorf("saving wallet %s: %w", wallet.ID(), err)
+			return err
 		}
 		eventDataList = append(eventDataList, kurrentdb.EventData{
 			ContentType: kurrentdb.ContentTypeJson,
@@ -64,9 +64,19 @@ func (h *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Walle
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
 	); err != nil {
 		if eventsourcing.IsKurrentDBConcurrencyError(err) {
-			return fmt.Errorf("%w: wallet %s was modified concurrently, retry the operation", apperr.ErrConflict, wallet.ID())
+			slog.Warn(
+				"optimistic concurrency conflict on wallet stream",
+				slog.String("wallet_id", wallet.ID().String()),
+				slog.String("error", err.Error()),
+			)
+			return apperr.ErrConflict
 		}
-		return fmt.Errorf("appending events to wallet %s stream: %w", wallet.ID(), err)
+		slog.Error(
+			"failed to append events to wallet stream",
+			slog.String("wallet_id", wallet.ID().String()),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	wallet.Commit()
 	return nil
@@ -84,9 +94,11 @@ func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) 
 		}, math.MaxUint64)
 	if err != nil {
 		if eventsourcing.IsKurrentDBNotFoundError(err) {
+			slog.Error("wallet stream not found", slog.String("wallet_id", id.String()))
 			return domain.Wallet{}, false, nil
 		}
-		return domain.Wallet{}, false, fmt.Errorf("reading wallet %s stream: %w", id, err)
+		slog.Error("failed to read wallet stream", slog.String("wallet_id", id.String()), slog.String("error", err.Error()))
+		return domain.Wallet{}, false, err
 	}
 	defer stream.Close()
 
@@ -98,19 +110,37 @@ func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) 
 				break
 			}
 			if eventsourcing.IsKurrentDBNotFoundError(err) {
+				slog.Error("wallet stream not found", slog.String("wallet_id", id.String()))
 				return domain.Wallet{}, false, nil
 			}
-			return domain.Wallet{}, false, fmt.Errorf("reading event from wallet %s stream: %w", id, err)
+			slog.Error(
+				"failed to read event from wallet stream",
+				slog.String("wallet_id", id.String()),
+				slog.String("error", err.Error()),
+			)
+			return domain.Wallet{}, false, err
 		}
 		domainEvent, err := WalletIntegrationToDomainEvent(
 			resolvedEvent.Event.Data,
 			resolvedEvent.Event.EventType,
 		)
 		if err != nil {
-			return domain.Wallet{}, false, fmt.Errorf("replaying wallet %s: %w", id, err)
+			slog.Error(
+				"failed to map integration event to domain event",
+				slog.String("event_type", resolvedEvent.Event.EventType),
+				slog.String("wallet_id", id.String()),
+				slog.String("error", err.Error()),
+			)
+			return domain.Wallet{}, false, err
 		}
 		if err := wallet.Replay(domainEvent); err != nil {
-			return domain.Wallet{}, false, fmt.Errorf("replaying wallet %s: %w", id, err)
+			slog.Error(
+				"failed to replay domain event on wallet",
+				slog.String("event_type", resolvedEvent.Event.EventType),
+				slog.String("wallet_id", id.String()),
+				slog.String("error", err.Error()),
+			)
+			return domain.Wallet{}, false, err
 		}
 	}
 	wallet.Commit()

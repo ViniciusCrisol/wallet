@@ -23,7 +23,8 @@ var (
 	ErrNonPositiveAmount        = fmt.Errorf("%w: amount must be a positive non-zero integer", ErrValidation)
 	ErrAmountOverflow           = fmt.Errorf("%w: amount overflow", ErrValidation)
 
-	ErrUnknownEventType = fmt.Errorf("%w: unknown event type", ErrInternal)
+	ErrUnknownEventType   = fmt.Errorf("%w: unknown event type", ErrInternal)
+	ErrSubscriptionFailed = fmt.Errorf("%w: failed to subscribe to persistent subscription", ErrInternal)
 )
 
 func IsPermanentError(err error) bool {

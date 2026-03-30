@@ -3,7 +3,6 @@ package eventsourcing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -13,8 +12,6 @@ import (
 )
 
 type EventHandler func(ctx context.Context, eventBody []byte, eventName string) error
-
-var errSubscriptionFailed = errors.New("failed to subscribe to persistent subscription")
 
 func SubscribeAndConsume(
 	ctx context.Context,
@@ -36,13 +33,14 @@ func SubscribeAndConsume(
 		if ctx.Err() != nil {
 			return
 		}
-		if !errors.Is(err, errSubscriptionFailed) {
+		if !errors.Is(err, apperr.ErrSubscriptionFailed) {
 			delay = baseDelay
 		}
-		slog.Warn("subscription ended, reconnecting",
-			slog.String("group_name", groupName),
-			slog.String("error", err.Error()),
+		slog.Warn(
+			"subscription ended, reconnecting",
 			slog.Duration("delay", delay),
+			slog.String("error", err.Error()),
+			slog.String("group_name", groupName),
 		)
 
 		select {
@@ -64,14 +62,24 @@ func consumeSubscription(
 	options := kurrentdb.SubscribeToPersistentSubscriptionOptions{}
 	subscription, err := kurrentClient.SubscribeToPersistentSubscriptionToAll(ctx, groupName, options)
 	if err != nil {
-		return fmt.Errorf("%w: %v", errSubscriptionFailed, err)
+		slog.Error(
+			"failed to subscribe to persistent subscription",
+			slog.String("group_name", groupName),
+			slog.String("error", err.Error()),
+		)
+		return apperr.ErrSubscriptionFailed
 	}
 	defer subscription.Close()
 
 	for {
 		msg := subscription.Recv()
 		if msg.SubscriptionDropped != nil {
-			return fmt.Errorf("subscription dropped: %w", msg.SubscriptionDropped.Error)
+			slog.Warn(
+				"subscription dropped",
+				slog.String("group_name", groupName),
+				slog.String("error", msg.SubscriptionDropped.Error.Error()),
+			)
+			return msg.SubscriptionDropped.Error
 		}
 		if msg.EventAppeared == nil ||
 			msg.EventAppeared.Event == nil ||
@@ -84,26 +92,28 @@ func consumeSubscription(
 			if apperr.IsPermanentError(err) {
 				nackAction = kurrentdb.NackActionPark
 			}
-			slog.Error("failed to handle event",
-				slog.String("event_type", event.Event.EventType),
-				slog.String("group_name", groupName),
-				slog.String("nack_action", nackActionString(nackAction)),
+			slog.Error(
+				"failed to handle event",
 				slog.String("error", err.Error()),
+				slog.String("group_name", groupName),
+				slog.String("event_type", event.Event.EventType),
 			)
 			if nackErr := subscription.Nack(err.Error(), nackAction, event); nackErr != nil {
-				slog.Error("failed to nack event",
-					slog.String("event_type", event.Event.EventType),
+				slog.Error(
+					"failed to nack event",
 					slog.String("error", nackErr.Error()),
+					slog.String("event_type", event.Event.EventType),
 				)
 			}
 			continue
 		}
 		if err := subscription.Ack(event); err != nil {
-			slog.Error("failed to acknowledge event",
-				slog.String("event_type", event.Event.EventType),
+			slog.Error(
+				"failed to acknowledge event",
 				slog.String("error", err.Error()),
+				slog.String("event_type", event.Event.EventType),
 			)
-			return fmt.Errorf("failed to ack event: %w", err)
+			return err
 		}
 	}
 }
@@ -121,15 +131,4 @@ func IsKurrentDBConcurrencyError(err error) bool {
 func IsKurrentDBAlreadyExistsError(err error) bool {
 	kurrentErr, ok := kurrentdb.FromError(err)
 	return !ok && kurrentErr.Code() == kurrentdb.ErrorCodeResourceAlreadyExists
-}
-
-func nackActionString(action kurrentdb.NackAction) string {
-	switch action {
-	case kurrentdb.NackActionRetry:
-		return "retry"
-	case kurrentdb.NackActionPark:
-		return "park"
-	default:
-		return "unknown"
-	}
 }

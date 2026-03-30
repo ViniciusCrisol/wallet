@@ -3,7 +3,6 @@ package projection
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
 
 	"wallet/wallet-service/pkg/apperr"
@@ -30,11 +29,17 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event int
 		event.UpdatedAt,
 	)
 	if err != nil {
-		return fmt.Errorf("inserting wallet projection %s: %w", event.WalletID, err)
+		slog.Error("failed to insert wallet projection", slog.String("wallet_id", event.WalletID), slog.String("error", err.Error()))
+		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("checking rows affected for wallet projection %s: %w", event.WalletID, err)
+		slog.Error(
+			"failed to get rows affected for wallet projection insert",
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	if rowsAffected == 0 {
 		slog.Info("wallet projection already exists, skipping", slog.String("wallet_id", event.WalletID))
@@ -45,7 +50,12 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event int
 func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, event integrationevent.FundsTransferredEvent) error {
 	tx, err := dao.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to begin transaction for funds transferred projection",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	defer tx.Rollback()
 
@@ -55,11 +65,21 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 		event.TransferID, integrationevent.FundsTransferredEventName,
 	)
 	if err != nil {
-		return fmt.Errorf("recording processed event for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to insert processed event for funds transferred",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	inserted, err := insertResult.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("checking processed event for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to get rows affected for processed event insert",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	if inserted == 0 {
 		slog.Info(
@@ -77,14 +97,31 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 		event.FromWalletID,
 	)
 	if err != nil {
-		return fmt.Errorf("debiting wallet %s for transfer %s: %w", event.FromWalletID, event.TransferID, err)
+		slog.Error(
+			"failed to update wallet projection for funds transferred",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.FromWalletID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("checking rows affected for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to get rows affected for funds transferred update",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.FromWalletID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w: wallet_id=%s, transfer_id=%s", apperr.ErrWalletProjectionNotFound, event.FromWalletID, event.TransferID)
+		slog.Warn(
+			"wallet projection not found for funds transferred",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.FromWalletID),
+		)
+		return apperr.ErrWalletProjectionNotFound
 	}
 
 	return tx.Commit()
@@ -93,7 +130,12 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Context, event integrationevent.FundsTransferReceivedEvent) error {
 	tx, err := dao.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to begin transaction for funds transfer received projection",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	defer tx.Rollback()
 
@@ -103,11 +145,21 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 		event.TransferID, integrationevent.FundsTransferReceivedEventName,
 	)
 	if err != nil {
-		return fmt.Errorf("recording processed event for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to insert processed event for funds transfer received",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	inserted, err := insertResult.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("checking processed event for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to get rows affected for processed event insert",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	if inserted == 0 {
 		slog.Info(
@@ -125,14 +177,31 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 		event.WalletID,
 	)
 	if err != nil {
-		return fmt.Errorf("crediting wallet %s for transfer %s: %w", event.WalletID, event.TransferID, err)
+		slog.Error(
+			"failed to update wallet projection for funds transfer received",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("checking rows affected for transfer %s: %w", event.TransferID, err)
+		slog.Error(
+			"failed to get rows affected for funds transfer received update",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()),
+		)
+		return err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w: wallet_id=%s, transfer_id=%s", apperr.ErrWalletProjectionNotFound, event.WalletID, event.TransferID)
+		slog.Warn(
+			"wallet projection not found for funds transfer received",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.WalletID),
+		)
+		return apperr.ErrWalletProjectionNotFound
 	}
 
 	return tx.Commit()

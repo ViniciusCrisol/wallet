@@ -3,7 +3,6 @@ package projection
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 
 	"wallet/wallet-service/pkg/apperr"
@@ -35,30 +34,41 @@ func (consumer *WalletKurrentDBProjectionConsumer) Start(ctx context.Context) {
 	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, consumer.groupName)
 }
 
-func (consumer *WalletKurrentDBProjectionConsumer) handle(
-	ctx context.Context,
-	eventBody []byte,
-	eventName string,
-) error {
+func (consumer *WalletKurrentDBProjectionConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
 	switch eventName {
 	case integrationevent.WalletCreatedEventName:
 		var event integrationevent.WalletCreatedEvent
 		if err := json.Unmarshal(eventBody, &event); err != nil {
-			return fmt.Errorf("%w: unmarshaling %s: %s", apperr.ErrValidation, eventName, err)
+			slog.Error(
+				"failed to unmarshal WalletCreatedEvent",
+				slog.String("event_name", eventName),
+				slog.String("error", err.Error()),
+			)
+			return apperr.ErrValidation
 		}
 		return consumer.projectionDAO.CreateWallet(ctx, event)
 
 	case integrationevent.FundsTransferredEventName:
 		var event integrationevent.FundsTransferredEvent
 		if err := json.Unmarshal(eventBody, &event); err != nil {
-			return fmt.Errorf("%w: unmarshaling %s: %s", apperr.ErrValidation, eventName, err)
+			slog.Error(
+				"failed to unmarshal FundsTransferredEvent",
+				slog.String("event_name", eventName),
+				slog.String("error", err.Error()),
+			)
+			return apperr.ErrValidation
 		}
 		return consumer.projectionDAO.ApplyFundsTransferred(ctx, event)
 
 	case integrationevent.FundsTransferReceivedEventName:
 		var event integrationevent.FundsTransferReceivedEvent
 		if err := json.Unmarshal(eventBody, &event); err != nil {
-			return fmt.Errorf("%w: unmarshaling %s: %s", apperr.ErrValidation, eventName, err)
+			slog.Error(
+				"failed to unmarshal FundsTransferReceivedEvent",
+				slog.String("event_name", eventName),
+				slog.String("error", err.Error()),
+			)
+			return apperr.ErrValidation
 		}
 		return consumer.projectionDAO.ApplyFundsTransferReceived(ctx, event)
 

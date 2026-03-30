@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"wallet/wallet-service/internal/command/domain"
@@ -36,11 +35,7 @@ func (consumer *WalletKurrentDBConsumer) Start(ctx context.Context) {
 	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, consumer.groupName)
 }
 
-func (consumer *WalletKurrentDBConsumer) handle(
-	ctx context.Context,
-	eventBody []byte,
-	eventName string,
-) error {
+func (consumer *WalletKurrentDBConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
 	switch eventName {
 	case integrationevent.FundsTransferredEventName:
 		domainEvent, err := persistence.WalletIntegrationToDomainEvent(eventBody, eventName)
@@ -48,7 +43,6 @@ func (consumer *WalletKurrentDBConsumer) handle(
 			return err
 		}
 		return consumer.receiveFundsTransfer(ctx, domainEvent.(domain.FundsTransferredEvent))
-
 	default:
 		slog.Warn("unhandled event type in wallet consumer", slog.String("type", eventName))
 		return nil
@@ -58,10 +52,15 @@ func (consumer *WalletKurrentDBConsumer) handle(
 func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Context, event domain.FundsTransferredEvent) error {
 	wallet, found, err := consumer.esHandler.Find(ctx, event.ToWalletID)
 	if err != nil {
-		return fmt.Errorf("receiving transfer %s for wallet %s: %w", event.TransferID, event.ToWalletID, err)
+		return err
 	}
 	if !found {
-		return fmt.Errorf("receiving transfer %s: %w", event.TransferID, apperr.ErrWalletNotFound)
+		slog.Error(
+			"destination wallet not found for funds transfer",
+			slog.String("transfer_id", event.TransferID.String()),
+			slog.String("to_wallet_id", event.ToWalletID.String()),
+		)
+		return apperr.ErrWalletNotFound
 	}
 	command := domain.ReceiveFundsTransferCommand{
 		Amount:       event.Amount,
@@ -70,10 +69,10 @@ func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Contex
 		Timestamp:    event.Timestamp,
 	}
 	if err := wallet.ReceiveFundsTransfer(command); err != nil {
-		return fmt.Errorf("receiving transfer %s for wallet %s: %w", event.TransferID, event.ToWalletID, err)
+		return err
 	}
 	if err := consumer.esHandler.Save(ctx, wallet); err != nil {
-		return fmt.Errorf("receiving transfer %s for wallet %s: %w", event.TransferID, event.ToWalletID, err)
+		return err
 	}
 	return nil
 }
