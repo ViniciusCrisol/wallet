@@ -42,20 +42,20 @@ func createTestWalletWithBalance(t *testing.T, esHandler *persistence.WalletKurr
 
 func TestWalletKurrentDBConsumer_Start(t *testing.T) {
 	t.Run("It should consume a published FundsTransferredEvent and apply ReceiveFundsTransfer to the target wallet", func(t *testing.T) {
-		groupName := "test-group-" + uuid.New().String()
+		group := "test-group-" + uuid.New().String()
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		kurrentDBClient.CreatePersistentSubscriptionToAll(
 			ctx,
-			groupName,
+			group,
 			kurrentdb.PersistentAllSubscriptionOptions{},
 		)
 
 		targetWallet := createTestWalletWithBalance(t, esHandler, 0)
 
-		go NewWalletKurrentDBConsumer(kurrentDBClient, esHandler, groupName).Start(ctx)
+		go NewWalletKurrentDBConsumer(group, kurrentDBClient, esHandler).Start(ctx)
 
 		fromWalletID := uuid.New().String()
 		transferID := uuid.New().String()
@@ -96,7 +96,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 	t.Run("It should process FundsTransferredEvent and credit the target wallet", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
 		targetWallet := createTestWalletWithBalance(t, esHandler, 1000)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		fromWalletID := uuid.New().String()
 		transferID := uuid.New().String()
@@ -120,7 +120,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return error when FundsTransferredEvent unmarshal fails", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		invalidEventBody := []byte(`{invalid json}`)
 
@@ -129,7 +129,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return nil error when unknown event type is received", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		unknownEventBody := []byte(`{"some": "data"}`)
 
@@ -138,7 +138,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return error when to_wallet_id is not a valid UUID", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
@@ -154,7 +154,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return error when transfer_id is not a valid UUID", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    "not-a-uuid",
@@ -170,7 +170,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return error when from_wallet_id is not a valid UUID", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
@@ -187,7 +187,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 	t.Run("It should return error when amount_in_cents is zero", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
 		targetWallet := createTestWalletWithBalance(t, esHandler, 1000)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
@@ -203,7 +203,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return error when amount_in_cents is negative", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
@@ -219,7 +219,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 	t.Run("It should return error when target wallet is not found", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),
@@ -236,7 +236,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 	t.Run("It should return error when balance limit would be exceeded", func(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
 		targetWallet := createTestWalletWithBalance(t, esHandler, domain.MaxBalanceInCents)
-		consumer := NewWalletKurrentDBConsumer(nil, esHandler, "")
+		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.New().String(),

@@ -12,8 +12,8 @@ import (
 )
 
 const (
+	maxDelay  = time.Minute
 	baseDelay = time.Second
-	maxDelay  = time.Second * 30
 )
 
 type EventHandler func(ctx context.Context, eventBody []byte, eventName string) error
@@ -37,14 +37,9 @@ func SubscribeAndConsume(
 			if !errors.Is(err, apperr.ErrSubscriptionFailed) {
 				delay = baseDelay
 			}
-
-			slog.Warn(
-				"subscription ended, reconnecting",
-				slog.String("group", group),
-				slog.String("error", err.Error()),
-			)
-			time.Sleep(delay)
+			slog.Warn("subscription ended, reconnecting", slog.String("group", group), slog.String("error", err.Error()))
 			delay = min(delay*2, maxDelay)
+			time.Sleep(delay)
 		}
 	}
 }
@@ -58,7 +53,7 @@ func consumeSubscription(
 	options := kurrentdb.SubscribeToPersistentSubscriptionOptions{}
 	subscription, err := client.SubscribeToPersistentSubscriptionToAll(ctx, group, options)
 	if err != nil {
-		slog.Error("failed to subscribe to persistent subscription", slog.String("group", group), slog.String("error", err.Error()))
+		slog.Error("failed to subscribe", slog.String("group", group), slog.String("error", err.Error()))
 		return apperr.ErrSubscriptionFailed
 	}
 	defer subscription.Close()
@@ -66,7 +61,9 @@ func consumeSubscription(
 	for {
 		msg := subscription.Recv()
 		if msg.SubscriptionDropped != nil {
-			slog.Warn("subscription dropped", slog.String("group", group), slog.String("error", msg.SubscriptionDropped.Error.Error()))
+			slog.Warn("subscription dropped",
+				slog.String("group", group),
+				slog.String("error", msg.SubscriptionDropped.Error.Error()))
 			return msg.SubscriptionDropped.Error
 		}
 		if msg.EventAppeared == nil ||
@@ -82,12 +79,12 @@ func consumeSubscription(
 				nack = kurrentdb.NackActionPark
 			}
 			if err := subscription.Nack(err.Error(), nack, event); err != nil {
-				slog.Error("failed to nack event", slog.String("event_type", event.Event.EventType), slog.String("error", err.Error()))
+				slog.Error("failed to nack event", slog.String("error", err.Error()))
 			}
 			continue
 		}
 		if err := subscription.Ack(event); err != nil {
-			slog.Error("failed to ack event", slog.String("event_type", event.Event.EventType), slog.String("error", err.Error()))
+			slog.Error("failed to ack event", slog.String("error", err.Error()))
 			return err
 		}
 	}

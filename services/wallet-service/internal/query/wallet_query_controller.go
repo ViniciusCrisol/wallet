@@ -54,13 +54,19 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 		return
 	}
 	if err != nil {
-		slog.Error("failed to query wallet projection", slog.String("wallet_id", walletID.String()), slog.String("error", err.Error()))
+		slog.Error("failed to query wallet projection",
+			slog.String("wallet_id", walletID.String()),
+			slog.String("error", err.Error()))
 		web.RespondWithError(response, err)
 		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(wallet)
+	if err := json.NewEncoder(response).Encode(wallet); err != nil {
+		slog.Error("failed to encode wallet response",
+			slog.String("wallet_id", walletID.String()),
+			slog.String("error", err.Error()))
+	}
 }
 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
@@ -76,7 +82,9 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 		holderID.String(),
 	)
 	if err != nil {
-		slog.Error("failed to query wallet projections by holder", slog.String("holder_id", holderID.String()), slog.String("error", err.Error()))
+		slog.Error("failed to query wallet projections by holder",
+			slog.String("holder_id", holderID.String()),
+			slog.String("error", err.Error()))
 		web.RespondWithError(response, err)
 		return
 	}
@@ -105,5 +113,9 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(wallets)
+	if err := json.NewEncoder(response).Encode(wallets); err != nil {
+		slog.Error("failed to encode wallets response",
+			slog.String("holder_id", holderID.String()),
+			slog.String("error", err.Error()))
+	}
 }

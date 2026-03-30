@@ -32,6 +32,7 @@ func main() {
 		slog.Error("failed to parse kurrentdb connection string", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
+	kurrenDBSettings.Logger = kurrentdb.NoopLogging()
 	kurrentDBClient, err := kurrentdb.NewClient(kurrenDBSettings)
 	if err != nil {
 		slog.Error("failed to connect to kurrentdb", slog.String("error", err.Error()))
@@ -91,11 +92,11 @@ func main() {
 	mux.HandleFunc("GET /wallets/{id}", walletQueryController.FindByID)
 	mux.HandleFunc("GET /wallets", walletQueryController.FindByHolderID)
 
-	walletConsumer := consumer.NewWalletKurrentDBConsumer(kurrentDBClient, walletESHandler, cfg.WalletCommandGroupName)
+	walletConsumer := consumer.NewWalletKurrentDBConsumer(cfg.WalletCommandGroupName, kurrentDBClient, walletESHandler)
 	go walletConsumer.Start(ctx)
 
 	projectionDAO := projection.NewWalletMySQLProjectionDAO(mySQLDB)
-	projectionConsumer := projection.NewWalletKurrentDBProjectionConsumer(kurrentDBClient, projectionDAO, cfg.WalletProjectionGroupName)
+	projectionConsumer := projection.NewWalletKurrentDBProjectionConsumer(cfg.WalletProjectionGroupName, kurrentDBClient, projectionDAO)
 	go projectionConsumer.Start(ctx)
 
 	server := &http.Server{Addr: cfg.ServerAddress, Handler: mux}

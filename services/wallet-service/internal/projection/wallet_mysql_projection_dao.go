@@ -29,13 +29,14 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event int
 		event.UpdatedAt,
 	)
 	if err != nil {
-		slog.Error("failed to insert wallet projection", slog.String("wallet_id", event.WalletID), slog.String("error", err.Error()))
+		slog.Error("failed to insert wallet projection",
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()))
 		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		slog.Error(
-			"failed to get rows affected for wallet projection insert",
+		slog.Error("failed to get rows affected for wallet projection insert",
 			slog.String("wallet_id", event.WalletID),
 			slog.String("error", err.Error()),
 		)
@@ -55,30 +56,24 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 		event.FromWalletID,
 	)
 	if err != nil {
-		slog.Error(
-			"failed to update wallet projection for funds transferred",
+		slog.Error("failed to update wallet projection for funds transferred",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.FromWalletID),
-			slog.String("error", err.Error()),
-		)
+			slog.String("error", err.Error()))
 		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		slog.Error(
-			"failed to get rows affected for funds transferred update",
+		slog.Error("failed to get rows affected for funds transferred update",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.FromWalletID),
-			slog.String("error", err.Error()),
-		)
+			slog.String("error", err.Error()))
 		return err
 	}
 	if rowsAffected == 0 {
-		slog.Warn(
-			"wallet projection not found for funds transferred",
+		slog.Warn("wallet projection not found for funds transferred",
 			slog.String("transfer_id", event.TransferID),
-			slog.String("wallet_id", event.FromWalletID),
-		)
+			slog.String("wallet_id", event.FromWalletID))
 		return apperr.ErrWalletProjectionNotFound
 	}
 
@@ -93,30 +88,24 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 		event.WalletID,
 	)
 	if err != nil {
-		slog.Error(
-			"failed to update wallet projection for funds transfer received",
+		slog.Error("failed to update wallet projection for funds transfer received",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.WalletID),
-			slog.String("error", err.Error()),
-		)
+			slog.String("error", err.Error()))
 		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		slog.Error(
-			"failed to get rows affected for funds transfer received update",
+		slog.Error("failed to get rows affected for funds transfer received update",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.WalletID),
-			slog.String("error", err.Error()),
-		)
+			slog.String("error", err.Error()))
 		return err
 	}
 	if rowsAffected == 0 {
-		slog.Warn(
-			"wallet projection not found for funds transfer received",
+		slog.Warn("wallet projection not found for funds transfer received",
 			slog.String("transfer_id", event.TransferID),
-			slog.String("wallet_id", event.WalletID),
-		)
+			slog.String("wallet_id", event.WalletID))
 		return apperr.ErrWalletProjectionNotFound
 	}
 	return nil

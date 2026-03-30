@@ -36,12 +36,10 @@ func NewWallet(command CreateWalletCommand) Wallet {
 
 func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 	if wallet.balance.Compare(command.Amount) == -1 {
-		slog.Warn(
-			"insufficient balance",
+		slog.Warn("insufficient balance",
 			slog.String("wallet_id", wallet.ID().String()),
-			slog.Int("amount_in_cents", command.Amount.Amount()),
 			slog.Int("balance_in_cents", wallet.balance.Amount()),
-		)
+			slog.Int("amount_in_cents", command.Amount.Amount()))
 		return apperr.ErrInsufficientBalance
 	}
 
@@ -69,12 +67,10 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 		return err
 	}
 	if newBalance.Compare(maxBalance) > 0 {
-		slog.Warn(
-			"balance limit would be exceeded",
+		slog.Warn("balance limit would be exceeded",
 			slog.String("wallet_id", wallet.ID().String()),
 			slog.Int("amount_in_cents", command.Amount.Amount()),
-			slog.Int("current_balance_in_cents", wallet.balance.Amount()),
-		)
+			slog.Int("current_balance_in_cents", wallet.balance.Amount()))
 		return apperr.ErrBalanceLimitExceeded
 	}
 
@@ -105,7 +101,7 @@ func (wallet *Wallet) Replay(event eventsourcing.Event) error {
 			return err
 		}
 	default:
-		slog.Error("unknown event type", slog.String("type", fmt.Sprintf("%T", event)), slog.Any("event", event))
+		slog.Error("unknown event type", slog.String("event_type", fmt.Sprintf("%T", event)), slog.Any("event", event))
 		return apperr.ErrUnknownEventType
 	}
 	wallet.IncrementVersion()

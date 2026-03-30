@@ -26,13 +26,13 @@ func NewWalletKurrentDBESHandler(client *kurrentdb.Client) *WalletKurrentDBESHan
 	}
 }
 
-func (h *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Wallet) error {
+func (handler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Wallet) error {
 	uncommittedEvents := wallet.UncommittedEvents()
 	if len(uncommittedEvents) == 0 {
 		return nil
 	}
 
-	var eventDataList []kurrentdb.EventData
+	var events []kurrentdb.EventData
 	for _, event := range uncommittedEvents {
 		integrationEvent, err := walletDomainToIntegrationEvent(event)
 		if err != nil {
@@ -42,7 +42,7 @@ func (h *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Walle
 		if err != nil {
 			return err
 		}
-		eventDataList = append(eventDataList, kurrentdb.EventData{
+		events = append(events, kurrentdb.EventData{
 			ContentType: kurrentdb.ContentTypeJson,
 			EventType:   integrationEvent.Name,
 			EventID:     uuid.NewUUIDValue(),
@@ -58,34 +58,30 @@ func (h *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain.Walle
 		streamState = kurrentdb.StreamRevision{Value: uint64(expectedRevision)}
 	}
 
-	if _, err := h.client.AppendToStream(
+	if _, err := handler.client.AppendToStream(
 		ctx,
-		h.buildStreamName(wallet.ID()),
-		kurrentdb.AppendToStreamOptions{StreamState: streamState}, eventDataList...,
+		handler.buildStreamName(wallet.ID()),
+		kurrentdb.AppendToStreamOptions{StreamState: streamState}, events...,
 	); err != nil {
 		if eventsourcing.IsKurrentDBConcurrencyError(err) {
-			slog.Warn(
-				"optimistic concurrency conflict on wallet stream",
+			slog.Warn("optimistic concurrency conflict on wallet stream",
 				slog.String("wallet_id", wallet.ID().String()),
-				slog.String("error", err.Error()),
-			)
+				slog.String("error", err.Error()))
 			return apperr.ErrConflict
 		}
-		slog.Error(
-			"failed to append events to wallet stream",
+		slog.Error("failed to append events to wallet stream",
 			slog.String("wallet_id", wallet.ID().String()),
-			slog.String("error", err.Error()),
-		)
+			slog.String("error", err.Error()))
 		return err
 	}
 	wallet.Commit()
 	return nil
 }
 
-func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) (domain.Wallet, bool, error) {
-	streamName := h.buildStreamName(id)
+func (handler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) (domain.Wallet, bool, error) {
+	streamName := handler.buildStreamName(id)
 
-	stream, err := h.client.ReadStream(
+	stream, err := handler.client.ReadStream(
 		ctx,
 		streamName,
 		kurrentdb.ReadStreamOptions{
@@ -94,10 +90,12 @@ func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) 
 		}, math.MaxUint64)
 	if err != nil {
 		if eventsourcing.IsKurrentDBNotFoundError(err) {
-			slog.Error("wallet stream not found", slog.String("wallet_id", id.String()))
+			slog.Info("wallet stream not found", slog.String("wallet_id", id.String()))
 			return domain.Wallet{}, false, nil
 		}
-		slog.Error("failed to read wallet stream", slog.String("wallet_id", id.String()), slog.String("error", err.Error()))
+		slog.Error("failed to read wallet stream",
+			slog.String("wallet_id", id.String()),
+			slog.String("error", err.Error()))
 		return domain.Wallet{}, false, err
 	}
 	defer stream.Close()
@@ -110,14 +108,12 @@ func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) 
 				break
 			}
 			if eventsourcing.IsKurrentDBNotFoundError(err) {
-				slog.Error("wallet stream not found", slog.String("wallet_id", id.String()))
+				slog.Info("wallet stream not found", slog.String("wallet_id", id.String()))
 				return domain.Wallet{}, false, nil
 			}
-			slog.Error(
-				"failed to read event from wallet stream",
+			slog.Error("failed to read event from wallet stream",
 				slog.String("wallet_id", id.String()),
-				slog.String("error", err.Error()),
-			)
+				slog.String("error", err.Error()))
 			return domain.Wallet{}, false, err
 		}
 		domainEvent, err := WalletIntegrationToDomainEvent(
@@ -125,21 +121,17 @@ func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) 
 			resolvedEvent.Event.EventType,
 		)
 		if err != nil {
-			slog.Error(
-				"failed to map integration event to domain event",
+			slog.Error("failed to map integration event to domain event",
 				slog.String("event_type", resolvedEvent.Event.EventType),
 				slog.String("wallet_id", id.String()),
-				slog.String("error", err.Error()),
-			)
+				slog.String("error", err.Error()))
 			return domain.Wallet{}, false, err
 		}
 		if err := wallet.Replay(domainEvent); err != nil {
-			slog.Error(
-				"failed to replay domain event on wallet",
+			slog.Error("failed to replay domain event on wallet",
 				slog.String("event_type", resolvedEvent.Event.EventType),
 				slog.String("wallet_id", id.String()),
-				slog.String("error", err.Error()),
-			)
+				slog.String("error", err.Error()))
 			return domain.Wallet{}, false, err
 		}
 	}
@@ -147,6 +139,6 @@ func (h *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) 
 	return wallet, true, nil
 }
 
-func (h *WalletKurrentDBESHandler) buildStreamName(id valueobject.ID) string {
+func (handler *WalletKurrentDBESHandler) buildStreamName(id valueobject.ID) string {
 	return "wallet-" + id.String()
 }
