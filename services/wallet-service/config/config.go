@@ -3,23 +3,19 @@ package config
 import "os"
 
 type Config struct {
+	ServerAddress             string
 	MySQLConnectionString     string
 	KurrentDBConnectionString string
-	WalletProjectionGroupName string
 	WalletCommandGroupName    string
-	ServerAddress             string
+	WalletProjectionGroupName string
 }
 
 func Load() Config {
-	serverAddr := os.Getenv("SERVER_ADDRESS")
-	if serverAddr == "" {
-		serverAddr = ":8080"
-	}
 	return Config{
+		ServerAddress:             os.Getenv("SERVER_ADDRESS"),
 		MySQLConnectionString:     os.Getenv("MYSQL_CONNECTION_STRING"),
 		KurrentDBConnectionString: os.Getenv("KURRENTDB_CONNECTION_STRING"),
-		WalletProjectionGroupName: os.Getenv("WALLET_PROJECTION_GROUP_NAME"),
 		WalletCommandGroupName:    os.Getenv("WALLET_COMMAND_GROUP_NAME"),
-		ServerAddress:             serverAddr,
+		WalletProjectionGroupName: os.Getenv("WALLET_PROJECTION_GROUP_NAME"),
 	}
 }
