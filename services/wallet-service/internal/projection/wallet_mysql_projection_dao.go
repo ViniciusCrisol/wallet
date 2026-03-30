@@ -48,49 +48,7 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event int
 }
 
 func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, event integrationevent.FundsTransferredEvent) error {
-	tx, err := dao.db.BeginTx(ctx, nil)
-	if err != nil {
-		slog.Error(
-			"failed to begin transaction for funds transferred projection",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	defer tx.Rollback()
-
-	insertResult, err := tx.ExecContext(
-		ctx,
-		"INSERT IGNORE INTO processed_events (event_id, event_type) VALUES (?, ?)",
-		event.TransferID, integrationevent.FundsTransferredEventName,
-	)
-	if err != nil {
-		slog.Error(
-			"failed to insert processed event for funds transferred",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	inserted, err := insertResult.RowsAffected()
-	if err != nil {
-		slog.Error(
-			"failed to get rows affected for processed event insert",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	if inserted == 0 {
-		slog.Info(
-			"event already processed, skipping",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("event_type", integrationevent.FundsTransferredEventName),
-		)
-		return nil
-	}
-
-	result, err := tx.ExecContext(ctx,
+	result, err := dao.db.ExecContext(ctx,
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents - ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
@@ -124,53 +82,11 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 		return apperr.ErrWalletProjectionNotFound
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Context, event integrationevent.FundsTransferReceivedEvent) error {
-	tx, err := dao.db.BeginTx(ctx, nil)
-	if err != nil {
-		slog.Error(
-			"failed to begin transaction for funds transfer received projection",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	defer tx.Rollback()
-
-	insertResult, err := tx.ExecContext(
-		ctx,
-		"INSERT IGNORE INTO processed_events (event_id, event_type) VALUES (?, ?)",
-		event.TransferID, integrationevent.FundsTransferReceivedEventName,
-	)
-	if err != nil {
-		slog.Error(
-			"failed to insert processed event for funds transfer received",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	inserted, err := insertResult.RowsAffected()
-	if err != nil {
-		slog.Error(
-			"failed to get rows affected for processed event insert",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	if inserted == 0 {
-		slog.Info(
-			"event already processed, skipping",
-			slog.String("transfer_id", event.TransferID),
-			slog.String("event_type", integrationevent.FundsTransferReceivedEventName),
-		)
-		return nil
-	}
-
-	result, err := tx.ExecContext(ctx,
+	result, err := dao.db.ExecContext(ctx,
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents + ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
@@ -203,6 +119,5 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 		)
 		return apperr.ErrWalletProjectionNotFound
 	}
-
-	return tx.Commit()
+	return nil
 }

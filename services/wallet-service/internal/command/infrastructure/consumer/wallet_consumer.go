@@ -32,7 +32,7 @@ func NewWalletKurrentDBConsumer(
 }
 
 func (consumer *WalletKurrentDBConsumer) Start(ctx context.Context) {
-	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, consumer.groupName)
+	eventsourcing.SubscribeAndConsume(ctx, consumer.groupName, consumer.client, consumer.handle)
 }
 
 func (consumer *WalletKurrentDBConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {

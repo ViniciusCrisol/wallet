@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"wallet/wallet-service/pkg/apperr"
@@ -23,13 +22,10 @@ func RespondWithError(response http.ResponseWriter, err error) {
 	case errors.Is(err, apperr.ErrUnprocessableEntity):
 		status = http.StatusUnprocessableEntity
 	default:
-		slog.Error("unhandled error in HTTP response", slog.String("error", err.Error()))
 		status = http.StatusInternalServerError
 		err = apperr.ErrInternal
 	}
 	response.WriteHeader(status)
 
-	if err := json.NewEncoder(response).Encode(map[string]string{"error": err.Error()}); err != nil {
-		slog.Error("failed to encode error response", slog.String("error", err.Error()))
-	}
+	json.NewEncoder(response).Encode(map[string]string{"error": err.Error()})
 }

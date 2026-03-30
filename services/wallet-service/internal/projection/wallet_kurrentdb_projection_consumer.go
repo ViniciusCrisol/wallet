@@ -31,7 +31,7 @@ func NewWalletKurrentDBProjectionConsumer(
 }
 
 func (consumer *WalletKurrentDBProjectionConsumer) Start(ctx context.Context) {
-	eventsourcing.SubscribeAndConsume(ctx, consumer.client, consumer.handle, consumer.groupName)
+	eventsourcing.SubscribeAndConsume(ctx, consumer.groupName, consumer.client, consumer.handle)
 }
 
 func (consumer *WalletKurrentDBProjectionConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
