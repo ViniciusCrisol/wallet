@@ -1,4 +1,4 @@
-package projection
+package projector
 
 import (
 	"context"
@@ -12,29 +12,29 @@ import (
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
 
-type WalletKurrentDBProjectionConsumer struct {
+type WalletKurrentDBProjectorConsumer struct {
 	group         string
 	client        *kurrentdb.Client
 	projectionDAO *WalletMySQLProjectionDAO
 }
 
-func NewWalletKurrentDBProjectionConsumer(
+func NewWalletKurrentDBProjectorConsumer(
 	group string,
 	client *kurrentdb.Client,
 	projectionDAO *WalletMySQLProjectionDAO,
-) *WalletKurrentDBProjectionConsumer {
-	return &WalletKurrentDBProjectionConsumer{
+) *WalletKurrentDBProjectorConsumer {
+	return &WalletKurrentDBProjectorConsumer{
 		group:         group,
 		client:        client,
 		projectionDAO: projectionDAO,
 	}
 }
 
-func (consumer *WalletKurrentDBProjectionConsumer) Start(ctx context.Context) {
+func (consumer *WalletKurrentDBProjectorConsumer) Start(ctx context.Context) {
 	eventsourcing.SubscribeAndConsume(ctx, consumer.group, consumer.client, consumer.handle)
 }
 
-func (consumer *WalletKurrentDBProjectionConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
+func (consumer *WalletKurrentDBProjectorConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
 	switch eventName {
 	case integrationevent.WalletCreatedEventName:
 		var event integrationevent.WalletCreatedEvent

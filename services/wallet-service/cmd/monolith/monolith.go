@@ -14,7 +14,7 @@ import (
 	"wallet/wallet-service/internal/command/infrastructure/consumer"
 	"wallet/wallet-service/internal/command/infrastructure/controller"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/internal/projection"
+	"wallet/wallet-service/internal/projector"
 	"wallet/wallet-service/internal/query"
 	"wallet/wallet-service/pkg/eventsourcing"
 
@@ -95,8 +95,8 @@ func main() {
 	walletConsumer := consumer.NewWalletKurrentDBConsumer(cfg.WalletCommandGroupName, kurrentDBClient, walletESHandler)
 	go walletConsumer.Start(ctx)
 
-	projectionDAO := projection.NewWalletMySQLProjectionDAO(mySQLDB)
-	projectionConsumer := projection.NewWalletKurrentDBProjectionConsumer(cfg.WalletProjectionGroupName, kurrentDBClient, projectionDAO)
+	projectionDAO := projector.NewWalletMySQLProjectionDAO(mySQLDB)
+	projectionConsumer := projector.NewWalletKurrentDBProjectorConsumer(cfg.WalletProjectionGroupName, kurrentDBClient, projectionDAO)
 	go projectionConsumer.Start(ctx)
 
 	server := &http.Server{Addr: cfg.ServerAddress, Handler: mux}

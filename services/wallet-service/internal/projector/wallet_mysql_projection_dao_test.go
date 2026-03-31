@@ -1,4 +1,4 @@
-package projection
+package projector
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 		assert.Equal(t, 0, balance)
 	})
 
-	t.Run("It should be idempotent when wallet_id already exists", func(t *testing.T) {
+	t.Run("It should return error when wallet_id already exists", func(t *testing.T) {
 		t.Parallel()
 
 		dao := NewWalletMySQLProjectionDAO(db)
@@ -61,7 +61,7 @@ func TestWalletMySQLProjectionDAO_CreateWallet(t *testing.T) {
 
 		assert.NoError(t, dao.CreateWallet(context.Background(), event))
 
-		assert.NoError(t, dao.CreateWallet(context.Background(), event))
+		assert.Error(t, dao.CreateWallet(context.Background(), event))
 	})
 
 	t.Run("It should initialize wallet balance as zero", func(t *testing.T) {

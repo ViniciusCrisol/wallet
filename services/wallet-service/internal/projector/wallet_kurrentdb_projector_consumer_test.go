@@ -1,4 +1,4 @@
-package projection
+package projector
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWalletKurrentDBProjectionConsumer_Start(t *testing.T) {
+func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 	t.Run("It should consume a published WalletCreatedEvent and persist the projection", func(t *testing.T) {
 		group := "test-group-" + uuid.New().String()
 
@@ -25,7 +25,7 @@ func TestWalletKurrentDBProjectionConsumer_Start(t *testing.T) {
 			group,
 			kurrentdb.PersistentAllSubscriptionOptions{},
 		)
-		go NewWalletKurrentDBProjectionConsumer(
+		go NewWalletKurrentDBProjectorConsumer(
 			group,
 			kurrentDBClient,
 			NewWalletMySQLProjectionDAO(db),
@@ -94,7 +94,7 @@ func TestWalletKurrentDBProjectionConsumer_Start(t *testing.T) {
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
 
-		go NewWalletKurrentDBProjectionConsumer(
+		go NewWalletKurrentDBProjectorConsumer(
 			group,
 			kurrentDBClient,
 			walletMySQLProjectionDAO,
@@ -146,7 +146,7 @@ func TestWalletKurrentDBProjectionConsumer_Start(t *testing.T) {
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
 
-		go NewWalletKurrentDBProjectionConsumer(
+		go NewWalletKurrentDBProjectorConsumer(
 			group,
 			kurrentDBClient,
 			walletMySQLProjectionDAO,
@@ -181,10 +181,10 @@ func TestWalletKurrentDBProjectionConsumer_Start(t *testing.T) {
 	})
 }
 
-func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
+func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should process WalletCreatedEvent and persist wallet to database", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		walletID := uuid.New().String()
 		holderID := uuid.New().String()
@@ -198,7 +198,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 		}
 		body, err := json.Marshal(event)
 		assert.NoError(t, err)
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), body, integrationevent.WalletCreatedEventName))
+		assert.NoError(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), body, integrationevent.WalletCreatedEventName))
 
 		var (
 			retrievedWalletID string
@@ -218,7 +218,7 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 
 	t.Run("It should process FundsTransferredEvent and deduct balance from wallet", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		walletID := uuid.New().String()
 		holderID := uuid.New().String()
@@ -239,14 +239,14 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 		}
 		body, err := json.Marshal(event)
 		assert.NoError(t, err)
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName))
+		assert.NoError(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName))
 
 		assert.Equal(t, 4000, getTestWalletBalance(t, walletID))
 	})
 
 	t.Run("It should process FundsTransferReceivedEvent and add balance to wallet", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		walletID := uuid.New().String()
 		holderID := uuid.New().String()
@@ -267,44 +267,44 @@ func TestWalletKurrentDBProjectionConsumer_Handle(t *testing.T) {
 		}
 		body, err := json.Marshal(event)
 		assert.NoError(t, err)
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), body, integrationevent.FundsTransferReceivedEventName))
+		assert.NoError(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), body, integrationevent.FundsTransferReceivedEventName))
 
 		assert.Equal(t, 3500, getTestWalletBalance(t, walletID))
 	})
 
 	t.Run("It should return error when WalletCreatedEvent unmarshal fails", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, walletKurrentDBProjectionConsumer.handle(context.Background(), invalidEventBody, integrationevent.WalletCreatedEventName))
+		assert.Error(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), invalidEventBody, integrationevent.WalletCreatedEventName))
 	})
 
 	t.Run("It should return error when FundsTransferredEvent unmarshal fails", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, walletKurrentDBProjectionConsumer.handle(context.Background(), invalidEventBody, integrationevent.FundsTransferredEventName))
+		assert.Error(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), invalidEventBody, integrationevent.FundsTransferredEventName))
 	})
 
 	t.Run("It should return error when FundsTransferReceivedEvent unmarshal fails", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, walletKurrentDBProjectionConsumer.handle(context.Background(), invalidEventBody, integrationevent.FundsTransferReceivedEventName))
+		assert.Error(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), invalidEventBody, integrationevent.FundsTransferReceivedEventName))
 	})
 
 	t.Run("It should return nil error when unknown event type is received", func(t *testing.T) {
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
-		walletKurrentDBProjectionConsumer := NewWalletKurrentDBProjectionConsumer("", nil, walletMySQLProjectionDAO)
+		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		unknownEventBody := []byte(`{"some": "data"}`)
 
-		assert.NoError(t, walletKurrentDBProjectionConsumer.handle(context.Background(), unknownEventBody, "unknown:event_type"))
+		assert.NoError(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), unknownEventBody, "unknown:event_type"))
 	})
 }
