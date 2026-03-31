@@ -20,9 +20,9 @@ func NewWalletMySQLProjectionDAO(db *sql.DB) *WalletMySQLProjectionDAO {
 }
 
 func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event integrationevent.WalletCreatedEvent) error {
-	result, err := dao.db.ExecContext(
+	_, err := dao.db.ExecContext(
 		ctx,
-		"INSERT IGNORE INTO wallet_projections (wallet_id, holder_id, balance_in_cents, created_at, updated_at) VALUES (?, ?, 0, ?, ?)",
+		"INSERT INTO wallet_projections (wallet_id, holder_id, balance_in_cents, created_at, updated_at) VALUES (?, ?, 0, ?, ?)",
 		event.WalletID,
 		event.HolderID,
 		event.CreatedAt,
@@ -33,17 +33,6 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event int
 			slog.String("wallet_id", event.WalletID),
 			slog.String("error", err.Error()))
 		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		slog.Error("failed to get rows affected for wallet projection insert",
-			slog.String("wallet_id", event.WalletID),
-			slog.String("error", err.Error()),
-		)
-		return err
-	}
-	if rowsAffected == 0 {
-		slog.Info("wallet projection already exists, skipping", slog.String("wallet_id", event.WalletID))
 	}
 	return nil
 }

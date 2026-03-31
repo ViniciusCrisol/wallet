@@ -2,7 +2,7 @@ const { randomUUID } = require("node:crypto");
 
 const BASE_URL = "http://localhost:8080";
 const ACCOUNTS = 25;
-const ITERATIONS = 50;
+const ITERATIONS = 25;
 
 const wallets = {};
 

@@ -61,9 +61,7 @@ func consumeSubscription(
 	for {
 		msg := subscription.Recv()
 		if msg.SubscriptionDropped != nil {
-			slog.Warn("subscription dropped",
-				slog.String("group", group),
-				slog.String("error", msg.SubscriptionDropped.Error.Error()))
+			slog.Warn("subscription dropped", slog.String("group", group), slog.String("error", msg.SubscriptionDropped.Error.Error()))
 			return msg.SubscriptionDropped.Error
 		}
 		if msg.EventAppeared == nil ||
