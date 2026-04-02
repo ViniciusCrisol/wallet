@@ -6,25 +6,30 @@ import (
 )
 
 var (
-	ErrNotFound            = errors.New("not found")
-	ErrValidation          = errors.New("validation error")
 	ErrConflict            = errors.New("conflict")
 	ErrUnprocessableEntity = errors.New("unprocessable entity")
-	ErrInternal            = errors.New("internal server error")
 
-	ErrInvalidUUID          = fmt.Errorf("%w: id must be a valid UUID", ErrValidation)
-	ErrMissingRequiredParam = fmt.Errorf("%w: missing required parameter", ErrValidation)
-
+	ErrNotFound                 = errors.New("not found")
 	ErrWalletNotFound           = fmt.Errorf("%w: wallet not found", ErrNotFound)
 	ErrWalletProjectionNotFound = fmt.Errorf("%w: wallet projection not found", ErrNotFound)
-	ErrInsufficientBalance      = fmt.Errorf("%w: insufficient balance", ErrValidation)
-	ErrBalanceLimitExceeded     = fmt.Errorf("%w: balance limit would be exceeded", ErrValidation)
-	ErrNegativeAmount           = fmt.Errorf("%w: amount must not be negative", ErrValidation)
-	ErrNonPositiveAmount        = fmt.Errorf("%w: amount must be a positive non-zero integer", ErrValidation)
-	ErrAmountOverflow           = fmt.Errorf("%w: amount overflow", ErrValidation)
 
+	ErrValidation           = errors.New("validation error")
+	ErrAmountOverflow       = fmt.Errorf("%w: amount overflow", ErrValidation)
+	ErrNegativeAmount       = fmt.Errorf("%w: amount must not be negative", ErrValidation)
+	ErrNonPositiveAmount    = fmt.Errorf("%w: amount must be a positive non-zero integer", ErrValidation)
+	ErrInsufficientBalance  = fmt.Errorf("%w: insufficient balance", ErrValidation)
+	ErrBalanceLimitExceeded = fmt.Errorf("%w: balance limit exceeded", ErrValidation)
+	ErrMissingRequiredParam = fmt.Errorf("%w: missing required parameter", ErrValidation)
+	ErrInvalidUUID          = fmt.Errorf("%w: id must be a valid UUID", ErrValidation)
+	ErrInvalidWalletID      = fmt.Errorf("%w: wallet_id must be a valid UUID", ErrInvalidUUID)
+	ErrInvalidHolderID      = fmt.Errorf("%w: holder_id must be a valid UUID", ErrInvalidUUID)
+	ErrInvalidTransferID    = fmt.Errorf("%w: transfer_id must be a valid UUID", ErrInvalidUUID)
+	ErrInvalidToWalletID    = fmt.Errorf("%w: to_wallet_id must be a valid UUID", ErrInvalidUUID)
+	ErrInvalidFromWalletID  = fmt.Errorf("%w: from_wallet_id must be a valid UUID", ErrInvalidUUID)
+
+	ErrInternal           = errors.New("internal server error")
 	ErrUnknownEventType   = fmt.Errorf("%w: unknown event type", ErrInternal)
-	ErrSubscriptionFailed = fmt.Errorf("%w: failed to subscribe to persistent subscription", ErrInternal)
+	ErrSubscriptionFailed = fmt.Errorf("%w: failed to subscribe", ErrInternal)
 )
 
 func IsPermanentError(err error) bool {

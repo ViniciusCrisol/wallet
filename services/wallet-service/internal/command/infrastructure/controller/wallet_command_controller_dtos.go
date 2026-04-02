@@ -16,11 +16,11 @@ type CreateWalletDTO struct {
 func (dto CreateWalletDTO) CreateWalletCommand() (domain.CreateWalletCommand, error) {
 	walletID, err := valueobject.NewID(dto.WalletID)
 	if err != nil {
-		return domain.CreateWalletCommand{}, err
+		return domain.CreateWalletCommand{}, apperr.ErrInvalidWalletID
 	}
 	holderID, err := valueobject.NewID(dto.HolderID)
 	if err != nil {
-		return domain.CreateWalletCommand{}, err
+		return domain.CreateWalletCommand{}, apperr.ErrInvalidHolderID
 	}
 	return domain.CreateWalletCommand{
 		WalletID:  walletID,
@@ -38,11 +38,11 @@ type TransferFundsDTO struct {
 func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand, error) {
 	transferID, err := valueobject.NewID(dto.TransferID)
 	if err != nil {
-		return domain.TransferFundsCommand{}, err
+		return domain.TransferFundsCommand{}, apperr.ErrInvalidTransferID
 	}
 	toWalletID, err := valueobject.NewID(dto.ToWalletID)
 	if err != nil {
-		return domain.TransferFundsCommand{}, err
+		return domain.TransferFundsCommand{}, apperr.ErrInvalidToWalletID
 	}
 	amount, err := valueobject.NewMoney(dto.AmountInCents)
 	if err != nil {
@@ -68,11 +68,11 @@ type MockTransferDTO struct {
 func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTransferCommand, error) {
 	transferID, err := valueobject.NewID(dto.TransferID)
 	if err != nil {
-		return domain.ReceiveFundsTransferCommand{}, err
+		return domain.ReceiveFundsTransferCommand{}, apperr.ErrInvalidTransferID
 	}
 	fromWalletID, err := valueobject.NewID(dto.FromWalletID)
 	if err != nil {
-		return domain.ReceiveFundsTransferCommand{}, err
+		return domain.ReceiveFundsTransferCommand{}, apperr.ErrInvalidFromWalletID
 	}
 	amount, err := valueobject.NewMoney(dto.AmountInCents)
 	if err != nil {

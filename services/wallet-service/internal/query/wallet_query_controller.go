@@ -32,7 +32,7 @@ func NewWalletQueryController(db *sql.DB) *WalletQueryController {
 func (controller *WalletQueryController) FindByID(response http.ResponseWriter, request *http.Request) {
 	walletID := request.PathValue("id")
 	if !uuid.IsValid(walletID) {
-		web.RespondWithError(response, apperr.ErrInvalidUUID)
+		web.RespondWithError(response, apperr.ErrInvalidWalletID)
 		return
 	}
 
@@ -65,7 +65,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
 	holderID := request.URL.Query().Get("holder_id")
 	if !uuid.IsValid(holderID) {
-		web.RespondWithError(response, apperr.ErrInvalidUUID)
+		web.RespondWithError(response, apperr.ErrInvalidHolderID)
 		return
 	}
 

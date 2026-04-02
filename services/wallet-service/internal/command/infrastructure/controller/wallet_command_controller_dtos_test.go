@@ -28,7 +28,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidWalletID)
 	})
 
 	t.Run("It should return an error when holder_id is not a valid UUID", func(t *testing.T) {
@@ -36,7 +36,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidHolderID)
 	})
 
 	t.Run("It should return an error when wallet_id is empty", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidWalletID)
 	})
 
 	t.Run("It should return an error when holder_id is empty", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidHolderID)
 	})
 }
 
@@ -76,7 +76,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidTransferID)
 	})
 
 	t.Run("It should return an error when to_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidToWalletID)
 	})
 
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidTransferID)
 	})
 
 	t.Run("It should return an error when from_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, apperr.ErrInvalidFromWalletID)
 	})
 
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {

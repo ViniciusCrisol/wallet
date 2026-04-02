@@ -55,7 +55,7 @@ func (controller *WalletCommandController) TransferFunds(response http.ResponseW
 	}
 	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
-		web.RespondWithError(response, err)
+		web.RespondWithError(response, apperr.ErrInvalidWalletID)
 		return
 	}
 	command, err := dto.TransferFundsCommand()
@@ -94,7 +94,7 @@ func (controller *WalletCommandController) MockTransfer(response http.ResponseWr
 	}
 	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
-		web.RespondWithError(response, err)
+		web.RespondWithError(response, apperr.ErrInvalidWalletID)
 		return
 	}
 	command, err := dto.ReceiveFundsTransferCommand()
