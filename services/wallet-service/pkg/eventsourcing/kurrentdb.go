@@ -30,10 +30,10 @@ func SubscribeAndConsume(
 		case <-ctx.Done():
 			return
 		default:
-			err := consumeSubscription(ctx, group, client, eventHandler)
 			if ctx.Err() != nil {
 				return
 			}
+			err := consumeSubscription(ctx, group, client, eventHandler)
 			if !errors.Is(err, apperr.ErrSubscriptionFailed) {
 				delay = baseDelay
 			}
@@ -53,7 +53,9 @@ func consumeSubscription(
 	options := kurrentdb.SubscribeToPersistentSubscriptionOptions{}
 	subscription, err := client.SubscribeToPersistentSubscriptionToAll(ctx, group, options)
 	if err != nil {
-		slog.Error("failed to subscribe", slog.String("group", group), slog.String("error", err.Error()))
+		slog.Error("failed to subscribe",
+			slog.String("group", group),
+			slog.String("error", err.Error()))
 		return apperr.ErrSubscriptionFailed
 	}
 	defer subscription.Close()
@@ -61,7 +63,9 @@ func consumeSubscription(
 	for {
 		msg := subscription.Recv()
 		if msg.SubscriptionDropped != nil {
-			slog.Warn("subscription dropped", slog.String("group", group), slog.String("error", msg.SubscriptionDropped.Error.Error()))
+			slog.Warn("subscription dropped",
+				slog.String("group", group),
+				slog.String("error", msg.SubscriptionDropped.Error.Error()))
 			return msg.SubscriptionDropped.Error
 		}
 		if msg.EventAppeared == nil ||

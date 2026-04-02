@@ -16,27 +16,27 @@ func NewAggregateRoot(id valueobject.ID) AggregateRoot {
 	}
 }
 
-func (agg *AggregateRoot) Commit() {
-	agg.uncommittedEvents = []Event{}
+func (aggregate *AggregateRoot) Commit() {
+	aggregate.uncommittedEvents = []Event{}
 }
 
-func (agg *AggregateRoot) Record(event Event) {
-	agg.version++
-	agg.uncommittedEvents = append(agg.uncommittedEvents, event)
+func (aggregate *AggregateRoot) Record(event Event) {
+	aggregate.version++
+	aggregate.uncommittedEvents = append(aggregate.uncommittedEvents, event)
 }
 
-func (agg *AggregateRoot) IncrementVersion() {
-	agg.version++
+func (aggregate *AggregateRoot) IncrementVersion() {
+	aggregate.version++
 }
 
-func (agg *AggregateRoot) ID() valueobject.ID {
-	return agg.id
+func (aggregate *AggregateRoot) ID() valueobject.ID {
+	return aggregate.id
 }
 
-func (agg *AggregateRoot) Version() int {
-	return agg.version
+func (aggregate *AggregateRoot) Version() int {
+	return aggregate.version
 }
 
-func (agg *AggregateRoot) UncommittedEvents() []Event {
-	return agg.uncommittedEvents
+func (aggregate *AggregateRoot) UncommittedEvents() []Event {
+	return aggregate.uncommittedEvents
 }
