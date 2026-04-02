@@ -2,7 +2,6 @@ package query
 
 import (
 	"database/sql"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
@@ -61,12 +60,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 		return
 	}
 
-	response.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(response).Encode(wallet); err != nil {
-		slog.Error("failed to encode wallet response",
-			slog.String("wallet_id", walletID.String()),
-			slog.String("error", err.Error()))
-	}
+	web.RespondWithJSON(response, http.StatusOK, wallet)
 }
 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
@@ -112,10 +106,5 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 		return
 	}
 
-	response.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(response).Encode(wallets); err != nil {
-		slog.Error("failed to encode wallets response",
-			slog.String("holder_id", holderID.String()),
-			slog.String("error", err.Error()))
-	}
+	web.RespondWithJSON(response, http.StatusOK, wallets)
 }

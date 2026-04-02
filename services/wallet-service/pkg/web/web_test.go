@@ -66,3 +66,27 @@ func TestRespondWithError(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
+
+func TestRespondWithJSON(t *testing.T) {
+	t.Run("It should set Content-Type to application/json", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		RespondWithJSON(rec, http.StatusOK, map[string]string{"key": "value"})
+		assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+	})
+
+	t.Run("It should set the provided status code", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		RespondWithJSON(rec, http.StatusCreated, map[string]string{"key": "value"})
+		assert.Equal(t, http.StatusCreated, rec.Code)
+	})
+
+	t.Run("It should encode the data as JSON in the response body", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		data := map[string]string{"name": "test"}
+		RespondWithJSON(rec, http.StatusOK, data)
+
+		var body map[string]string
+		json.Unmarshal(rec.Body.Bytes(), &body)
+		assert.Equal(t, "test", body["name"])
+	})
+}

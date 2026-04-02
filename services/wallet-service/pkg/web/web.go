@@ -3,14 +3,13 @@ package web
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"wallet/wallet-service/pkg/apperr"
 )
 
 func RespondWithError(response http.ResponseWriter, err error) {
-	response.Header().Set("Content-Type", "application/json")
-
 	var status int
 	switch {
 	case errors.Is(err, apperr.ErrNotFound):
@@ -25,7 +24,14 @@ func RespondWithError(response http.ResponseWriter, err error) {
 		status = http.StatusInternalServerError
 		err = apperr.ErrInternal
 	}
+	RespondWithJSON(response, status, map[string]string{"error": err.Error()})
+}
+
+func RespondWithJSON(response http.ResponseWriter, status int, data any) {
+	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(status)
 
-	json.NewEncoder(response).Encode(map[string]string{"error": err.Error()})
+	if err := json.NewEncoder(response).Encode(data); err != nil {
+		slog.Error("failed to encode response", slog.String("error", err.Error()))
+	}
 }
