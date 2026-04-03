@@ -10,41 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newMoney(t *testing.T, amountInCents int) valueobject.Money {
-	t.Helper()
-
-	money, err := valueobject.NewMoney(amountInCents)
-	assert.NoError(t, err)
-	return money
-}
-
-func newTestWallet(t *testing.T) Wallet {
-	t.Helper()
-
-	return NewWallet(CreateWalletCommand{
-		WalletID:  valueobject.GenerateID(),
-		HolderID:  valueobject.GenerateID(),
-		Timestamp: time.Now(),
-	})
-}
-
-func newTestWalletWithBalance(t *testing.T, amountInCents int) Wallet {
-	t.Helper()
-
-	wallet := newTestWallet(t)
-	err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
-		Amount:       newMoney(t, amountInCents),
-		TransferID:   valueobject.GenerateID(),
-		FromWalletID: valueobject.GenerateID(),
-		Timestamp:    time.Now(),
-	})
-	assert.NoError(t, err)
-	wallet.Commit()
-	return wallet
-}
-
 func TestNewWallet(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return a valid wallet when all fields are provided", func(t *testing.T) {
+		t.Parallel()
+
 		now := time.Now()
 		walletID := valueobject.GenerateID()
 		holderID := valueobject.GenerateID()
@@ -64,11 +35,15 @@ func TestNewWallet(t *testing.T) {
 	})
 
 	t.Run("It should set version to zero when wallet is created", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 		assert.Equal(t, 0, wallet.Version())
 	})
 
 	t.Run("It should log one uncommitted event when wallet is created", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 		events := wallet.UncommittedEvents()
 
@@ -78,7 +53,11 @@ func TestNewWallet(t *testing.T) {
 }
 
 func TestWallet_TransferFunds(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return an error when balance is insufficient", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 
 		err := wallet.TransferFunds(TransferFundsCommand{
@@ -92,6 +71,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 	})
 
 	t.Run("It should deduct balance and log an event when funds are transferred", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 500)
 
 		err := wallet.TransferFunds(TransferFundsCommand{
@@ -109,6 +90,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 	})
 
 	t.Run("It should set balance to zero when transferring the entire balance", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 500)
 
 		err := wallet.TransferFunds(TransferFundsCommand{
@@ -123,6 +106,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 	})
 
 	t.Run("It should update updatedAt when funds are transferred", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 500)
 		transferTime := time.Now().Add(time.Hour)
 
@@ -139,7 +124,11 @@ func TestWallet_TransferFunds(t *testing.T) {
 }
 
 func TestWallet_ReceiveFundsTransfer(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should add funds and log an event when transfer is received", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 		wallet.Commit()
 
@@ -158,6 +147,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 	})
 
 	t.Run("It should return an error when new balance would exceed the limit", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 99_999_999)
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
@@ -171,6 +162,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 	})
 
 	t.Run("It should accept funds when new balance equals the limit", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 99_999_999)
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
@@ -185,6 +178,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 	})
 
 	t.Run("It should update updatedAt when funds are received", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 		wallet.Commit()
 		receiveTime := time.Now().Add(time.Hour)
@@ -202,7 +197,11 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 }
 
 func TestWallet_Replay(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should apply WalletCreatedEvent when replayed", func(t *testing.T) {
+		t.Parallel()
+
 		var wallet Wallet
 		now := time.Now()
 		walletID := valueobject.GenerateID()
@@ -223,6 +222,8 @@ func TestWallet_Replay(t *testing.T) {
 	})
 
 	t.Run("It should apply FundsTransferredEvent and deduct balance when replayed", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 500)
 		transferTime := time.Now().Add(time.Hour)
 
@@ -239,6 +240,8 @@ func TestWallet_Replay(t *testing.T) {
 	})
 
 	t.Run("It should apply FundsTransferReceivedEvent and update balance when replayed", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 		receiveTime := time.Now().Add(time.Hour)
 
@@ -255,6 +258,8 @@ func TestWallet_Replay(t *testing.T) {
 	})
 
 	t.Run("It should increment version when event is replayed", func(t *testing.T) {
+		t.Parallel()
+
 		var wallet Wallet
 
 		assert.NoError(t, wallet.Replay(WalletCreatedEvent{
@@ -269,19 +274,29 @@ func TestWallet_Replay(t *testing.T) {
 }
 
 func TestWallet_Balance(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return zero balance when wallet is first created", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWallet(t)
 		assert.Equal(t, 0, wallet.Balance().Amount())
 	})
 
 	t.Run("It should return updated balance after funds are received", func(t *testing.T) {
+		t.Parallel()
+
 		wallet := newTestWalletWithBalance(t, 250)
 		assert.Equal(t, 250, wallet.Balance().Amount())
 	})
 }
 
 func TestWallet_HolderID(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return the holder ID provided at creation", func(t *testing.T) {
+		t.Parallel()
+
 		holderID := valueobject.GenerateID()
 		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
@@ -294,7 +309,11 @@ func TestWallet_HolderID(t *testing.T) {
 }
 
 func TestWallet_CreatedAt(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return the timestamp provided at creation", func(t *testing.T) {
+		t.Parallel()
+
 		now := time.Now()
 		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
@@ -307,7 +326,11 @@ func TestWallet_CreatedAt(t *testing.T) {
 }
 
 func TestWallet_UpdatedAt(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return the creation timestamp when wallet has not been updated", func(t *testing.T) {
+		t.Parallel()
+
 		now := time.Now()
 		wallet := NewWallet(CreateWalletCommand{
 			WalletID:  valueobject.GenerateID(),
@@ -319,6 +342,8 @@ func TestWallet_UpdatedAt(t *testing.T) {
 	})
 
 	t.Run("It should return the latest timestamp after funds are received", func(t *testing.T) {
+		t.Parallel()
+
 		createdAt := time.Now()
 		updatedAt := createdAt.Add(time.Hour)
 

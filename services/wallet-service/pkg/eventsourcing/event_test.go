@@ -9,7 +9,11 @@ import (
 )
 
 func TestParsedEvent_ToJSON(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return valid JSON when body is a serializable struct", func(t *testing.T) {
+		t.Parallel()
+
 		event := ParsedEvent{
 			Body: integrationevent.WalletCreatedEvent{
 				WalletID: "wallet-123",
@@ -30,6 +34,8 @@ func TestParsedEvent_ToJSON(t *testing.T) {
 	})
 
 	t.Run("It should return an error when body cannot be marshaled to JSON", func(t *testing.T) {
+		t.Parallel()
+
 		event := ParsedEvent{
 			Body: make(chan int),
 			Name: "some-event",

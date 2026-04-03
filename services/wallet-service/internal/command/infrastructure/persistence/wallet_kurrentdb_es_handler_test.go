@@ -6,39 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/pkg/apperr"
 	"wallet/wallet-service/pkg/valueobject"
 
-	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func newTestESHandler(t *testing.T) *WalletKurrentDBESHandler {
-	t.Helper()
-
-	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
-	if err != nil {
-		t.Fatalf("failed to parse connection string: %v", err)
-	}
-	db, err := kurrentdb.NewClient(settings)
-	if err != nil {
-		t.Fatalf("failed to create kurrentdb client: %v", err)
-	}
-	return NewWalletKurrentDBESHandler(db)
-}
-
-func newWallet(t *testing.T) domain.Wallet {
-	t.Helper()
-
-	return domain.NewWallet(domain.CreateWalletCommand{
-		WalletID:  valueobject.GenerateID(),
-		HolderID:  valueobject.GenerateID(),
-		Timestamp: time.Now(),
-	})
-}
 
 func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 	t.Parallel()
@@ -181,7 +155,11 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 }
 
 func TestWalletKurrentDBESHandler_buildStreamName(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return a stream name prefixed with 'wallet-' when given a valid ID", func(t *testing.T) {
+		t.Parallel()
+
 		id, _ := valueobject.NewID("550e8400-e29b-41d4-a716-446655440000")
 		esHandler := &WalletKurrentDBESHandler{}
 		result := esHandler.buildStreamName(id)

@@ -14,6 +14,8 @@ import (
 )
 
 func TestWalletDomainToIntegrationEvent(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	walletID := valueobject.GenerateID()
 	holderID := valueobject.GenerateID()
@@ -22,6 +24,8 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 	amount, _ := valueobject.NewMoney(500)
 
 	t.Run("It should return a ParsedEvent with WalletCreatedEvent name and body when event is WalletCreatedEvent", func(t *testing.T) {
+		t.Parallel()
+
 		event := domain.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
@@ -42,6 +46,8 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 	})
 
 	t.Run("It should return a ParsedEvent with FundsTransferredEvent name and body when event is FundsTransferredEvent", func(t *testing.T) {
+		t.Parallel()
+
 		event := domain.FundsTransferredEvent{
 			TransferID:   transferID,
 			ToWalletID:   walletID,
@@ -64,6 +70,8 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 	})
 
 	t.Run("It should return a ParsedEvent with FundsTransferReceivedEvent name and body when event is FundsTransferReceivedEvent", func(t *testing.T) {
+		t.Parallel()
+
 		event := domain.FundsTransferReceivedEvent{
 			WalletID:     walletID,
 			TransferID:   transferID,
@@ -86,6 +94,8 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event type is unknown", func(t *testing.T) {
+		t.Parallel()
+
 		type unknownEvent struct{}
 		_, err := walletDomainToIntegrationEvent(unknownEvent{})
 		assert.ErrorIs(t, err, apperr.ErrUnknownEventType)
@@ -93,6 +103,8 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 }
 
 func TestWalletIntegrationToDomainEvent(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	walletID := valueobject.GenerateID()
 	holderID := valueobject.GenerateID()
@@ -100,6 +112,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	fromWalletID := valueobject.GenerateID()
 
 	t.Run("It should return a WalletCreatedEvent when event name is WalletCreatedEventName and body is valid", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.WalletCreatedEvent{
 			WalletID:  walletID.String(),
 			HolderID:  holderID.String(),
@@ -119,11 +133,15 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is WalletCreatedEventName and body is invalid JSON", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := WalletIntegrationToDomainEvent([]byte("invalid"), integrationevent.WalletCreatedEventName)
 		assert.Error(t, err)
 	})
 
 	t.Run("It should return an error when event name is WalletCreatedEventName and WalletID is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.WalletCreatedEvent{
 			WalletID: "not-a-uuid",
 			HolderID: holderID.String(),
@@ -133,6 +151,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is WalletCreatedEventName and HolderID is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.WalletCreatedEvent{
 			WalletID: walletID.String(),
 			HolderID: "not-a-uuid",
@@ -142,6 +162,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return a FundsTransferredEvent when event name is FundsTransferredEventName and body is valid", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    transferID.String(),
 			ToWalletID:    walletID.String(),
@@ -163,11 +185,15 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is FundsTransferredEventName and body is invalid JSON", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := WalletIntegrationToDomainEvent([]byte("invalid"), integrationevent.FundsTransferredEventName)
 		assert.Error(t, err)
 	})
 
 	t.Run("It should return an error when event name is FundsTransferredEventName and TransferID is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    "not-a-uuid",
 			ToWalletID:    walletID.String(),
@@ -179,6 +205,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is FundsTransferredEventName and amount is invalid", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    transferID.String(),
 			ToWalletID:    walletID.String(),
@@ -190,6 +218,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return a FundsTransferReceivedEvent when event name is FundsTransferReceivedEventName and body is valid", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID.String(),
 			TransferID:    transferID.String(),
@@ -211,11 +241,15 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is FundsTransferReceivedEventName and body is invalid JSON", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := WalletIntegrationToDomainEvent([]byte("invalid"), integrationevent.FundsTransferReceivedEventName)
 		assert.Error(t, err)
 	})
 
 	t.Run("It should return an error when event name is FundsTransferReceivedEventName and WalletID is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.FundsTransferReceivedEvent{
 			WalletID:      "not-a-uuid",
 			TransferID:    transferID.String(),
@@ -227,6 +261,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is FundsTransferReceivedEventName and amount is invalid", func(t *testing.T) {
+		t.Parallel()
+
 		body, _ := json.Marshal(integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID.String(),
 			TransferID:    transferID.String(),
@@ -238,6 +274,8 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 	})
 
 	t.Run("It should return an error when event name is unknown", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := WalletIntegrationToDomainEvent([]byte("{}"), "unknown:event")
 		assert.ErrorIs(t, err, apperr.ErrUnknownEventType)
 	})

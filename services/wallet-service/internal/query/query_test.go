@@ -2,6 +2,7 @@ package query
 
 import (
 	"database/sql"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -39,4 +40,20 @@ func createTestWallet(t *testing.T, walletID string, holderID string) {
 		time.Now(),
 	)
 	assert.NoError(t, err)
+}
+
+func newFindByIDMux(t *testing.T, controller *WalletQueryController) *http.ServeMux {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /wallets/{id}", controller.FindByID)
+	return mux
+}
+
+func newFindByHolderIDMux(t *testing.T, controller *WalletQueryController) *http.ServeMux {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /wallets", controller.FindByHolderID)
+	return mux
 }

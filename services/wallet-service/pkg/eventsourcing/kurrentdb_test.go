@@ -20,24 +20,34 @@ func newKurrentDBError(code kurrentdb.ErrorCode) error {
 }
 
 func TestIsKurrentDBNotFoundError(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return false when the error is nil", func(t *testing.T) {
+		t.Parallel()
+
 		result := IsKurrentDBNotFoundError(nil)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return false when the error is a generic Go error", func(t *testing.T) {
+		t.Parallel()
+
 		err := errors.New("some unexpected error")
 		result := IsKurrentDBNotFoundError(err)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return true when the error is a KurrentDB ResourceNotFound error", func(t *testing.T) {
+		t.Parallel()
+
 		err := newKurrentDBError(kurrentdb.ErrorCodeResourceNotFound)
 		result := IsKurrentDBNotFoundError(err)
 		assert.True(t, result)
 	})
 
 	t.Run("It should return false when the error is a KurrentDB error with a different error code", func(t *testing.T) {
+		t.Parallel()
+
 		err := newKurrentDBError(kurrentdb.ErrorCodeUnknown)
 		result := IsKurrentDBNotFoundError(err)
 		assert.False(t, result)
@@ -45,24 +55,34 @@ func TestIsKurrentDBNotFoundError(t *testing.T) {
 }
 
 func TestIsKurrentDBConcurrencyError(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return false when the error is nil", func(t *testing.T) {
+		t.Parallel()
+
 		result := IsKurrentDBConcurrencyError(nil)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return false when the error is a generic Go error", func(t *testing.T) {
+		t.Parallel()
+
 		err := errors.New("some unexpected error")
 		result := IsKurrentDBConcurrencyError(err)
 		assert.False(t, result)
 	})
 
 	t.Run("It should return true when the error is a KurrentDB WrongExpectedVersion error", func(t *testing.T) {
+		t.Parallel()
+
 		err := newKurrentDBError(kurrentdb.ErrorCodeWrongExpectedVersion)
 		result := IsKurrentDBConcurrencyError(err)
 		assert.True(t, result)
 	})
 
 	t.Run("It should return false when the error is a KurrentDB error with a different error code", func(t *testing.T) {
+		t.Parallel()
+
 		err := newKurrentDBError(kurrentdb.ErrorCodeUnknown)
 		result := IsKurrentDBConcurrencyError(err)
 		assert.False(t, result)

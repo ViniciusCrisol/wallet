@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	db              *sql.DB
-	kurrentDBClient *kurrentdb.Client
+	db     *sql.DB
+	client *kurrentdb.Client
 )
 
 func TestMain(m *testing.M) {
@@ -38,11 +38,11 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	kurrentDBClient, err = kurrentdb.NewClient(settings)
+	client, err = kurrentdb.NewClient(settings)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer kurrentDBClient.Close()
+	defer client.Close()
 
 	os.Exit(m.Run())
 }

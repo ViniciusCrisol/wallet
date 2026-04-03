@@ -27,18 +27,19 @@ func main() {
 	godotenv.Load()
 	cfg := config.Load()
 
-	kurrenDBSettings, err := kurrentdb.ParseConnectionString(cfg.KurrentDBConnectionString)
+	settings, err := kurrentdb.ParseConnectionString(cfg.KurrentDBConnectionString)
 	if err != nil {
 		slog.Error("failed to parse kurrentdb connection string", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	kurrenDBSettings.Logger = kurrentdb.NoopLogging()
-	kurrentDBClient, err := kurrentdb.NewClient(kurrenDBSettings)
+	settings.Logger = kurrentdb.NoopLogging()
+
+	client, err := kurrentdb.NewClient(settings)
 	if err != nil {
 		slog.Error("failed to connect to kurrentdb", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	defer kurrentDBClient.Close()
+	defer client.Close()
 
 	mySQLDB, err := sql.Open("mysql", cfg.MySQLConnectionString)
 	if err != nil {
@@ -54,7 +55,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := kurrentDBClient.CreatePersistentSubscriptionToAll(
+	if err := client.CreatePersistentSubscriptionToAll(
 		ctx,
 		cfg.WalletProjectionGroupName,
 		kurrentdb.PersistentAllSubscriptionOptions{
@@ -67,7 +68,7 @@ func main() {
 		slog.Error("failed to create projection subscription", slog.String("group", cfg.WalletProjectionGroupName), slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	if err := kurrentDBClient.CreatePersistentSubscriptionToAll(
+	if err := client.CreatePersistentSubscriptionToAll(
 		ctx,
 		cfg.WalletCommandGroupName,
 		kurrentdb.PersistentAllSubscriptionOptions{
@@ -81,7 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	walletESHandler := persistence.NewWalletKurrentDBESHandler(kurrentDBClient)
+	walletESHandler := persistence.NewWalletKurrentDBESHandler(client)
 	walletCommandController := controller.NewWalletCommandController(walletESHandler)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /wallets", walletCommandController.Create)
@@ -92,11 +93,11 @@ func main() {
 	mux.HandleFunc("GET /wallets/{id}", walletQueryController.FindByID)
 	mux.HandleFunc("GET /wallets", walletQueryController.FindByHolderID)
 
-	walletConsumer := consumer.NewWalletKurrentDBConsumer(cfg.WalletCommandGroupName, kurrentDBClient, walletESHandler)
+	walletConsumer := consumer.NewWalletKurrentDBConsumer(cfg.WalletCommandGroupName, client, walletESHandler)
 	go walletConsumer.Start(ctx)
 
 	projectionDAO := projector.NewWalletMySQLProjectionDAO(mySQLDB)
-	projectionConsumer := projector.NewWalletKurrentDBProjectorConsumer(cfg.WalletProjectionGroupName, kurrentDBClient, projectionDAO)
+	projectionConsumer := projector.NewWalletKurrentDBProjectorConsumer(cfg.WalletProjectionGroupName, client, projectionDAO)
 	go projectionConsumer.Start(ctx)
 
 	server := &http.Server{Addr: cfg.ServerAddress, Handler: mux}

@@ -68,9 +68,7 @@ func consumeSubscription(
 				slog.String("error", msg.SubscriptionDropped.Error.Error()))
 			return msg.SubscriptionDropped.Error
 		}
-		if msg.EventAppeared == nil ||
-			msg.EventAppeared.Event == nil ||
-			msg.EventAppeared.Event.Event == nil {
+		if msg.EventAppeared == nil || msg.EventAppeared.Event == nil || msg.EventAppeared.Event.Event == nil {
 			continue
 		}
 

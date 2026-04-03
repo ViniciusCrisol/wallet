@@ -6,23 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"wallet/wallet-service/pkg/uuid"
 	"wallet/wallet-service/pkg/valueobject"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-func newFindByIDMux(ctrl *WalletQueryController) *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /wallets/{id}", ctrl.FindByID)
-	return mux
-}
-
-func newFindByHolderIDMux(ctrl *WalletQueryController) *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /wallets", ctrl.FindByHolderID)
-	return mux
-}
 
 func TestWalletQueryController_FindByID(t *testing.T) {
 	t.Parallel()
@@ -30,14 +18,14 @@ func TestWalletQueryController_FindByID(t *testing.T) {
 	t.Run("It should return 200 with wallet data when wallet exists", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
-		walletID := uuid.New().String()
-		holderID := uuid.New().String()
+		controller := NewWalletQueryController(db)
+		walletID := uuid.NewUUID()
+		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID)
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets/"+walletID, nil)
 		rec := httptest.NewRecorder()
-		newFindByIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -51,12 +39,12 @@ func TestWalletQueryController_FindByID(t *testing.T) {
 	t.Run("It should return 404 when wallet does not exist", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
+		controller := NewWalletQueryController(db)
 		nonExistentID := valueobject.GenerateID().String()
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets/"+nonExistentID, nil)
 		rec := httptest.NewRecorder()
-		newFindByIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
@@ -64,11 +52,11 @@ func TestWalletQueryController_FindByID(t *testing.T) {
 	t.Run("It should return 400 when path ID is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
+		controller := NewWalletQueryController(db)
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets/not-a-uuid", nil)
 		rec := httptest.NewRecorder()
-		newFindByIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -80,16 +68,16 @@ func TestWalletQueryController_FindByHolderID(t *testing.T) {
 	t.Run("It should return 200 with wallets when holder has wallets", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
-		holderID := uuid.New().String()
-		walletID1 := uuid.New().String()
-		walletID2 := uuid.New().String()
+		controller := NewWalletQueryController(db)
+		holderID := uuid.NewUUID()
+		walletID1 := uuid.NewUUID()
+		walletID2 := uuid.NewUUID()
 		createTestWallet(t, walletID1, holderID)
 		createTestWallet(t, walletID2, holderID)
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets?holder_id="+holderID, nil)
 		rec := httptest.NewRecorder()
-		newFindByHolderIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByHolderIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -109,12 +97,12 @@ func TestWalletQueryController_FindByHolderID(t *testing.T) {
 	t.Run("It should return 200 with empty array when holder has no wallets", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
-		holderID := uuid.New().String()
+		controller := NewWalletQueryController(db)
+		holderID := uuid.NewUUID()
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets?holder_id="+holderID, nil)
 		rec := httptest.NewRecorder()
-		newFindByHolderIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByHolderIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 
@@ -126,11 +114,11 @@ func TestWalletQueryController_FindByHolderID(t *testing.T) {
 	t.Run("It should return 400 when holder_id query param is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
+		controller := NewWalletQueryController(db)
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets?holder_id=not-a-uuid", nil)
 		rec := httptest.NewRecorder()
-		newFindByHolderIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByHolderIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
@@ -138,11 +126,11 @@ func TestWalletQueryController_FindByHolderID(t *testing.T) {
 	t.Run("It should return 400 when holder_id query param is missing", func(t *testing.T) {
 		t.Parallel()
 
-		ctrl := NewWalletQueryController(db)
+		controller := NewWalletQueryController(db)
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets", nil)
 		rec := httptest.NewRecorder()
-		newFindByHolderIDMux(ctrl).ServeHTTP(rec, req)
+		newFindByHolderIDMux(t, controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})

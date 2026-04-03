@@ -10,7 +10,11 @@ import (
 )
 
 func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return a valid command when both IDs are valid UUIDs", func(t *testing.T) {
+		t.Parallel()
+
 		walletID := valueobject.GenerateID().String()
 		holderID := valueobject.GenerateID().String()
 		dto := CreateWalletDTO{WalletID: walletID, HolderID: holderID}
@@ -24,6 +28,8 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when wallet_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		dto := CreateWalletDTO{WalletID: "not-a-uuid", HolderID: valueobject.GenerateID().String()}
 
 		_, err := dto.CreateWalletCommand()
@@ -32,6 +38,8 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when holder_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		dto := CreateWalletDTO{WalletID: valueobject.GenerateID().String(), HolderID: "not-a-uuid"}
 
 		_, err := dto.CreateWalletCommand()
@@ -40,6 +48,8 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when wallet_id is empty", func(t *testing.T) {
+		t.Parallel()
+
 		dto := CreateWalletDTO{WalletID: "", HolderID: valueobject.GenerateID().String()}
 
 		_, err := dto.CreateWalletCommand()
@@ -48,6 +58,8 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when holder_id is empty", func(t *testing.T) {
+		t.Parallel()
+
 		dto := CreateWalletDTO{WalletID: valueobject.GenerateID().String(), HolderID: ""}
 
 		_, err := dto.CreateWalletCommand()
@@ -57,7 +69,11 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 }
 
 func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return a valid command when all fields are valid", func(t *testing.T) {
+		t.Parallel()
+
 		transferID := valueobject.GenerateID().String()
 		toWalletID := valueobject.GenerateID().String()
 		dto := TransferFundsDTO{AmountInCents: 500, TransferID: transferID, ToWalletID: toWalletID}
@@ -72,6 +88,8 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when transfer_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		dto := TransferFundsDTO{AmountInCents: 100, TransferID: "not-a-uuid", ToWalletID: valueobject.GenerateID().String()}
 
 		_, err := dto.TransferFundsCommand()
@@ -80,6 +98,8 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when to_wallet_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueobject.GenerateID().String(), ToWalletID: "not-a-uuid"}
 
 		_, err := dto.TransferFundsCommand()
@@ -88,6 +108,8 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
+		t.Parallel()
+
 		dto := TransferFundsDTO{AmountInCents: 0, TransferID: valueobject.GenerateID().String(), ToWalletID: valueobject.GenerateID().String()}
 
 		_, err := dto.TransferFundsCommand()
@@ -96,6 +118,8 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
+		t.Parallel()
+
 		dto := TransferFundsDTO{AmountInCents: -1, TransferID: valueobject.GenerateID().String(), ToWalletID: valueobject.GenerateID().String()}
 
 		_, err := dto.TransferFundsCommand()
@@ -105,7 +129,11 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 }
 
 func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
+	t.Parallel()
+
 	t.Run("It should return a valid command when all fields are valid", func(t *testing.T) {
+		t.Parallel()
+
 		transferID := valueobject.GenerateID().String()
 		fromWalletID := valueobject.GenerateID().String()
 		dto := MockTransferDTO{
@@ -124,6 +152,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when transfer_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		dto := MockTransferDTO{
 			AmountInCents: 100,
 			TransferID:    "not-a-uuid",
@@ -136,6 +166,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when from_wallet_id is not a valid UUID", func(t *testing.T) {
+		t.Parallel()
+
 		dto := MockTransferDTO{
 			AmountInCents: 100,
 			TransferID:    valueobject.GenerateID().String(),
@@ -148,6 +180,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
+		t.Parallel()
+
 		dto := MockTransferDTO{
 			AmountInCents: 0,
 			TransferID:    valueobject.GenerateID().String(),
@@ -160,6 +194,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 	})
 
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
+		t.Parallel()
+
 		dto := MockTransferDTO{
 			AmountInCents: -1,
 			TransferID:    valueobject.GenerateID().String(),
