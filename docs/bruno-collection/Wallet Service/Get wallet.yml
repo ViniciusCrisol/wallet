@@ -5,7 +5,7 @@ info:
 
 http:
     method: get
-    url: http://localhost:8080/wallets/11111111-1111-1111-1111-111111111111
+    url: http://localhost:8080/wallets/ea2c4e44-d4ed-4f35-8640-e9fa380da877
     auth: inherit
 
 settings:

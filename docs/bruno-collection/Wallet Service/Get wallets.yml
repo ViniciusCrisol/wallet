@@ -5,10 +5,10 @@ info:
 
 http:
     method: get
-    url: http://localhost:8080/wallets?holder_id=22222222-2222-2222-2222-222222222222
+    url: http://localhost:8080/wallets?holder_id=25dfc9e2-e664-454a-b935-a56bcadfdcff
     params:
         - name: holder_id
-          value: 22222222-2222-2222-2222-222222222222
+          value: 25dfc9e2-e664-454a-b935-a56bcadfdcff
           type: query
     auth: inherit
 

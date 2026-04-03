@@ -5,7 +5,7 @@ info:
 
 http:
     method: post
-    url: http://localhost:8080/wallets/11111111-1111-1111-1111-111111111111/mock-transfer
+    url: http://localhost:8080/wallets/ea2c4e44-d4ed-4f35-8640-e9fa380da877/mock-transfer
     headers:
         - name: Content-Type
           value: application/json
@@ -14,8 +14,8 @@ http:
         data: |-
             {
               "amount_in_cents": 1000,
-              "transfer_id": "00000000-0000-0000-0000-000000000002",
-              "from_wallet_id": "00000000-0000-0000-0000-000000000003"
+              "transfer_id": "5bc686d0-cc3e-4555-aced-7cc0d3fe0e5b",
+              "from_wallet_id": "59045cf5-db12-4356-af6d-281589efe137"
             }
     auth: inherit
 

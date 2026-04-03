@@ -5,7 +5,7 @@ info:
 
 http:
     method: post
-    url: http://localhost:8080/wallets/11111111-1111-1111-1111-111111111111/transfer
+    url: http://localhost:8080/wallets/ea2c4e44-d4ed-4f35-8640-e9fa380da877/transfer
     headers:
         - name: Content-Type
           value: application/json
@@ -13,9 +13,9 @@ http:
         type: json
         data: |-
             {
-              "transfer_id": "33333333-3333-3333-3333-333333333333",
-              "to_wallet_id": "21111111-1111-1111-1111-111111111111",
-              "amount_in_cents": 1000
+              "amount_in_cents": 1000,
+              "transfer_id": "40b4b219-ad32-44cf-bede-bfc3fa82ce30",
+              "to_wallet_id": "5bbc3e3c-2f60-43bc-8b62-c339bfefe995"
             }
     auth: inherit
 
