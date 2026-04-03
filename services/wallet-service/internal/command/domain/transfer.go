@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 )
 
 const (
@@ -12,24 +12,24 @@ const (
 )
 
 type Transfer struct {
-	id        valueobject.ID
+	id        valueObject.ID
 	kind      string
-	amount    valueobject.Money
+	amount    valueObject.Money
 	timestamp time.Time
 }
 
-func NewOutgoingTransfer(id valueobject.ID, amount valueobject.Money, timestamp time.Time) Transfer {
+func NewOutgoingTransfer(id valueObject.ID, amount valueObject.Money, timestamp time.Time) Transfer {
 	return NewTransfer(id, TransferKindOutgoing, amount, timestamp)
 }
 
-func NewIncomingTransfer(id valueobject.ID, amount valueobject.Money, timestamp time.Time) Transfer {
+func NewIncomingTransfer(id valueObject.ID, amount valueObject.Money, timestamp time.Time) Transfer {
 	return NewTransfer(id, TransferKindIncoming, amount, timestamp)
 }
 
 func NewTransfer(
-	id valueobject.ID,
+	id valueObject.ID,
 	kind string,
-	amount valueobject.Money,
+	amount valueObject.Money,
 	timestamp time.Time,
 ) Transfer {
 	return Transfer{
@@ -40,7 +40,7 @@ func NewTransfer(
 	}
 }
 
-func (transfer *Transfer) ID() valueobject.ID {
+func (transfer *Transfer) ID() valueObject.ID {
 	return transfer.id
 }
 
@@ -48,7 +48,7 @@ func (transfer *Transfer) Kind() string {
 	return transfer.kind
 }
 
-func (transfer *Transfer) Amount() valueobject.Money {
+func (transfer *Transfer) Amount() valueObject.Money {
 	return transfer.amount
 }
 

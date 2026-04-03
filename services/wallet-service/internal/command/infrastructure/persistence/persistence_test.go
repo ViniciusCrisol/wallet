@@ -7,7 +7,7 @@ import (
 
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/joho/godotenv"
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -16,6 +16,8 @@ import (
 func TestMain(m *testing.M) {
 	godotenv.Load("../../../../.env.test")
 
+	time.Local = config.Load().TZ
+
 	os.Exit(m.Run())
 }
 
@@ -23,8 +25,8 @@ func newWallet(t *testing.T) domain.Wallet {
 	t.Helper()
 
 	return domain.NewWallet(domain.CreateWalletCommand{
-		WalletID:  valueobject.GenerateID(),
-		HolderID:  valueobject.GenerateID(),
+		WalletID:  valueObject.GenerateID(),
+		HolderID:  valueObject.GenerateID(),
 		Timestamp: time.Now(),
 	})
 }

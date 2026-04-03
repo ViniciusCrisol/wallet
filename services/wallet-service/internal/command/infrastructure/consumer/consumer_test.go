@@ -10,7 +10,7 @@ import (
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/joho/godotenv"
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -21,8 +21,11 @@ var client *kurrentdb.Client
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../../../.env.test")
+	cfg := config.Load()
 
-	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
+	time.Local = cfg.TZ
+
+	settings, err := kurrentdb.ParseConnectionString(cfg.KurrentDBConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,17 +44,17 @@ func createTestWalletWithBalance(t *testing.T, esHandler *persistence.WalletKurr
 	t.Helper()
 
 	wallet := domain.NewWallet(domain.CreateWalletCommand{
-		WalletID:  valueobject.GenerateID(),
-		HolderID:  valueobject.GenerateID(),
+		WalletID:  valueObject.GenerateID(),
+		HolderID:  valueObject.GenerateID(),
 		Timestamp: time.Now(),
 	})
 	if balance > 0 {
-		amount, err := valueobject.NewMoney(balance)
+		amount, err := valueObject.NewMoney(balance)
 		require.NoError(t, err)
 		require.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       amount,
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
 	}

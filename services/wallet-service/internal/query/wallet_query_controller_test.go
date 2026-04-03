@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func TestWalletQueryController_FindByID(t *testing.T) {
 		t.Parallel()
 
 		controller := NewWalletQueryController(db)
-		nonExistentID := valueobject.GenerateID().String()
+		nonExistentID := valueObject.GenerateID().String()
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets/"+nonExistentID, nil)
 		rec := httptest.NewRecorder()

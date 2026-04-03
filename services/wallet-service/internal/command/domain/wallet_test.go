@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -17,8 +17,8 @@ func TestNewWallet(t *testing.T) {
 		t.Parallel()
 
 		now := time.Now()
-		walletID := valueobject.GenerateID()
-		holderID := valueobject.GenerateID()
+		walletID := valueObject.GenerateID()
+		holderID := valueObject.GenerateID()
 		cmd := CreateWalletCommand{
 			WalletID:  walletID,
 			HolderID:  holderID,
@@ -62,8 +62,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 
 		err := wallet.TransferFunds(TransferFundsCommand{
 			Amount:     newMoney(t, 100),
-			TransferID: valueobject.GenerateID(),
-			ToWalletID: valueobject.GenerateID(),
+			TransferID: valueObject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  time.Now(),
 		})
 
@@ -77,8 +77,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 
 		err := wallet.TransferFunds(TransferFundsCommand{
 			Amount:     newMoney(t, 300),
-			TransferID: valueobject.GenerateID(),
-			ToWalletID: valueobject.GenerateID(),
+			TransferID: valueObject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  time.Now(),
 		})
 
@@ -96,8 +96,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 
 		err := wallet.TransferFunds(TransferFundsCommand{
 			Amount:     newMoney(t, 500),
-			TransferID: valueobject.GenerateID(),
-			ToWalletID: valueobject.GenerateID(),
+			TransferID: valueObject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  time.Now(),
 		})
 
@@ -113,8 +113,8 @@ func TestWallet_TransferFunds(t *testing.T) {
 
 		err := wallet.TransferFunds(TransferFundsCommand{
 			Amount:     newMoney(t, 100),
-			TransferID: valueobject.GenerateID(),
-			ToWalletID: valueobject.GenerateID(),
+			TransferID: valueObject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  transferTime,
 		})
 
@@ -126,12 +126,12 @@ func TestWallet_TransferFunds(t *testing.T) {
 		t.Parallel()
 
 		wallet := newTestWalletWithBalance(t, 1000)
-		transferID := valueobject.GenerateID()
+		transferID := valueObject.GenerateID()
 
 		err := wallet.TransferFunds(TransferFundsCommand{
 			Amount:     newMoney(t, 100),
 			TransferID: transferID,
-			ToWalletID: valueobject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  time.Now(),
 		})
 		assert.NoError(t, err)
@@ -140,7 +140,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 		err = wallet.TransferFunds(TransferFundsCommand{
 			Amount:     newMoney(t, 100),
 			TransferID: transferID,
-			ToWalletID: valueobject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  time.Now(),
 		})
 		assert.ErrorIs(t, err, pkg.ErrDuplicateTransfer)
@@ -159,8 +159,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 500),
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		})
 
@@ -178,8 +178,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 2),
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		})
 
@@ -193,8 +193,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 1),
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		})
 
@@ -211,8 +211,8 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 200),
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    receiveTime,
 		})
 
@@ -225,12 +225,12 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 
 		wallet := newTestWallet(t)
 		wallet.Commit()
-		transferID := valueobject.GenerateID()
+		transferID := valueObject.GenerateID()
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 500),
 			TransferID:   transferID,
-			FromWalletID: valueobject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
@@ -239,7 +239,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 		err = wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 500),
 			TransferID:   transferID,
-			FromWalletID: valueobject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		})
 		assert.ErrorIs(t, err, pkg.ErrDuplicateTransfer)
@@ -255,8 +255,8 @@ func TestWallet_Replay(t *testing.T) {
 
 		var wallet Wallet
 		now := time.Now()
-		walletID := valueobject.GenerateID()
-		holderID := valueobject.GenerateID()
+		walletID := valueObject.GenerateID()
+		holderID := valueObject.GenerateID()
 
 		assert.NoError(t, wallet.Replay(WalletCreatedEvent{
 			WalletID:  walletID,
@@ -280,8 +280,8 @@ func TestWallet_Replay(t *testing.T) {
 
 		assert.NoError(t, wallet.Replay(FundsTransferredEvent{
 			Amount:       newMoney(t, 200),
-			TransferID:   valueobject.GenerateID(),
-			ToWalletID:   valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			ToWalletID:   valueObject.GenerateID(),
 			FromWalletID: wallet.ID(),
 			Timestamp:    transferTime,
 		}))
@@ -299,8 +299,8 @@ func TestWallet_Replay(t *testing.T) {
 		assert.NoError(t, wallet.Replay(FundsTransferReceivedEvent{
 			Amount:       newMoney(t, 750),
 			WalletID:     wallet.ID(),
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    receiveTime,
 		}))
 
@@ -314,8 +314,8 @@ func TestWallet_Replay(t *testing.T) {
 		var wallet Wallet
 
 		assert.NoError(t, wallet.Replay(WalletCreatedEvent{
-			WalletID:  valueobject.GenerateID(),
-			HolderID:  valueobject.GenerateID(),
+			WalletID:  valueObject.GenerateID(),
+			HolderID:  valueObject.GenerateID(),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}))
@@ -348,9 +348,9 @@ func TestWallet_HolderID(t *testing.T) {
 	t.Run("It should return the holder ID provided at creation", func(t *testing.T) {
 		t.Parallel()
 
-		holderID := valueobject.GenerateID()
+		holderID := valueObject.GenerateID()
 		wallet := NewWallet(CreateWalletCommand{
-			WalletID:  valueobject.GenerateID(),
+			WalletID:  valueObject.GenerateID(),
 			HolderID:  holderID,
 			Timestamp: time.Now(),
 		})
@@ -367,8 +367,8 @@ func TestWallet_CreatedAt(t *testing.T) {
 
 		now := time.Now()
 		wallet := NewWallet(CreateWalletCommand{
-			WalletID:  valueobject.GenerateID(),
-			HolderID:  valueobject.GenerateID(),
+			WalletID:  valueObject.GenerateID(),
+			HolderID:  valueObject.GenerateID(),
 			Timestamp: now,
 		})
 
@@ -384,8 +384,8 @@ func TestWallet_UpdatedAt(t *testing.T) {
 
 		now := time.Now()
 		wallet := NewWallet(CreateWalletCommand{
-			WalletID:  valueobject.GenerateID(),
-			HolderID:  valueobject.GenerateID(),
+			WalletID:  valueObject.GenerateID(),
+			HolderID:  valueObject.GenerateID(),
 			Timestamp: now,
 		})
 
@@ -399,15 +399,15 @@ func TestWallet_UpdatedAt(t *testing.T) {
 		updatedAt := createdAt.Add(time.Hour)
 
 		wallet := NewWallet(CreateWalletCommand{
-			WalletID:  valueobject.GenerateID(),
-			HolderID:  valueobject.GenerateID(),
+			WalletID:  valueObject.GenerateID(),
+			HolderID:  valueObject.GenerateID(),
 			Timestamp: createdAt,
 		})
 
 		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
 			Amount:       newMoney(t, 100),
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    updatedAt,
 		})
 		assert.NoError(t, err)

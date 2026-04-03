@@ -7,7 +7,7 @@ import (
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/subscriber"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -37,7 +37,7 @@ func (consumer *WalletKurrentDBConsumer) Start(ctx context.Context) {
 
 func (consumer *WalletKurrentDBConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
 	switch eventName {
-	case integrationevent.FundsTransferredEventName:
+	case integrationEvent.FundsTransferredEventName:
 		domainEvent, err := persistence.WalletIntegrationToDomainEvent(eventBody, eventName)
 		if err != nil {
 			return err

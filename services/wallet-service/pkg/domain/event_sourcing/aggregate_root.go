@@ -1,14 +1,14 @@
-package eventsourcing
+package event_sourcing
 
-import "wallet/wallet-service/pkg/domain/valueobject"
+import valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 type AggregateRoot struct {
-	id                valueobject.ID
+	id                valueObject.ID
 	version           int
 	uncommittedEvents []Event
 }
 
-func NewAggregateRoot(id valueobject.ID) AggregateRoot {
+func NewAggregateRoot(id valueObject.ID) AggregateRoot {
 	return AggregateRoot{
 		id:                id,
 		version:           -1,
@@ -29,7 +29,7 @@ func (aggregate *AggregateRoot) IncrementVersion() {
 	aggregate.version++
 }
 
-func (aggregate *AggregateRoot) ID() valueobject.ID {
+func (aggregate *AggregateRoot) ID() valueObject.ID {
 	return aggregate.id
 }
 

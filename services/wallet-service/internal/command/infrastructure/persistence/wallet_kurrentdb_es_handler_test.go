@@ -8,7 +8,7 @@ import (
 
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,12 +39,12 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
-		amount, err := valueobject.NewMoney(500)
+		amount, err := valueObject.NewMoney(500)
 		assert.NoError(t, err)
 		assert.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       amount,
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), wallet))
@@ -59,7 +59,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 
 		conflictWallet := domain.NewWallet(domain.CreateWalletCommand{
 			WalletID:  wallet.ID(),
-			HolderID:  valueobject.GenerateID(),
+			HolderID:  valueObject.GenerateID(),
 			Timestamp: time.Now(),
 		})
 		assert.True(t, errors.Is(esHandler.Save(context.Background(), conflictWallet), pkg.ErrConflict))
@@ -73,7 +73,7 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 		t.Parallel()
 
 		esHandler := newTestESHandler(t)
-		nonExistentID := valueobject.GenerateID()
+		nonExistentID := valueObject.GenerateID()
 
 		_, found, err := esHandler.Find(context.Background(), nonExistentID)
 
@@ -100,12 +100,12 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
-		amount, err := valueobject.NewMoney(750)
+		amount, err := valueObject.NewMoney(750)
 		assert.NoError(t, err)
 		assert.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       amount,
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), wallet))
@@ -123,12 +123,12 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 		esHandler := newTestESHandler(t)
 		wallet := newWallet(t)
 
-		received, err := valueobject.NewMoney(1000)
+		received, err := valueObject.NewMoney(1000)
 		assert.NoError(t, err)
 		assert.NoError(t, wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
 			Amount:       received,
-			TransferID:   valueobject.GenerateID(),
-			FromWalletID: valueobject.GenerateID(),
+			TransferID:   valueObject.GenerateID(),
+			FromWalletID: valueObject.GenerateID(),
 			Timestamp:    time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), wallet))
@@ -137,12 +137,12 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 		assert.NoError(t, err)
 		require.True(t, found)
 
-		transferred, err := valueobject.NewMoney(400)
+		transferred, err := valueObject.NewMoney(400)
 		assert.NoError(t, err)
 		assert.NoError(t, reloaded.TransferFunds(domain.TransferFundsCommand{
 			Amount:     transferred,
-			TransferID: valueobject.GenerateID(),
-			ToWalletID: valueobject.GenerateID(),
+			TransferID: valueObject.GenerateID(),
+			ToWalletID: valueObject.GenerateID(),
 			Timestamp:  time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), reloaded))
@@ -160,7 +160,7 @@ func TestWalletKurrentDBESHandler_buildStreamName(t *testing.T) {
 	t.Run("It should return a stream name prefixed with 'wallet-' when given a valid ID", func(t *testing.T) {
 		t.Parallel()
 
-		id, _ := valueobject.NewID("550e8400-e29b-41d4-a716-446655440000")
+		id, _ := valueObject.NewID("550e8400-e29b-41d4-a716-446655440000")
 		esHandler := &WalletKurrentDBESHandler{}
 		result := esHandler.buildStreamName(id)
 		assert.Equal(t, "wallet-550e8400-e29b-41d4-a716-446655440000", result)

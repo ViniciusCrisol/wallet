@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,8 +15,8 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return a valid command when both IDs are valid UUIDs", func(t *testing.T) {
 		t.Parallel()
 
-		walletID := valueobject.GenerateID().String()
-		holderID := valueobject.GenerateID().String()
+		walletID := valueObject.GenerateID().String()
+		holderID := valueObject.GenerateID().String()
 		dto := CreateWalletDTO{WalletID: walletID, HolderID: holderID}
 
 		command, err := dto.CreateWalletCommand()
@@ -30,7 +30,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when wallet_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: "not-a-uuid", HolderID: valueobject.GenerateID().String()}
+		dto := CreateWalletDTO{WalletID: "not-a-uuid", HolderID: valueObject.GenerateID().String()}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -40,7 +40,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when holder_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: valueobject.GenerateID().String(), HolderID: "not-a-uuid"}
+		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: "not-a-uuid"}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -50,7 +50,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when wallet_id is empty", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: "", HolderID: valueobject.GenerateID().String()}
+		dto := CreateWalletDTO{WalletID: "", HolderID: valueObject.GenerateID().String()}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -60,7 +60,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when holder_id is empty", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: valueobject.GenerateID().String(), HolderID: ""}
+		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: ""}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -74,8 +74,8 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return a valid command when all fields are valid", func(t *testing.T) {
 		t.Parallel()
 
-		transferID := valueobject.GenerateID().String()
-		toWalletID := valueobject.GenerateID().String()
+		transferID := valueObject.GenerateID().String()
+		toWalletID := valueObject.GenerateID().String()
 		dto := TransferFundsDTO{AmountInCents: 500, TransferID: transferID, ToWalletID: toWalletID}
 
 		command, err := dto.TransferFundsCommand()
@@ -90,7 +90,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when transfer_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: 100, TransferID: "not-a-uuid", ToWalletID: valueobject.GenerateID().String()}
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: "not-a-uuid", ToWalletID: valueObject.GenerateID().String()}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -100,7 +100,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when to_wallet_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueobject.GenerateID().String(), ToWalletID: "not-a-uuid"}
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: "not-a-uuid"}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -110,7 +110,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: 0, TransferID: valueobject.GenerateID().String(), ToWalletID: valueobject.GenerateID().String()}
+		dto := TransferFundsDTO{AmountInCents: 0, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String()}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -120,7 +120,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: -1, TransferID: valueobject.GenerateID().String(), ToWalletID: valueobject.GenerateID().String()}
+		dto := TransferFundsDTO{AmountInCents: -1, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String()}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -134,8 +134,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 	t.Run("It should return a valid command when all fields are valid", func(t *testing.T) {
 		t.Parallel()
 
-		transferID := valueobject.GenerateID().String()
-		fromWalletID := valueobject.GenerateID().String()
+		transferID := valueObject.GenerateID().String()
+		fromWalletID := valueObject.GenerateID().String()
 		dto := MockTransferDTO{
 			AmountInCents: 300,
 			TransferID:    transferID,
@@ -157,7 +157,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 		dto := MockTransferDTO{
 			AmountInCents: 100,
 			TransferID:    "not-a-uuid",
-			FromWalletID:  valueobject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()
@@ -170,7 +170,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		dto := MockTransferDTO{
 			AmountInCents: 100,
-			TransferID:    valueobject.GenerateID().String(),
+			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  "not-a-uuid",
 		}
 
@@ -184,8 +184,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		dto := MockTransferDTO{
 			AmountInCents: 0,
-			TransferID:    valueobject.GenerateID().String(),
-			FromWalletID:  valueobject.GenerateID().String(),
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()
@@ -198,8 +198,8 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		dto := MockTransferDTO{
 			AmountInCents: -1,
-			TransferID:    valueobject.GenerateID().String(),
-			FromWalletID:  valueobject.GenerateID().String(),
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()

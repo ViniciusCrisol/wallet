@@ -7,7 +7,7 @@ import (
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 	"wallet/wallet-service/pkg/platform/web"
 )
 
@@ -53,7 +53,7 @@ func (controller *WalletCommandController) TransferFunds(response http.ResponseW
 		web.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
-	walletID, err := valueobject.NewID(request.PathValue("id"))
+	walletID, err := valueObject.NewID(request.PathValue("id"))
 	if err != nil {
 		web.RespondWithError(response, pkg.ErrInvalidWalletID)
 		return
@@ -92,7 +92,7 @@ func (controller *WalletCommandController) MockTransfer(response http.ResponseWr
 		web.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
-	walletID, err := valueobject.NewID(request.PathValue("id"))
+	walletID, err := valueObject.NewID(request.PathValue("id"))
 	if err != nil {
 		web.RespondWithError(response, pkg.ErrInvalidWalletID)
 		return

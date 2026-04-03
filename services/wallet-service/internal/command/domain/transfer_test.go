@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +15,7 @@ func TestNewTransfer(t *testing.T) {
 	t.Run("It should create a transfer with the provided values", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		kind := TransferKindOutgoing
 		amount := newMoney(t, 500)
 		timestamp := time.Now()
@@ -32,7 +32,7 @@ func TestNewTransfer(t *testing.T) {
 		t.Parallel()
 
 		transfer := NewTransfer(
-			valueobject.GenerateID(),
+			valueObject.GenerateID(),
 			TransferKindIncoming,
 			newMoney(t, 200),
 			time.Now(),
@@ -48,7 +48,7 @@ func TestNewOutgoingTransfer(t *testing.T) {
 	t.Run("It should create an outgoing transfer", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		amount := newMoney(t, 300)
 		timestamp := time.Now()
 
@@ -67,7 +67,7 @@ func TestNewIncomingTransfer(t *testing.T) {
 	t.Run("It should create an incoming transfer", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		amount := newMoney(t, 150)
 		timestamp := time.Now()
 

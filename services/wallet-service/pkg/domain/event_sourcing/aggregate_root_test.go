@@ -1,9 +1,9 @@
-package eventsourcing
+package event_sourcing
 
 import (
 	"testing"
 
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +18,7 @@ func TestAggregateRoot_NewAggregateRoot(t *testing.T) {
 	t.Run("It should return an aggregate root with the given ID when a valid ID is provided", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		assert.Equal(t, id, ar.ID())
 	})
@@ -26,7 +26,7 @@ func TestAggregateRoot_NewAggregateRoot(t *testing.T) {
 	t.Run("It should initialize version as -1 when a new aggregate root is created", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		assert.Equal(t, -1, ar.Version())
 	})
@@ -34,7 +34,7 @@ func TestAggregateRoot_NewAggregateRoot(t *testing.T) {
 	t.Run("It should initialize with no uncommitted events when a new aggregate root is created", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		assert.Empty(t, ar.UncommittedEvents())
 	})
@@ -46,7 +46,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 	t.Run("It should append the event to uncommitted events when an event is recorded", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		event := stubEvent{name: "created"}
 
@@ -58,7 +58,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 	t.Run("It should increment the version by one when an event is recorded", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 
 		ar.Record(stubEvent{name: "created"})
@@ -69,7 +69,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 	t.Run("It should increment version for each event recorded when multiple events are recorded", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 
 		ar.Record(stubEvent{name: "created"})
@@ -82,7 +82,7 @@ func TestAggregateRoot_Record(t *testing.T) {
 	t.Run("It should accumulate all events in order when multiple events are recorded", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		e1 := stubEvent{name: "created"}
 		e2 := stubEvent{name: "updated"}
@@ -100,7 +100,7 @@ func TestAggregateRoot_Commit(t *testing.T) {
 	t.Run("It should clear all uncommitted events when commit is called", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		ar.Record(stubEvent{name: "created"})
 		ar.Record(stubEvent{name: "updated"})
@@ -113,7 +113,7 @@ func TestAggregateRoot_Commit(t *testing.T) {
 	t.Run("It should preserve the version after commit when events were previously recorded", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 		ar.Record(stubEvent{name: "created"})
 		ar.Record(stubEvent{name: "updated"})
@@ -126,7 +126,7 @@ func TestAggregateRoot_Commit(t *testing.T) {
 	t.Run("It should have no effect when commit is called on a fresh aggregate root", func(t *testing.T) {
 		t.Parallel()
 
-		id := valueobject.GenerateID()
+		id := valueObject.GenerateID()
 		ar := NewAggregateRoot(id)
 
 		ar.Commit()

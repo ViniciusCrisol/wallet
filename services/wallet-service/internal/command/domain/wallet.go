@@ -6,16 +6,16 @@ import (
 	"time"
 
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/domain/eventsourcing"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	eventSourcing "wallet/wallet-service/pkg/domain/event_sourcing"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 )
 
 const MaxBalanceInCents = 100_000_000
 
 type Wallet struct {
-	eventsourcing.AggregateRoot
-	balance   valueobject.Money
-	holderID  valueobject.ID
+	eventSourcing.AggregateRoot
+	balance   valueObject.Money
+	holderID  valueObject.ID
 	transfers []Transfer
 	createdAt time.Time
 	updatedAt time.Time
@@ -62,7 +62,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 	if err != nil {
 		return err
 	}
-	maxBalance, err := valueobject.NewMoney(MaxBalanceInCents)
+	maxBalance, err := valueObject.NewMoney(MaxBalanceInCents)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 	return nil
 }
 
-func (wallet *Wallet) Replay(event eventsourcing.Event) error {
+func (wallet *Wallet) Replay(event eventSourcing.Event) error {
 	switch e := event.(type) {
 	case WalletCreatedEvent:
 		wallet.applyWalletCreated(e)
@@ -109,7 +109,7 @@ func (wallet *Wallet) Replay(event eventsourcing.Event) error {
 }
 
 func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
-	wallet.AggregateRoot = eventsourcing.NewAggregateRoot(event.WalletID)
+	wallet.AggregateRoot = eventSourcing.NewAggregateRoot(event.WalletID)
 	wallet.holderID = event.HolderID
 	wallet.createdAt = event.CreatedAt
 	wallet.updatedAt = event.UpdatedAt
@@ -143,7 +143,7 @@ func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEven
 	return nil
 }
 
-func (wallet *Wallet) hasTransfer(transferID valueobject.ID) bool {
+func (wallet *Wallet) hasTransfer(transferID valueObject.ID) bool {
 	for _, transfer := range wallet.transfers {
 		if transfer.ID().Equals(transferID) {
 			return true
@@ -152,11 +152,11 @@ func (wallet *Wallet) hasTransfer(transferID valueobject.ID) bool {
 	return false
 }
 
-func (wallet *Wallet) Balance() valueobject.Money {
+func (wallet *Wallet) Balance() valueObject.Money {
 	return wallet.balance
 }
 
-func (wallet *Wallet) HolderID() valueobject.ID {
+func (wallet *Wallet) HolderID() valueObject.ID {
 	return wallet.holderID
 }
 

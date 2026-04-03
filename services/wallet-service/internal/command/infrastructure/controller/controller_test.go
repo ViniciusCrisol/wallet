@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
@@ -16,6 +17,8 @@ import (
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../../../.env.test")
+
+	time.Local = config.Load().TZ
 
 	os.Exit(m.Run())
 }

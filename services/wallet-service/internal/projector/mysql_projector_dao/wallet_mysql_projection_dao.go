@@ -1,4 +1,4 @@
-package postgresqlprojectordao
+package mysql_projector_dao
 
 import (
 	"context"
@@ -6,23 +6,23 @@ import (
 	"log/slog"
 
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 )
 
-type WalletPostgreSQLProjectionDAO struct {
+type WalletMySQLProjectionDAO struct {
 	db *sql.DB
 }
 
-func NewWalletPostgreSQLProjectionDAO(db *sql.DB) *WalletPostgreSQLProjectionDAO {
-	return &WalletPostgreSQLProjectionDAO{
+func NewWalletMySQLProjectionDAO(db *sql.DB) *WalletMySQLProjectionDAO {
+	return &WalletMySQLProjectionDAO{
 		db: db,
 	}
 }
 
-func (dao *WalletPostgreSQLProjectionDAO) CreateWallet(ctx context.Context, event integrationevent.WalletCreatedEvent) error {
+func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event integrationEvent.WalletCreatedEvent) error {
 	_, err := dao.db.ExecContext(
 		ctx,
-		"INSERT INTO wallet_projections (wallet_id, holder_id, balance_in_cents, created_at, updated_at) VALUES ($1, $2, 0, $3, $4)",
+		"INSERT INTO wallet_projections (wallet_id, holder_id, balance_in_cents, created_at, updated_at) VALUES (?, ?, 0, ?, ?)",
 		event.WalletID,
 		event.HolderID,
 		event.CreatedAt,
@@ -37,7 +37,7 @@ func (dao *WalletPostgreSQLProjectionDAO) CreateWallet(ctx context.Context, even
 	return nil
 }
 
-func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, event integrationevent.FundsTransferredEvent) error {
+func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, event integrationEvent.FundsTransferredEvent) error {
 	tx, err := dao.db.BeginTx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction for funds transferred",
@@ -49,7 +49,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferred(ctx context.Cont
 
 	result, err := tx.ExecContext(
 		ctx,
-		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents - $1, updated_at = $2 WHERE wallet_id = $3",
+		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents - ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
 		event.FromWalletID,
@@ -79,7 +79,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferred(ctx context.Cont
 	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
+		VALUES (?, ?, ?, ?, ?, ?)`,
 		event.FromWalletID,
 		event.TransferID,
 		event.ToWalletID,
@@ -97,7 +97,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferred(ctx context.Cont
 	return tx.Commit()
 }
 
-func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Context, event integrationevent.FundsTransferReceivedEvent) error {
+func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Context, event integrationEvent.FundsTransferReceivedEvent) error {
 	tx, err := dao.db.BeginTx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction for funds transfer received",
@@ -109,7 +109,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferReceived(ctx context
 
 	result, err := tx.ExecContext(
 		ctx,
-		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents + $1, updated_at = $2 WHERE wallet_id = $3",
+		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents + ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
 		event.WalletID,
@@ -139,7 +139,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferReceived(ctx context
 	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
+		VALUES (?, ?, ?, ?, ?, ?)`,
 		event.WalletID,
 		event.TransferID,
 		event.FromWalletID,

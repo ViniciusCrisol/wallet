@@ -1,4 +1,4 @@
-package mysqlprojectordao
+package mysql_projector_dao
 
 import (
 	"context"
@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	"wallet/wallet-service/config"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
-var mySQLDB *sql.DB
+var db *sql.DB
 
 type transferProjectionRow struct {
 	WalletID            string
@@ -28,15 +29,23 @@ type transferProjectionRow struct {
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../../.env.test")
+	cfg := config.Load()
 
-	mysql, err := sql.Open("mysql", os.Getenv("MYSQL_CONNECTION_STRING"))
+	time.Local = cfg.TZ
+
+	mysql, err := sql.Open("mysql", cfg.MySQLConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
+	mysql.SetMaxOpenConns(cfg.MySQLMaxOpenConns)
+	mysql.SetMaxIdleConns(cfg.MySQLMaxIdleConns)
+	mysql.SetConnMaxLifetime(cfg.MySQLConnMaxLifetime)
+	mysql.SetConnMaxIdleTime(cfg.MySQLConnMaxIdleTime)
+
 	if err = mysql.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	mySQLDB = mysql
+	db = mysql
 
 	os.Exit(m.Run())
 }
@@ -49,7 +58,7 @@ func createTestWallet(
 ) {
 	t.Helper()
 
-	event := integrationevent.WalletCreatedEvent{
+	event := integrationEvent.WalletCreatedEvent{
 		WalletID:  walletID,
 		HolderID:  holderID,
 		CreatedAt: time.Now(),
@@ -62,7 +71,7 @@ func getTestWalletBalance(t *testing.T, walletID string) int {
 	t.Helper()
 
 	var balance int
-	assert.NoError(t, mySQLDB.QueryRow("SELECT balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&balance))
+	assert.NoError(t, db.QueryRow("SELECT balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&balance))
 	return balance
 }
 
@@ -74,7 +83,7 @@ func getTestTransferProjection(
 	t.Helper()
 
 	var row transferProjectionRow
-	err := mySQLDB.QueryRow(
+	err := db.QueryRow(
 		`
 			SELECT
 				wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at

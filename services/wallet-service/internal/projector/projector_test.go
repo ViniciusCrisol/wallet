@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/projector/mysqlprojectordao"
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	mySQLProjectorDAO "wallet/wallet-service/internal/projector/mysql_projector_dao"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/uuid"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -20,9 +20,8 @@ import (
 )
 
 var (
-	client       *kurrentdb.Client
-	mySQLDB      *sql.DB
-	postgreSQLDB *sql.DB
+	db     *sql.DB
+	client *kurrentdb.Client
 )
 
 type transferProjectionRow struct {
@@ -36,17 +35,25 @@ type transferProjectionRow struct {
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../.env.test")
+	cfg := config.Load()
 
-	mysql, err := sql.Open("mysql", os.Getenv("MYSQL_CONNECTION_STRING"))
+	time.Local = cfg.TZ
+
+	mysql, err := sql.Open("mysql", cfg.MySQLConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
+	mysql.SetMaxOpenConns(cfg.MySQLMaxOpenConns)
+	mysql.SetMaxIdleConns(cfg.MySQLMaxIdleConns)
+	mysql.SetConnMaxLifetime(cfg.MySQLConnMaxLifetime)
+	mysql.SetConnMaxIdleTime(cfg.MySQLConnMaxIdleTime)
+
 	if err = mysql.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	mySQLDB = mysql
+	db = mysql
 
-	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
+	settings, err := kurrentdb.ParseConnectionString(cfg.KurrentDBConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +77,7 @@ func TestMain(m *testing.M) {
 	go NewWalletKurrentDBProjectorConsumer(
 		group,
 		client,
-		mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB),
+		mySQLProjectorDAO.NewWalletMySQLProjectionDAO(db),
 	).Start(ctx)
 
 	os.Exit(m.Run())
@@ -80,11 +87,11 @@ func createTestWallet(
 	t *testing.T,
 	walletID string,
 	holderID string,
-	walletMySQLProjectionDAO *mysqlprojectordao.WalletMySQLProjectionDAO,
+	walletMySQLProjectionDAO *mySQLProjectorDAO.WalletMySQLProjectionDAO,
 ) {
 	t.Helper()
 
-	event := integrationevent.WalletCreatedEvent{
+	event := integrationEvent.WalletCreatedEvent{
 		WalletID:  walletID,
 		HolderID:  holderID,
 		CreatedAt: time.Now(),
@@ -97,7 +104,7 @@ func getTestWalletBalance(t *testing.T, walletID string) int {
 	t.Helper()
 
 	var balance int
-	assert.NoError(t, mySQLDB.QueryRow("SELECT balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&balance))
+	assert.NoError(t, db.QueryRow("SELECT balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&balance))
 	return balance
 }
 
@@ -109,7 +116,7 @@ func getTestTransferProjection(
 	t.Helper()
 
 	var row transferProjectionRow
-	err := mySQLDB.QueryRow(
+	err := db.QueryRow(
 		`
 			SELECT
 				wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at

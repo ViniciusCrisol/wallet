@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	TZ                                  *time.Location
 	ServerAddress                       string
 	MySQLConnectionString               string
 	MySQLMaxOpenConns                   int
@@ -26,6 +27,7 @@ type Config struct {
 
 func Load() Config {
 	return Config{
+		TZ:                                  envLocation("TZ"),
 		ServerAddress:                       os.Getenv("SERVER_ADDRESS"),
 		MySQLConnectionString:               os.Getenv("MYSQL_CONNECTION_STRING"),
 		MySQLMaxOpenConns:                   envInt("MYSQL_MAX_OPEN_CONNS"),
@@ -51,6 +53,15 @@ func envInt(key string) int {
 		}
 	}
 	return 0
+}
+
+func envLocation(key string) *time.Location {
+	if v := os.Getenv(key); v != "" {
+		if l, err := time.LoadLocation(v); err == nil {
+			return l
+		}
+	}
+	return time.UTC
 }
 
 func envDuration(key string) time.Duration {

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"wallet/wallet-service/config"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
@@ -16,15 +18,23 @@ var db *sql.DB
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../.env.test")
+	cfg := config.Load()
 
-	d, err := sql.Open("mysql", os.Getenv("MYSQL_CONNECTION_STRING"))
+	time.Local = cfg.TZ
+
+	mysql, err := sql.Open("mysql", cfg.MySQLConnectionString)
 	if err != nil {
 		panic(err)
 	}
-	if err = d.Ping(); err != nil {
+	mysql.SetMaxOpenConns(cfg.MySQLMaxOpenConns)
+	mysql.SetMaxIdleConns(cfg.MySQLMaxIdleConns)
+	mysql.SetConnMaxLifetime(cfg.MySQLConnMaxLifetime)
+	mysql.SetConnMaxIdleTime(cfg.MySQLConnMaxIdleTime)
+
+	if err = mysql.Ping(); err != nil {
 		panic(err)
 	}
-	db = d
+	db = mysql
 
 	os.Exit(m.Run())
 }

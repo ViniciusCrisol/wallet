@@ -1,4 +1,4 @@
-package postgresqlprojectordao
+package postgresql_projector_dao
 
 import (
 	"context"
@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	"wallet/wallet-service/config"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
-var postgreSQLDB *sql.DB
+var db *sql.DB
 
 type transferProjectionRow struct {
 	WalletID            string
@@ -28,15 +29,23 @@ type transferProjectionRow struct {
 
 func TestMain(m *testing.M) {
 	godotenv.Load("../../../.env.test")
+	cfg := config.Load()
 
-	pg, err := sql.Open("postgres", os.Getenv("POSTGRESQL_CONNECTION_STRING"))
+	time.Local = cfg.TZ
+
+	pg, err := sql.Open("postgres", cfg.PostgreSQLConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
+	pg.SetMaxOpenConns(cfg.PostgreSQLMaxOpenConns)
+	pg.SetMaxIdleConns(cfg.PostgreSQLMaxIdleConns)
+	pg.SetConnMaxLifetime(cfg.PostgreSQLConnMaxLifetime)
+	pg.SetConnMaxIdleTime(cfg.PostgreSQLConnMaxIdleTime)
+
 	if err = pg.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	postgreSQLDB = pg
+	db = pg
 
 	os.Exit(m.Run())
 }
@@ -49,7 +58,7 @@ func createTestWallet(
 ) {
 	t.Helper()
 
-	event := integrationevent.WalletCreatedEvent{
+	event := integrationEvent.WalletCreatedEvent{
 		WalletID:  walletID,
 		HolderID:  holderID,
 		CreatedAt: time.Now(),
@@ -62,7 +71,7 @@ func getTestWalletBalance(t *testing.T, walletID string) int {
 	t.Helper()
 
 	var balance int
-	assert.NoError(t, postgreSQLDB.QueryRow("SELECT balance_in_cents FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(&balance))
+	assert.NoError(t, db.QueryRow("SELECT balance_in_cents FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(&balance))
 	return balance
 }
 
@@ -74,7 +83,7 @@ func getTestTransferProjection(
 	t.Helper()
 
 	var row transferProjectionRow
-	err := postgreSQLDB.QueryRow(
+	err := db.QueryRow(
 		`
 			SELECT
 				wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at

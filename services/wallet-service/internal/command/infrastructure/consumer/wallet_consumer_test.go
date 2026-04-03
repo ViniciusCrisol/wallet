@@ -9,7 +9,7 @@ import (
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
@@ -41,7 +41,7 @@ func TestWalletKurrentDBConsumer_Start(t *testing.T) {
 		fromWalletID := uuid.NewUUID()
 		transferID := uuid.NewUUID()
 		now := time.Now()
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    transferID,
 			ToWalletID:    targetWallet.ID().String(),
 			FromWalletID:  fromWalletID,
@@ -57,7 +57,7 @@ func TestWalletKurrentDBConsumer_Start(t *testing.T) {
 			kurrentdb.EventData{
 				Data:        body,
 				EventID:     uuid.NewUUIDValue(),
-				EventType:   integrationevent.FundsTransferredEventName,
+				EventType:   integrationEvent.FundsTransferredEventName,
 				ContentType: kurrentdb.ContentTypeJson,
 			},
 		)
@@ -86,7 +86,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		fromWalletID := uuid.NewUUID()
 		transferID := uuid.NewUUID()
 		now := time.Now()
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    transferID,
 			ToWalletID:    targetWallet.ID().String(),
 			FromWalletID:  fromWalletID,
@@ -95,7 +95,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.NoError(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName))
+		assert.NoError(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName))
 
 		wallet, found, err := esHandler.Find(context.Background(), targetWallet.ID())
 		assert.NoError(t, err)
@@ -111,7 +111,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 
 		invalidEventBody := []byte(`{invalid json}`)
 
-		assert.Error(t, consumer.handle(context.Background(), invalidEventBody, integrationevent.FundsTransferredEventName))
+		assert.Error(t, consumer.handle(context.Background(), invalidEventBody, integrationEvent.FundsTransferredEventName))
 	})
 
 	t.Run("It should return nil error when unknown event type is received", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(client)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			ToWalletID:    "not-a-uuid",
 			FromWalletID:  uuid.NewUUID(),
@@ -140,7 +140,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName), pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrInvalidUUID)
 	})
 
 	t.Run("It should return error when transfer_id is not a valid UUID", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(client)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    "not-a-uuid",
 			ToWalletID:    uuid.NewUUID(),
 			FromWalletID:  uuid.NewUUID(),
@@ -158,7 +158,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName), pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrInvalidUUID)
 	})
 
 	t.Run("It should return error when from_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(client)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			ToWalletID:    uuid.NewUUID(),
 			FromWalletID:  "not-a-uuid",
@@ -176,7 +176,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName), pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrInvalidUUID)
 	})
 
 	t.Run("It should return error when amount_in_cents is zero", func(t *testing.T) {
@@ -186,7 +186,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		targetWallet := createTestWalletWithBalance(t, esHandler, 1000)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			ToWalletID:    targetWallet.ID().String(),
 			FromWalletID:  uuid.NewUUID(),
@@ -195,7 +195,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.NoError(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName))
+		assert.NoError(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName))
 	})
 
 	t.Run("It should return error when amount_in_cents is negative", func(t *testing.T) {
@@ -204,7 +204,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(client)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			ToWalletID:    uuid.NewUUID(),
 			FromWalletID:  uuid.NewUUID(),
@@ -213,7 +213,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName), pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrNegativeAmount)
 	})
 
 	t.Run("It should return error when target wallet is not found", func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		esHandler := persistence.NewWalletKurrentDBESHandler(client)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			ToWalletID:    uuid.NewUUID(),
 			FromWalletID:  uuid.NewUUID(),
@@ -231,7 +231,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName), pkg.ErrWalletNotFound)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrWalletNotFound)
 	})
 
 	t.Run("It should return error when balance limit would be exceeded", func(t *testing.T) {
@@ -241,7 +241,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		targetWallet := createTestWalletWithBalance(t, esHandler, domain.MaxBalanceInCents)
 		consumer := NewWalletKurrentDBConsumer("", nil, esHandler)
 
-		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
+		body, err := json.Marshal(integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			ToWalletID:    targetWallet.ID().String(),
 			FromWalletID:  uuid.NewUUID(),
@@ -250,6 +250,6 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName), pkg.ErrBalanceLimitExceeded)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrBalanceLimitExceeded)
 	})
 }

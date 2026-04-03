@@ -9,7 +9,7 @@ import (
 
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/pkg"
-	"wallet/wallet-service/pkg/domain/valueobject"
+	valueObject "wallet/wallet-service/pkg/domain/value_object"
 	"wallet/wallet-service/pkg/platform/subscriber"
 	"wallet/wallet-service/pkg/platform/uuid"
 
@@ -78,7 +78,7 @@ func (handler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain
 	return nil
 }
 
-func (handler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobject.ID) (domain.Wallet, bool, error) {
+func (handler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueObject.ID) (domain.Wallet, bool, error) {
 	streamName := handler.buildStreamName(id)
 
 	stream, err := handler.client.ReadStream(
@@ -139,6 +139,6 @@ func (handler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobjec
 	return wallet, true, nil
 }
 
-func (handler *WalletKurrentDBESHandler) buildStreamName(id valueobject.ID) string {
+func (handler *WalletKurrentDBESHandler) buildStreamName(id valueObject.ID) string {
 	return "wallet-" + id.String()
 }

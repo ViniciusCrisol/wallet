@@ -1,11 +1,11 @@
-package postgresqlprojectordao
+package postgresql_projector_dao
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/platform/integrationevent"
+	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/stretchr/testify/assert"
@@ -17,11 +17,11 @@ func TestWalletPostgreSQLProjectionDAO_CreateWallet(t *testing.T) {
 	t.Run("It should successfully create a wallet when valid event is provided", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
-		event := integrationevent.WalletCreatedEvent{
+		event := integrationEvent.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: time.Now(),
@@ -34,7 +34,7 @@ func TestWalletPostgreSQLProjectionDAO_CreateWallet(t *testing.T) {
 			retrievedHolderID string
 			balance           int
 		)
-		postgreSQLDB.QueryRow("SELECT wallet_id, holder_id, balance_in_cents FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(
+		db.QueryRow("SELECT wallet_id, holder_id, balance_in_cents FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(
 			&retrievedWalletID,
 			&retrievedHolderID,
 			&balance,
@@ -48,11 +48,11 @@ func TestWalletPostgreSQLProjectionDAO_CreateWallet(t *testing.T) {
 	t.Run("It should return error when wallet_id already exists", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
-		event := integrationevent.WalletCreatedEvent{
+		event := integrationEvent.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: time.Now(),
@@ -67,11 +67,11 @@ func TestWalletPostgreSQLProjectionDAO_CreateWallet(t *testing.T) {
 	t.Run("It should initialize wallet balance as zero", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
-		event := integrationevent.WalletCreatedEvent{
+		event := integrationEvent.WalletCreatedEvent{
 			WalletID:  walletID,
 			HolderID:  holderID,
 			CreatedAt: time.Now(),
@@ -89,18 +89,18 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 	t.Run("It should successfully deduct balance when funds are transferred", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
 		createTestWallet(t, walletID, holderID, dao)
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 5000, walletID)
+		db.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 5000, walletID)
 
 		toWalletID := uuid.NewUUID()
 		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferredEvent{
+		event := integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  walletID,
 			ToWalletID:    toWalletID,
@@ -115,18 +115,18 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 	t.Run("It should result in negative balance if deducted amount exceeds current balance", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
 		createTestWallet(t, walletID, holderID, dao)
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 500, walletID)
+		db.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 500, walletID)
 
 		toWalletID := uuid.NewUUID()
 		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferredEvent{
+		event := integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  walletID,
 			ToWalletID:    toWalletID,
@@ -141,23 +141,23 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 	t.Run("It should update the updated_at timestamp when funds are transferred", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
 		createTestWallet(t, walletID, holderID, dao)
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 1000, walletID)
+		db.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 1000, walletID)
 
 		oldTime := time.Now().Add(-1 * time.Hour)
 		newTime := time.Now()
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET updated_at = $1 WHERE wallet_id = $2", oldTime, walletID)
+		db.Exec("UPDATE wallet_projections SET updated_at = $1 WHERE wallet_id = $2", oldTime, walletID)
 
 		toWalletID := uuid.NewUUID()
 		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferredEvent{
+		event := integrationEvent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  walletID,
 			ToWalletID:    toWalletID,
@@ -167,7 +167,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 		assert.NoError(t, dao.ApplyFundsTransferred(context.Background(), event))
 
 		var updatedAt time.Time
-		postgreSQLDB.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(&updatedAt)
+		db.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(&updatedAt)
 
 		assert.True(t, updatedAt.After(oldTime))
 	})
@@ -175,7 +175,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 	t.Run("It should insert an outgoing transfer projection when funds are transferred", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 		toWalletID := uuid.NewUUID()
@@ -184,9 +184,9 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 		createTestWallet(t, walletID, holderID, dao)
 		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 5000, walletID)
+		db.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 5000, walletID)
 
-		event := integrationevent.FundsTransferredEvent{
+		event := integrationEvent.FundsTransferredEvent{
 			TransferID:    transferID,
 			FromWalletID:  walletID,
 			ToWalletID:    toWalletID,
@@ -209,18 +209,18 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 	t.Run("It should successfully increase balance when funds are received", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
 		createTestWallet(t, walletID, holderID, dao)
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 1000, walletID)
+		db.Exec("UPDATE wallet_projections SET balance_in_cents = $1 WHERE wallet_id = $2", 1000, walletID)
 
 		fromWalletID := uuid.NewUUID()
 		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferReceivedEvent{
+		event := integrationEvent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  fromWalletID,
@@ -235,7 +235,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 	t.Run("It should successfully add funds to zero balance wallet", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
@@ -244,7 +244,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 		fromWalletID := uuid.NewUUID()
 		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferReceivedEvent{
+		event := integrationEvent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  fromWalletID,
@@ -259,7 +259,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 	t.Run("It should update the updated_at timestamp when funds are received", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
@@ -268,12 +268,12 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 		oldTime := time.Now().Add(-1 * time.Hour)
 		newTime := time.Now()
 
-		postgreSQLDB.Exec("UPDATE wallet_projections SET updated_at = $1 WHERE wallet_id = $2", oldTime, walletID)
+		db.Exec("UPDATE wallet_projections SET updated_at = $1 WHERE wallet_id = $2", oldTime, walletID)
 
 		fromWalletID := uuid.NewUUID()
 		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferReceivedEvent{
+		event := integrationEvent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  fromWalletID,
@@ -283,7 +283,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event))
 
 		var updatedAt time.Time
-		postgreSQLDB.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(&updatedAt)
+		db.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = $1", walletID).Scan(&updatedAt)
 
 		assert.True(t, updatedAt.After(oldTime))
 	})
@@ -291,7 +291,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 	t.Run("It should successfully accumulate multiple fund transfers", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 
@@ -300,7 +300,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 		fromWalletID1 := uuid.NewUUID()
 		createTestWallet(t, fromWalletID1, uuid.NewUUID(), dao)
 
-		event1 := integrationevent.FundsTransferReceivedEvent{
+		event1 := integrationEvent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  fromWalletID1,
@@ -312,7 +312,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 		fromWalletID2 := uuid.NewUUID()
 		createTestWallet(t, fromWalletID2, uuid.NewUUID(), dao)
 
-		event2 := integrationevent.FundsTransferReceivedEvent{
+		event2 := integrationEvent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  fromWalletID2,
@@ -327,7 +327,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 	t.Run("It should insert an incoming transfer projection when funds are received", func(t *testing.T) {
 		t.Parallel()
 
-		dao := NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+		dao := NewWalletPostgreSQLProjectionDAO(db)
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 		fromWalletID := uuid.NewUUID()
@@ -336,7 +336,7 @@ func TestWalletPostgreSQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) 
 		createTestWallet(t, walletID, holderID, dao)
 		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
 
-		event := integrationevent.FundsTransferReceivedEvent{
+		event := integrationEvent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    transferID,
 			FromWalletID:  fromWalletID,

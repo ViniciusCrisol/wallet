@@ -1,4 +1,4 @@
-package integrationevent
+package integration_event
 
 import "time"
 
