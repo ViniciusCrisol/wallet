@@ -19,6 +19,13 @@ type WalletResponse struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+type TransferResponse struct {
+	TransferID    string    `json:"transfer_id"`
+	Direction     string    `json:"direction"`
+	AmountInCents int       `json:"amount_in_cents"`
+	TransferredAt time.Time `json:"transferred_at"`
+}
+
 type WalletQueryController struct {
 	db *sql.DB
 }
@@ -83,7 +90,7 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 	}
 	defer rows.Close()
 
-	var wallets []WalletResponse
+	wallets := []WalletResponse{}
 	for rows.Next() {
 		var wallet WalletResponse
 		if err := rows.Scan(
@@ -105,4 +112,69 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 		return
 	}
 	web.RespondWithJSON(response, http.StatusOK, wallets)
+}
+
+func (controller *WalletQueryController) FindTransfersByWalletID(response http.ResponseWriter, request *http.Request) {
+	walletID := request.PathValue("id")
+	if !uuid.IsValid(walletID) {
+		web.RespondWithError(response, pkg.ErrInvalidWalletID)
+		return
+	}
+	limit, ok := web.GetIntQueryParam(request, "limit")
+	if !ok || limit <= 0 || limit > 100 {
+		web.RespondWithError(response, pkg.ErrInvalidPaginationLimit)
+		return
+	}
+	offset, ok := web.GetIntQueryParam(request, "offset")
+	if !ok || offset < 0 {
+		web.RespondWithError(response, pkg.ErrInvalidPaginationOffset)
+		return
+	}
+
+	rows, err := controller.db.QueryContext(
+		request.Context(),
+		`
+			SELECT
+				transfer_id, direction, amount_in_cents, transferred_at
+			FROM
+				transfer_projections
+			WHERE
+				wallet_id = ?
+			ORDER BY
+				transferred_at DESC
+			LIMIT ?
+			OFFSET ?
+		`,
+		walletID, limit, offset,
+	)
+	if err != nil {
+		slog.Error("failed to query transfer projections",
+			slog.String("wallet_id", walletID),
+			slog.String("error", err.Error()))
+		web.RespondWithError(response, err)
+		return
+	}
+	defer rows.Close()
+
+	transfers := []TransferResponse{}
+	for rows.Next() {
+		var transfer TransferResponse
+		if err := rows.Scan(
+			&transfer.TransferID,
+			&transfer.Direction,
+			&transfer.AmountInCents,
+			&transfer.TransferredAt,
+		); err != nil {
+			slog.Error("failed to scan transfer projection row", slog.String("error", err.Error()))
+			web.RespondWithError(response, err)
+			return
+		}
+		transfers = append(transfers, transfer)
+	}
+	if err := rows.Err(); err != nil {
+		slog.Error("error iterating transfer projection rows", slog.String("error", err.Error()))
+		web.RespondWithError(response, err)
+		return
+	}
+	web.RespondWithJSON(response, http.StatusOK, transfers)
 }

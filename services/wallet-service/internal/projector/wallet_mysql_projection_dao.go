@@ -38,7 +38,17 @@ func (dao *WalletMySQLProjectionDAO) CreateWallet(ctx context.Context, event int
 }
 
 func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, event integrationevent.FundsTransferredEvent) error {
-	result, err := dao.db.ExecContext(ctx,
+	tx, err := dao.db.BeginTx(ctx, nil)
+	if err != nil {
+		slog.Error("failed to begin transaction for funds transferred",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()))
+		return err
+	}
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(
+		ctx,
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents - ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
@@ -66,11 +76,39 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 		return pkg.ErrWalletProjectionNotFound
 	}
 
-	return nil
+	_, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
+		VALUES (?, ?, ?, ?, ?, ?)`,
+		event.FromWalletID,
+		event.TransferID,
+		event.ToWalletID,
+		"outgoing",
+		event.AmountInCents,
+		event.Timestamp,
+	)
+	if err != nil {
+		slog.Error("failed to insert transfer projection",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.FromWalletID),
+			slog.String("error", err.Error()))
+		return err
+	}
+	return tx.Commit()
 }
 
 func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Context, event integrationevent.FundsTransferReceivedEvent) error {
-	result, err := dao.db.ExecContext(ctx,
+	tx, err := dao.db.BeginTx(ctx, nil)
+	if err != nil {
+		slog.Error("failed to begin transaction for funds transfer received",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("error", err.Error()))
+		return err
+	}
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(
+		ctx,
 		"UPDATE wallet_projections SET balance_in_cents = balance_in_cents + ?, updated_at = ? WHERE wallet_id = ?",
 		event.AmountInCents,
 		event.Timestamp,
@@ -97,5 +135,24 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 			slog.String("wallet_id", event.WalletID))
 		return pkg.ErrWalletProjectionNotFound
 	}
-	return nil
+
+	_, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
+		VALUES (?, ?, ?, ?, ?, ?)`,
+		event.WalletID,
+		event.TransferID,
+		event.FromWalletID,
+		"incoming",
+		event.AmountInCents,
+		event.Timestamp,
+	)
+	if err != nil {
+		slog.Error("failed to insert transfer projection",
+			slog.String("transfer_id", event.TransferID),
+			slog.String("wallet_id", event.WalletID),
+			slog.String("error", err.Error()))
+		return err
+	}
+	return tx.Commit()
 }

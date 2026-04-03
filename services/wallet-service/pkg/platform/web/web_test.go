@@ -12,6 +12,46 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetIntQueryParam(t *testing.T) {
+	t.Parallel()
+
+	t.Run("It should return the parsed value and true when the param exists", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/?limit=10", nil)
+		val, ok := GetIntQueryParam(req, "limit")
+		assert.True(t, ok)
+		assert.Equal(t, 10, val)
+	})
+
+	t.Run("It should return 0 and false when the param is missing", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		val, ok := GetIntQueryParam(req, "limit")
+		assert.False(t, ok)
+		assert.Equal(t, 0, val)
+	})
+
+	t.Run("It should return 0 and false when the param is not a valid integer", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/?limit=abc", nil)
+		val, ok := GetIntQueryParam(req, "limit")
+		assert.False(t, ok)
+		assert.Equal(t, 0, val)
+	})
+
+	t.Run("It should parse negative integers correctly", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "/?offset=-5", nil)
+		val, ok := GetIntQueryParam(req, "offset")
+		assert.True(t, ok)
+		assert.Equal(t, -5, val)
+	})
+}
+
 func TestRespondWithError(t *testing.T) {
 	t.Parallel()
 

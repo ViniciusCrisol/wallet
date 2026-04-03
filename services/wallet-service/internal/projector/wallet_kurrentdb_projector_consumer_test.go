@@ -78,6 +78,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		now := time.Now()
 		transferID := uuid.NewUUID()
 		toWalletID := uuid.NewUUID()
+		createTestWallet(t, toWalletID, uuid.NewUUID(), walletMySQLProjectionDAO)
 		body, err := json.Marshal(integrationevent.FundsTransferredEvent{
 			TransferID:    transferID,
 			ToWalletID:    toWalletID,
@@ -101,6 +102,15 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool { return getTestWalletBalance(t, walletID) == 4000 }, time.Minute, time.Second)
+
+		require.Eventually(t, func() bool {
+			_, found := getTestTransferProjection(t, walletID, transferID)
+			return found
+		}, time.Minute, time.Second)
+		row, _ := getTestTransferProjection(t, walletID, transferID)
+		assert.Equal(t, 1000, row.AmountInCents)
+		assert.Equal(t, "outgoing", row.Direction)
+		assert.Equal(t, toWalletID, row.CounterpartWalletID)
 	})
 
 	t.Run("It should consume a published FundsTransferReceivedEvent and add balance to projection", func(t *testing.T) {
@@ -116,6 +126,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		now := time.Now()
 		transferID := uuid.NewUUID()
 		fromWalletID := uuid.NewUUID()
+		createTestWallet(t, fromWalletID, uuid.NewUUID(), walletMySQLProjectionDAO)
 		body, err := json.Marshal(integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    transferID,
@@ -139,6 +150,15 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool { return getTestWalletBalance(t, walletID) == 3500 }, time.Minute, time.Second)
+
+		require.Eventually(t, func() bool {
+			_, found := getTestTransferProjection(t, walletID, transferID)
+			return found
+		}, time.Minute, time.Second)
+		row, _ := getTestTransferProjection(t, walletID, transferID)
+		assert.Equal(t, 2500, row.AmountInCents)
+		assert.Equal(t, "incoming", row.Direction)
+		assert.Equal(t, fromWalletID, row.CounterpartWalletID)
 	})
 }
 
@@ -193,9 +213,10 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
 
+		now := time.Now()
 		toWalletID := uuid.NewUUID()
 		transferID := uuid.NewUUID()
-		now := time.Now()
+		createTestWallet(t, toWalletID, uuid.NewUUID(), walletMySQLProjectionDAO)
 
 		event := integrationevent.FundsTransferredEvent{
 			TransferID:    transferID,
@@ -209,6 +230,12 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 		assert.NoError(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), body, integrationevent.FundsTransferredEventName))
 
 		assert.Equal(t, 4000, getTestWalletBalance(t, walletID))
+
+		row, found := getTestTransferProjection(t, walletID, transferID)
+		assert.True(t, found)
+		assert.Equal(t, 1000, row.AmountInCents)
+		assert.Equal(t, "outgoing", row.Direction)
+		assert.Equal(t, toWalletID, row.CounterpartWalletID)
 	})
 
 	t.Run("It should process FundsTransferReceivedEvent and add balance to wallet", func(t *testing.T) {
@@ -223,9 +250,10 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
 
+		now := time.Now()
 		fromWalletID := uuid.NewUUID()
 		transferID := uuid.NewUUID()
-		now := time.Now()
+		createTestWallet(t, fromWalletID, uuid.NewUUID(), walletMySQLProjectionDAO)
 
 		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
@@ -239,6 +267,12 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 		assert.NoError(t, WalletKurrentDBProjectorConsumer.handle(context.Background(), body, integrationevent.FundsTransferReceivedEventName))
 
 		assert.Equal(t, 3500, getTestWalletBalance(t, walletID))
+
+		row, found := getTestTransferProjection(t, walletID, transferID)
+		assert.True(t, found)
+		assert.Equal(t, 2500, row.AmountInCents)
+		assert.Equal(t, "incoming", row.Direction)
+		assert.Equal(t, fromWalletID, row.CounterpartWalletID)
 	})
 
 	t.Run("It should return error when WalletCreatedEvent unmarshal fails", func(t *testing.T) {

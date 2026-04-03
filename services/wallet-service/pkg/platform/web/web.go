@@ -5,9 +5,22 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"wallet/wallet-service/pkg"
 )
+
+func GetIntQueryParam(request *http.Request, key string) (int, bool) {
+	param := request.URL.Query().Get(key)
+	if param == "" {
+		return 0, false
+	}
+	parsed, err := strconv.Atoi(param)
+	if err != nil {
+		return 0, false
+	}
+	return parsed, true
+}
 
 func RespondWithError(response http.ResponseWriter, err error) {
 	var status int

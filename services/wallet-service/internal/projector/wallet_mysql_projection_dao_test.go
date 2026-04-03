@@ -97,10 +97,13 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
 
+		toWalletID := uuid.NewUUID()
+		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
+
 		event := integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  walletID,
-			ToWalletID:    uuid.NewUUID(),
+			ToWalletID:    toWalletID,
 			AmountInCents: 1000,
 			Timestamp:     time.Now(),
 		}
@@ -120,10 +123,13 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 500, walletID)
 
+		toWalletID := uuid.NewUUID()
+		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
+
 		event := integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  walletID,
-			ToWalletID:    uuid.NewUUID(),
+			ToWalletID:    toWalletID,
 			AmountInCents: 1000,
 			Timestamp:     time.Now(),
 		}
@@ -148,10 +154,13 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET updated_at = ? WHERE wallet_id = ?", oldTime, walletID)
 
+		toWalletID := uuid.NewUUID()
+		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
+
 		event := integrationevent.FundsTransferredEvent{
 			TransferID:    uuid.NewUUID(),
 			FromWalletID:  walletID,
-			ToWalletID:    uuid.NewUUID(),
+			ToWalletID:    toWalletID,
 			AmountInCents: 200,
 			Timestamp:     newTime,
 		}
@@ -161,6 +170,36 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 		db.QueryRow("SELECT updated_at FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&updatedAt)
 
 		assert.True(t, updatedAt.After(oldTime))
+	})
+
+	t.Run("It should insert an outgoing transfer projection when funds are transferred", func(t *testing.T) {
+		t.Parallel()
+
+		dao := NewWalletMySQLProjectionDAO(db)
+		walletID := uuid.NewUUID()
+		holderID := uuid.NewUUID()
+		toWalletID := uuid.NewUUID()
+		transferID := uuid.NewUUID()
+
+		createTestWallet(t, walletID, holderID, dao)
+		createTestWallet(t, toWalletID, uuid.NewUUID(), dao)
+
+		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
+
+		event := integrationevent.FundsTransferredEvent{
+			TransferID:    transferID,
+			FromWalletID:  walletID,
+			ToWalletID:    toWalletID,
+			AmountInCents: 1000,
+			Timestamp:     time.Now(),
+		}
+		assert.NoError(t, dao.ApplyFundsTransferred(context.Background(), event))
+
+		row, found := getTestTransferProjection(t, walletID, transferID)
+		assert.True(t, found)
+		assert.Equal(t, 1000, row.AmountInCents)
+		assert.Equal(t, "outgoing", row.Direction)
+		assert.Equal(t, toWalletID, row.CounterpartWalletID)
 	})
 }
 
@@ -178,10 +217,13 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
 
+		fromWalletID := uuid.NewUUID()
+		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
+
 		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
-			FromWalletID:  uuid.NewUUID(),
+			FromWalletID:  fromWalletID,
 			AmountInCents: 500,
 			Timestamp:     time.Now(),
 		}
@@ -199,10 +241,13 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		createTestWallet(t, walletID, holderID, dao)
 
+		fromWalletID := uuid.NewUUID()
+		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
+
 		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
-			FromWalletID:  uuid.NewUUID(),
+			FromWalletID:  fromWalletID,
 			AmountInCents: 2000,
 			Timestamp:     time.Now(),
 		}
@@ -225,10 +270,13 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		db.Exec("UPDATE wallet_projections SET updated_at = ? WHERE wallet_id = ?", oldTime, walletID)
 
+		fromWalletID := uuid.NewUUID()
+		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
+
 		event := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
-			FromWalletID:  uuid.NewUUID(),
+			FromWalletID:  fromWalletID,
 			AmountInCents: 750,
 			Timestamp:     newTime,
 		}
@@ -249,24 +297,58 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 
 		createTestWallet(t, walletID, holderID, dao)
 
+		fromWalletID1 := uuid.NewUUID()
+		createTestWallet(t, fromWalletID1, uuid.NewUUID(), dao)
+
 		event1 := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
-			FromWalletID:  uuid.NewUUID(),
+			FromWalletID:  fromWalletID1,
 			AmountInCents: 1000,
 			Timestamp:     time.Now(),
 		}
 		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event1))
 
+		fromWalletID2 := uuid.NewUUID()
+		createTestWallet(t, fromWalletID2, uuid.NewUUID(), dao)
+
 		event2 := integrationevent.FundsTransferReceivedEvent{
 			WalletID:      walletID,
 			TransferID:    uuid.NewUUID(),
-			FromWalletID:  uuid.NewUUID(),
+			FromWalletID:  fromWalletID2,
 			AmountInCents: 500,
 			Timestamp:     time.Now(),
 		}
 		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event2))
 
 		assert.Equal(t, 1500, getTestWalletBalance(t, walletID))
+	})
+
+	t.Run("It should insert an incoming transfer projection when funds are received", func(t *testing.T) {
+		t.Parallel()
+
+		dao := NewWalletMySQLProjectionDAO(db)
+		walletID := uuid.NewUUID()
+		holderID := uuid.NewUUID()
+		fromWalletID := uuid.NewUUID()
+		transferID := uuid.NewUUID()
+
+		createTestWallet(t, walletID, holderID, dao)
+		createTestWallet(t, fromWalletID, uuid.NewUUID(), dao)
+
+		event := integrationevent.FundsTransferReceivedEvent{
+			WalletID:      walletID,
+			TransferID:    transferID,
+			FromWalletID:  fromWalletID,
+			AmountInCents: 2000,
+			Timestamp:     time.Now(),
+		}
+		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event))
+
+		row, found := getTestTransferProjection(t, walletID, transferID)
+		assert.True(t, found)
+		assert.Equal(t, 2000, row.AmountInCents)
+		assert.Equal(t, "incoming", row.Direction)
+		assert.Equal(t, fromWalletID, row.CounterpartWalletID)
 	})
 }

@@ -90,8 +90,9 @@ func main() {
 	mux.HandleFunc("POST /wallets/{id}/mock-transfer", walletCommandController.MockTransfer)
 
 	walletQueryController := query.NewWalletQueryController(mySQLDB)
-	mux.HandleFunc("GET /wallets/{id}", walletQueryController.FindByID)
 	mux.HandleFunc("GET /wallets", walletQueryController.FindByHolderID)
+	mux.HandleFunc("GET /wallets/{id}", walletQueryController.FindByID)
+	mux.HandleFunc("GET /wallets/{id}/transfers", walletQueryController.FindTransfersByWalletID)
 
 	walletConsumer := consumer.NewWalletKurrentDBConsumer(cfg.WalletCommandGroupName, client, walletESHandler)
 	go walletConsumer.Start(ctx)
