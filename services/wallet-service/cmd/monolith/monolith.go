@@ -15,12 +15,15 @@ import (
 	"wallet/wallet-service/internal/command/infrastructure/controller"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/internal/projector"
+	"wallet/wallet-service/internal/projector/mysqlprojectordao"
+	"wallet/wallet-service/internal/projector/postgresqlprojectordao"
 	"wallet/wallet-service/internal/query"
 	"wallet/wallet-service/pkg/platform/subscriber"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -57,12 +60,28 @@ func main() {
 	}
 	defer mySQLDB.Close()
 
+	postgreSQLDB, err := sql.Open("postgres", config.PostgreSQLConnectionString)
+	if err != nil {
+		slog.Error("failed to open postgresql connection", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	postgreSQLDB.SetMaxOpenConns(config.PostgreSQLMaxOpenConns)
+	postgreSQLDB.SetMaxIdleConns(config.PostgreSQLMaxIdleConns)
+	postgreSQLDB.SetConnMaxLifetime(config.PostgreSQLConnMaxLifetime)
+	postgreSQLDB.SetConnMaxIdleTime(config.PostgreSQLConnMaxIdleTime)
+
+	if err := postgreSQLDB.Ping(); err != nil {
+		slog.Error("failed to ping postgresql", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	defer postgreSQLDB.Close()
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	if err := client.CreatePersistentSubscriptionToAll(
 		ctx,
-		config.WalletProjectionGroupName,
+		config.WalletMySQLProjectionGroupName,
 		kurrentdb.PersistentAllSubscriptionOptions{
 			Filter: &kurrentdb.SubscriptionFilter{
 				Type:     kurrentdb.EventFilterType,
@@ -70,7 +89,20 @@ func main() {
 			},
 		},
 	); err != nil && !subscriber.IsKurrentDBAlreadyExistsError(err) {
-		slog.Error("failed to create projection subscription", slog.String("group", config.WalletProjectionGroupName), slog.String("error", err.Error()))
+		slog.Error("failed to create mysql projection subscription", slog.String("group", config.WalletMySQLProjectionGroupName), slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	if err := client.CreatePersistentSubscriptionToAll(
+		ctx,
+		config.WalletPostgreSQLProjectionGroupName,
+		kurrentdb.PersistentAllSubscriptionOptions{
+			Filter: &kurrentdb.SubscriptionFilter{
+				Type:     kurrentdb.EventFilterType,
+				Prefixes: []string{"wallet:"},
+			},
+		},
+	); err != nil && !subscriber.IsKurrentDBAlreadyExistsError(err) {
+		slog.Error("failed to create postgresql projection subscription", slog.String("group", config.WalletPostgreSQLProjectionGroupName), slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 	if err := client.CreatePersistentSubscriptionToAll(
@@ -102,9 +134,13 @@ func main() {
 	walletConsumer := consumer.NewWalletKurrentDBConsumer(config.WalletCommandGroupName, client, walletESHandler)
 	go walletConsumer.Start(ctx)
 
-	projectionDAO := projector.NewWalletMySQLProjectionDAO(mySQLDB)
-	projectionConsumer := projector.NewWalletKurrentDBProjectorConsumer(config.WalletProjectionGroupName, client, projectionDAO)
-	go projectionConsumer.Start(ctx)
+	mySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
+	mySQLProjectionConsumer := projector.NewWalletKurrentDBProjectorConsumer(config.WalletMySQLProjectionGroupName, client, mySQLProjectionDAO)
+	go mySQLProjectionConsumer.Start(ctx)
+
+	postgreSQLProjectionDAO := postgresqlprojectordao.NewWalletPostgreSQLProjectionDAO(postgreSQLDB)
+	postgreSQLProjectionConsumer := projector.NewWalletKurrentDBProjectorConsumer(config.WalletPostgreSQLProjectionGroupName, client, postgreSQLProjectionDAO)
+	go postgreSQLProjectionConsumer.Start(ctx)
 
 	server := &http.Server{Addr: config.ServerAddress, Handler: mux}
 	go func() {

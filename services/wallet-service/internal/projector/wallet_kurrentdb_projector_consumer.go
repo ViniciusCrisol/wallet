@@ -12,16 +12,22 @@ import (
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
 
+type WalletProjectionDAO interface {
+	CreateWallet(ctx context.Context, event integrationevent.WalletCreatedEvent) error
+	ApplyFundsTransferred(ctx context.Context, event integrationevent.FundsTransferredEvent) error
+	ApplyFundsTransferReceived(ctx context.Context, event integrationevent.FundsTransferReceivedEvent) error
+}
+
 type WalletKurrentDBProjectorConsumer struct {
 	group         string
 	client        *kurrentdb.Client
-	projectionDAO *WalletMySQLProjectionDAO
+	projectionDAO WalletProjectionDAO
 }
 
 func NewWalletKurrentDBProjectorConsumer(
 	group string,
 	client *kurrentdb.Client,
-	projectionDAO *WalletMySQLProjectionDAO,
+	projectionDAO WalletProjectionDAO,
 ) *WalletKurrentDBProjectorConsumer {
 	return &WalletKurrentDBProjectorConsumer{
 		group:         group,

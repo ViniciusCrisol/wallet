@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"wallet/wallet-service/internal/projector/mysqlprojectordao"
 	"wallet/wallet-service/pkg/platform/integrationevent"
 	"wallet/wallet-service/pkg/platform/uuid"
 
@@ -46,7 +47,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 
 		require.Eventually(t, func() bool {
 			var count int
-			db.QueryRow("SELECT COUNT(*) FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&count)
+			mySQLDB.QueryRow("SELECT COUNT(*) FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(&count)
 			return count == 1
 		}, time.Minute, time.Second)
 
@@ -55,7 +56,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 			retrievedHolderID string
 			balance           int
 		)
-		db.QueryRow("SELECT wallet_id, holder_id, balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(
+		mySQLDB.QueryRow("SELECT wallet_id, holder_id, balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(
 			&retrievedWalletID,
 			&retrievedHolderID,
 			&balance,
@@ -68,12 +69,12 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 	t.Run("It should consume a published FundsTransferredEvent and deduct balance from projection", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
-		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
+		mySQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
 
 		now := time.Now()
 		transferID := uuid.NewUUID()
@@ -116,12 +117,12 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 	t.Run("It should consume a published FundsTransferReceivedEvent and add balance to projection", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
-		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
+		mySQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
 
 		now := time.Now()
 		transferID := uuid.NewUUID()
@@ -168,7 +169,7 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should process WalletCreatedEvent and persist wallet to database", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		walletID := uuid.NewUUID()
@@ -190,7 +191,7 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 			retrievedHolderID string
 			balance           int
 		)
-		db.QueryRow("SELECT wallet_id, holder_id, balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(
+		mySQLDB.QueryRow("SELECT wallet_id, holder_id, balance_in_cents FROM wallet_projections WHERE wallet_id = ?", walletID).Scan(
 			&retrievedWalletID,
 			&retrievedHolderID,
 			&balance,
@@ -204,14 +205,14 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should process FundsTransferredEvent and deduct balance from wallet", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
 
-		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
+		mySQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
 
 		now := time.Now()
 		toWalletID := uuid.NewUUID()
@@ -241,14 +242,14 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should process FundsTransferReceivedEvent and add balance to wallet", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		walletID := uuid.NewUUID()
 		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
 
-		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
+		mySQLDB.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
 
 		now := time.Now()
 		fromWalletID := uuid.NewUUID()
@@ -278,7 +279,7 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should return error when WalletCreatedEvent unmarshal fails", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		invalidEventBody := []byte(`{invalid json}`)
@@ -289,7 +290,7 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should return error when FundsTransferredEvent unmarshal fails", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		invalidEventBody := []byte(`{invalid json}`)
@@ -300,7 +301,7 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should return error when FundsTransferReceivedEvent unmarshal fails", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		invalidEventBody := []byte(`{invalid json}`)
@@ -311,7 +312,7 @@ func TestWalletKurrentDBProjectorConsumer_Handle(t *testing.T) {
 	t.Run("It should return nil error when unknown event type is received", func(t *testing.T) {
 		t.Parallel()
 
-		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
+		walletMySQLProjectionDAO := mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB)
 		WalletKurrentDBProjectorConsumer := NewWalletKurrentDBProjectorConsumer("", nil, walletMySQLProjectionDAO)
 
 		unknownEventBody := []byte(`{"some": "data"}`)

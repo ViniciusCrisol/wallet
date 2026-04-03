@@ -1,4 +1,4 @@
-package projector
+package mysqlprojectordao
 
 import (
 	"context"

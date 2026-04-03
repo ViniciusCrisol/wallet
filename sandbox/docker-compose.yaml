@@ -8,9 +8,28 @@ services:
             MYSQL_ROOT_PASSWORD: root
         volumes:
             - wallet-mysql-data:/var/lib/mysql
-            - ./create-wallet-tables.sql:/docker-entrypoint-initdb.d/create-wallet-tables.sql
+            - ./create-wallet-tables-mysql.sql:/docker-entrypoint-initdb.d/create-wallet-tables-mysql.sql
         healthcheck:
             test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
+        restart: always
+        networks:
+            - wallet-network
+
+    wallet-postgresql:
+        image: postgres:17
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_DB: wallet
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: root
+        volumes:
+            - wallet-postgresql-data:/var/lib/postgresql/data
+            - ./create-wallet-tables-postgresql.sql:/docker-entrypoint-initdb.d/create-wallet-tables-postgresql.sql
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "root", "-d", "wallet"]
             timeout: 20s
             retries: 10
         restart: always
@@ -36,6 +55,7 @@ services:
 
 volumes:
     wallet-mysql-data:
+    wallet-postgresql-data:
     wallet-kurrentdb-data:
     wallet-kurrentdb-logs:
 

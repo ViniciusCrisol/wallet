@@ -1,4 +1,4 @@
-package projector
+package mysqlprojectordao
 
 import (
 	"context"
@@ -8,22 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/config"
-	"wallet/wallet-service/internal/projector/mysqlprojectordao"
 	"wallet/wallet-service/pkg/platform/integrationevent"
-	"wallet/wallet-service/pkg/platform/uuid"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	client       *kurrentdb.Client
-	mySQLDB      *sql.DB
-	postgreSQLDB *sql.DB
-)
+var mySQLDB *sql.DB
 
 type transferProjectionRow struct {
 	WalletID            string
@@ -35,7 +27,7 @@ type transferProjectionRow struct {
 }
 
 func TestMain(m *testing.M) {
-	godotenv.Load("../../.env.test")
+	godotenv.Load("../../../.env.test")
 
 	mysql, err := sql.Open("mysql", os.Getenv("MYSQL_CONNECTION_STRING"))
 	if err != nil {
@@ -46,33 +38,6 @@ func TestMain(m *testing.M) {
 	}
 	mySQLDB = mysql
 
-	settings, err := kurrentdb.ParseConnectionString(config.Load().KurrentDBConnectionString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	settings.Logger = kurrentdb.NoopLogging()
-
-	client, err = kurrentdb.NewClient(settings)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	group := "test-group-" + uuid.NewUUID()
-	client.CreatePersistentSubscriptionToAll(
-		ctx,
-		group,
-		kurrentdb.PersistentAllSubscriptionOptions{},
-	)
-	go NewWalletKurrentDBProjectorConsumer(
-		group,
-		client,
-		mysqlprojectordao.NewWalletMySQLProjectionDAO(mySQLDB),
-	).Start(ctx)
-
 	os.Exit(m.Run())
 }
 
@@ -80,7 +45,7 @@ func createTestWallet(
 	t *testing.T,
 	walletID string,
 	holderID string,
-	walletMySQLProjectionDAO *mysqlprojectordao.WalletMySQLProjectionDAO,
+	walletMySQLProjectionDAO *WalletMySQLProjectionDAO,
 ) {
 	t.Helper()
 
