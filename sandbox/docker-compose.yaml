@@ -14,6 +14,8 @@ services:
             timeout: 20s
             retries: 10
         restart: always
+        networks:
+            - wallet-network
 
     wallet-kurrentdb:
         image: kurrentplatform/kurrentdb:latest
@@ -29,8 +31,14 @@ services:
             - wallet-kurrentdb-data:/var/lib/eventstore
             - wallet-kurrentdb-logs:/var/log/eventstore
         restart: always
+        networks:
+            - wallet-network
 
 volumes:
     wallet-mysql-data:
     wallet-kurrentdb-data:
     wallet-kurrentdb-logs:
+
+networks:
+    wallet-network:
+        driver: bridge

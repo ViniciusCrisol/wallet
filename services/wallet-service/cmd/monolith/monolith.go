@@ -46,6 +46,11 @@ func main() {
 		slog.Error("failed to open mysql connection", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
+	mySQLDB.SetMaxOpenConns(cfg.MySQLMaxOpenConns)
+	mySQLDB.SetMaxIdleConns(cfg.MySQLMaxIdleConns)
+	mySQLDB.SetConnMaxLifetime(cfg.MySQLConnMaxLifetime)
+	mySQLDB.SetConnMaxIdleTime(cfg.MySQLConnMaxIdleTime)
+
 	if err := mySQLDB.Ping(); err != nil {
 		slog.Error("failed to ping mysql", slog.String("error", err.Error()))
 		os.Exit(1)
