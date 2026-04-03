@@ -121,6 +121,31 @@ func TestWallet_TransferFunds(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, transferTime, wallet.UpdatedAt())
 	})
+
+	t.Run("It should return duplicate error when transferring with same TransferID twice", func(t *testing.T) {
+		t.Parallel()
+
+		wallet := newTestWalletWithBalance(t, 1000)
+		transferID := valueobject.GenerateID()
+
+		err := wallet.TransferFunds(TransferFundsCommand{
+			Amount:     newMoney(t, 100),
+			TransferID: transferID,
+			ToWalletID: valueobject.GenerateID(),
+			Timestamp:  time.Now(),
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 900, wallet.Balance().Amount())
+
+		err = wallet.TransferFunds(TransferFundsCommand{
+			Amount:     newMoney(t, 100),
+			TransferID: transferID,
+			ToWalletID: valueobject.GenerateID(),
+			Timestamp:  time.Now(),
+		})
+		assert.ErrorIs(t, err, apperr.ErrDuplicateTransfer)
+		assert.Equal(t, 900, wallet.Balance().Amount())
+	})
 }
 
 func TestWallet_ReceiveFundsTransfer(t *testing.T) {
@@ -193,6 +218,32 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, receiveTime, wallet.UpdatedAt())
+	})
+
+	t.Run("It should return duplicate error when receiving same TransferID twice", func(t *testing.T) {
+		t.Parallel()
+
+		wallet := newTestWallet(t)
+		wallet.Commit()
+		transferID := valueobject.GenerateID()
+
+		err := wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
+			Amount:       newMoney(t, 500),
+			TransferID:   transferID,
+			FromWalletID: valueobject.GenerateID(),
+			Timestamp:    time.Now(),
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 500, wallet.Balance().Amount())
+
+		err = wallet.ReceiveFundsTransfer(ReceiveFundsTransferCommand{
+			Amount:       newMoney(t, 500),
+			TransferID:   transferID,
+			FromWalletID: valueobject.GenerateID(),
+			Timestamp:    time.Now(),
+		})
+		assert.ErrorIs(t, err, apperr.ErrDuplicateTransfer)
+		assert.Equal(t, 500, wallet.Balance().Amount())
 	})
 }
 

@@ -23,3 +23,7 @@ func GenerateID() ID {
 func (id ID) String() string {
 	return id.value
 }
+
+func (id ID) Equals(other ID) bool {
+	return id.value == other.value
+}

@@ -6,8 +6,10 @@ import (
 )
 
 var (
-	ErrConflict            = errors.New("conflict")
 	ErrUnprocessableEntity = errors.New("unprocessable entity")
+
+	ErrConflict          = errors.New("conflict")
+	ErrDuplicateTransfer = fmt.Errorf("%w: transfer already processed", ErrConflict)
 
 	ErrNotFound                 = errors.New("not found")
 	ErrWalletNotFound           = fmt.Errorf("%w: wallet not found", ErrNotFound)

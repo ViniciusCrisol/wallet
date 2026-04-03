@@ -17,6 +17,7 @@ type Wallet struct {
 
 	balance   valueobject.Money
 	holderID  valueobject.ID
+	transfers []Transfer
 	createdAt time.Time
 	updatedAt time.Time
 }
@@ -116,23 +117,40 @@ func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
 }
 
 func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
+	if wallet.hasTransfer(event.TransferID) {
+		return apperr.ErrDuplicateTransfer
+	}
 	balance, err := wallet.balance.Sub(event.Amount)
 	if err != nil {
 		return err
 	}
 	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
+	wallet.transfers = append(wallet.transfers, NewOutgoingTransfer(event.TransferID, event.Amount, event.Timestamp))
 	return nil
 }
 
 func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) error {
+	if wallet.hasTransfer(event.TransferID) {
+		return apperr.ErrDuplicateTransfer
+	}
 	balance, err := wallet.balance.Sum(event.Amount)
 	if err != nil {
 		return err
 	}
 	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
+	wallet.transfers = append(wallet.transfers, NewIncomingTransfer(event.TransferID, event.Amount, event.Timestamp))
 	return nil
+}
+
+func (wallet *Wallet) hasTransfer(transferID valueobject.ID) bool {
+	for _, transfer := range wallet.transfers {
+		if transfer.ID().Equals(transferID) {
+			return true
+		}
+	}
+	return false
 }
 
 func (wallet *Wallet) Balance() valueobject.Money {

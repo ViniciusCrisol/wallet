@@ -219,6 +219,45 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
+
+	t.Run("It should return 409 when the same transfer is submitted twice", func(t *testing.T) {
+		t.Parallel()
+
+		controller := newTestController(t)
+		wallet := domain.NewWallet(domain.CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: time.Now(),
+		})
+
+		amount, err := valueobject.NewMoney(1000)
+		assert.NoError(t, err)
+		err = wallet.ReceiveFundsTransfer(domain.ReceiveFundsTransferCommand{
+			Amount:       amount,
+			TransferID:   valueobject.GenerateID(),
+			FromWalletID: valueobject.GenerateID(),
+			Timestamp:    time.Now(),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, controller.esHandler.Save(context.Background(), wallet))
+
+		transferID := valueobject.GenerateID().String()
+		dto := TransferFundsDTO{
+			AmountInCents: 100,
+			TransferID:    transferID,
+			ToWalletID:    valueobject.GenerateID().String(),
+		}
+
+		req1 := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", marshalBody(t, dto))
+		rec1 := httptest.NewRecorder()
+		newTransferMux(controller).ServeHTTP(rec1, req1)
+		assert.Equal(t, http.StatusNoContent, rec1.Code)
+
+		req2 := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", marshalBody(t, dto))
+		rec2 := httptest.NewRecorder()
+		newTransferMux(controller).ServeHTTP(rec2, req2)
+		assert.Equal(t, http.StatusConflict, rec2.Code)
+	})
 }
 
 func TestWalletCommandController_MockTransfer(t *testing.T) {
@@ -374,5 +413,34 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 		newMockTransferMux(controller).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 409 when the same mock transfer is submitted twice", func(t *testing.T) {
+		t.Parallel()
+
+		controller := newTestController(t)
+		wallet := domain.NewWallet(domain.CreateWalletCommand{
+			WalletID:  valueobject.GenerateID(),
+			HolderID:  valueobject.GenerateID(),
+			Timestamp: time.Now(),
+		})
+		assert.NoError(t, controller.esHandler.Save(context.Background(), wallet))
+
+		transferID := valueobject.GenerateID().String()
+		dto := MockTransferDTO{
+			AmountInCents: 100,
+			TransferID:    transferID,
+			FromWalletID:  valueobject.GenerateID().String(),
+		}
+
+		req1 := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", marshalBody(t, dto))
+		rec1 := httptest.NewRecorder()
+		newMockTransferMux(controller).ServeHTTP(rec1, req1)
+		assert.Equal(t, http.StatusNoContent, rec1.Code)
+
+		req2 := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", marshalBody(t, dto))
+		rec2 := httptest.NewRecorder()
+		newMockTransferMux(controller).ServeHTTP(rec2, req2)
+		assert.Equal(t, http.StatusConflict, rec2.Code)
 	})
 }

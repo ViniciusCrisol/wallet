@@ -73,3 +73,31 @@ func TestID_String(t *testing.T) {
 		assert.Equal(t, validUUID, id.String())
 	})
 }
+
+func TestID_Equals(t *testing.T) {
+	t.Parallel()
+
+	t.Run("It should return true when both IDs have the same value", func(t *testing.T) {
+		t.Parallel()
+
+		value := uuid.NewUUID()
+		id1, _ := NewID(value)
+		id2, _ := NewID(value)
+		assert.True(t, id1.Equals(id2))
+	})
+
+	t.Run("It should return false when IDs have different values", func(t *testing.T) {
+		t.Parallel()
+
+		id1 := GenerateID()
+		id2 := GenerateID()
+		assert.False(t, id1.Equals(id2))
+	})
+
+	t.Run("It should return true when comparing an ID to itself", func(t *testing.T) {
+		t.Parallel()
+
+		id := GenerateID()
+		assert.True(t, id.Equals(id))
+	})
+}
