@@ -36,6 +36,8 @@ func newTestESHandler(t *testing.T) *WalletKurrentDBESHandler {
 	if err != nil {
 		t.Fatalf("failed to parse connection string: %v", err)
 	}
+	settings.Logger = kurrentdb.NoopLogging()
+
 	db, err := kurrentdb.NewClient(settings)
 	if err != nil {
 		t.Fatalf("failed to create kurrentdb client: %v", err)

@@ -1,0 +1,36 @@
+services:
+    test-wallet-mysql:
+        image: mysql:8.0
+        ports:
+            - "3307:3306"
+        environment:
+            MYSQL_DATABASE: wallet
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - test-wallet-mysql-data:/var/lib/mysql
+            - ./create-wallet-tables.sql:/docker-entrypoint-initdb.d/create-wallet-tables.sql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
+        restart: always
+
+    test-wallet-kurrentdb:
+        image: kurrentplatform/kurrentdb:latest
+        ports:
+            - "2114:2113"
+            - "1114:1113"
+        environment:
+            # Required for development, runs in insecure mode without SSL
+            - EVENTSTORE_INSECURE=true
+            - EVENTSTORE_RUN_PROJECTIONS=All
+            - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+        volumes:
+            - test-wallet-kurrentdb-data:/var/lib/eventstore
+            - test-wallet-kurrentdb-logs:/var/log/eventstore
+        restart: always
+
+volumes:
+    test-wallet-mysql-data:
+    test-wallet-kurrentdb-data:
+    test-wallet-kurrentdb-logs:

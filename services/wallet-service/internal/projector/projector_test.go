@@ -10,6 +10,7 @@ import (
 
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/pkg/platform/integrationevent"
+	"wallet/wallet-service/pkg/platform/uuid"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -38,11 +39,28 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	settings.Logger = kurrentdb.NoopLogging()
+
 	client, err = kurrentdb.NewClient(settings)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer client.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	group := "test-group-" + uuid.NewUUID()
+	client.CreatePersistentSubscriptionToAll(
+		ctx,
+		group,
+		kurrentdb.PersistentAllSubscriptionOptions{},
+	)
+	go NewWalletKurrentDBProjectorConsumer(
+		group,
+		client,
+		NewWalletMySQLProjectionDAO(db),
+	).Start(ctx)
 
 	os.Exit(m.Run())
 }

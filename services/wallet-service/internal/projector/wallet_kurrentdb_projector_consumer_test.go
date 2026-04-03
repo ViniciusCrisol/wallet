@@ -16,30 +16,9 @@ import (
 
 func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 	t.Parallel()
-	/*
-		Subtests must NOT run in parallel!
-
-		Each consumer subscribes to $all, so parallel consumers receive each other's events.
-		Unrecognized events cause non-permanent errors that are nacked with NackActionRetry,
-		creating an infinite retry loop that blocks the consumer from ever reaching the
-		event the test is waiting for, causing require.Eventually to hang until timeout.
-	*/
 
 	t.Run("It should consume a published WalletCreatedEvent and persist the projection", func(t *testing.T) {
-		group := "test-group-" + uuid.NewUUID()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		client.CreatePersistentSubscriptionToAll(
-			ctx,
-			group,
-			kurrentdb.PersistentAllSubscriptionOptions{},
-		)
-		go NewWalletKurrentDBProjectorConsumer(
-			group,
-			client,
-			NewWalletMySQLProjectionDAO(db),
-		).Start(ctx)
+		t.Parallel()
 
 		now := time.Now()
 		walletID := uuid.NewUUID()
@@ -53,7 +32,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = client.AppendToStream(
-			ctx,
+			context.Background(),
 			"wallet-"+walletID,
 			kurrentdb.AppendToStreamOptions{},
 			kurrentdb.EventData{
@@ -87,15 +66,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 	})
 
 	t.Run("It should consume a published FundsTransferredEvent and deduct balance from projection", func(t *testing.T) {
-		group := "test-group-" + uuid.NewUUID()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		client.CreatePersistentSubscriptionToAll(
-			ctx,
-			group,
-			kurrentdb.PersistentAllSubscriptionOptions{},
-		)
+		t.Parallel()
 
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
 
@@ -103,12 +74,6 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 5000, walletID)
-
-		go NewWalletKurrentDBProjectorConsumer(
-			group,
-			client,
-			walletMySQLProjectionDAO,
-		).Start(ctx)
 
 		now := time.Now()
 		transferID := uuid.NewUUID()
@@ -123,7 +88,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = client.AppendToStream(
-			ctx,
+			context.Background(),
 			"wallet-"+walletID,
 			kurrentdb.AppendToStreamOptions{},
 			kurrentdb.EventData{
@@ -139,15 +104,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 	})
 
 	t.Run("It should consume a published FundsTransferReceivedEvent and add balance to projection", func(t *testing.T) {
-		group := "test-group-" + uuid.NewUUID()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		client.CreatePersistentSubscriptionToAll(
-			ctx,
-			group,
-			kurrentdb.PersistentAllSubscriptionOptions{},
-		)
+		t.Parallel()
 
 		walletMySQLProjectionDAO := NewWalletMySQLProjectionDAO(db)
 
@@ -155,12 +112,6 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		holderID := uuid.NewUUID()
 		createTestWallet(t, walletID, holderID, walletMySQLProjectionDAO)
 		db.Exec("UPDATE wallet_projections SET balance_in_cents = ? WHERE wallet_id = ?", 1000, walletID)
-
-		go NewWalletKurrentDBProjectorConsumer(
-			group,
-			client,
-			walletMySQLProjectionDAO,
-		).Start(ctx)
 
 		now := time.Now()
 		transferID := uuid.NewUUID()
@@ -175,7 +126,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = client.AppendToStream(
-			ctx,
+			context.Background(),
 			"wallet-"+walletID,
 			kurrentdb.AppendToStreamOptions{},
 			kurrentdb.EventData{

@@ -26,6 +26,8 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	settings.Logger = kurrentdb.NoopLogging()
+
 	client, err = kurrentdb.NewClient(settings)
 	if err != nil {
 		log.Fatal(err)
