@@ -14,7 +14,6 @@ const MaxBalanceInCents = 100_000_000
 
 type Wallet struct {
 	eventsourcing.AggregateRoot
-
 	balance   valueobject.Money
 	holderID  valueobject.ID
 	transfers []Transfer
