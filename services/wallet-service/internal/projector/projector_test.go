@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/config"
-	"wallet/wallet-service/pkg/integrationevent"
+	"wallet/wallet-service/pkg/platform/integrationevent"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"

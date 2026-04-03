@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/integrationevent"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/platform/integrationevent"
 )
 
 type WalletMySQLProjectionDAO struct {
@@ -63,7 +63,7 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 		slog.Warn("wallet projection not found for funds transferred",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.FromWalletID))
-		return apperr.ErrWalletProjectionNotFound
+		return pkg.ErrWalletProjectionNotFound
 	}
 
 	return nil
@@ -95,7 +95,7 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 		slog.Warn("wallet projection not found for funds transfer received",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.WalletID))
-		return apperr.ErrWalletProjectionNotFound
+		return pkg.ErrWalletProjectionNotFound
 	}
 	return nil
 }

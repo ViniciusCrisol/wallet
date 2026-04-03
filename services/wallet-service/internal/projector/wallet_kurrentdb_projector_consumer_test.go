@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/integrationevent"
-	"wallet/wallet-service/pkg/uuid"
+	"wallet/wallet-service/pkg/platform/integrationevent"
+	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 	"github.com/stretchr/testify/assert"

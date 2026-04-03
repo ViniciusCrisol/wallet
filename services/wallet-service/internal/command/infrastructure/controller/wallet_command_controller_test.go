@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg/domain/valueobject"
 
 	"github.com/stretchr/testify/assert"
 )

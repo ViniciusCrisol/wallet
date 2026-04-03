@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/domain/valueobject"
 )
 
 type CreateWalletDTO struct {
@@ -16,11 +16,11 @@ type CreateWalletDTO struct {
 func (dto CreateWalletDTO) CreateWalletCommand() (domain.CreateWalletCommand, error) {
 	walletID, err := valueobject.NewID(dto.WalletID)
 	if err != nil {
-		return domain.CreateWalletCommand{}, apperr.ErrInvalidWalletID
+		return domain.CreateWalletCommand{}, pkg.ErrInvalidWalletID
 	}
 	holderID, err := valueobject.NewID(dto.HolderID)
 	if err != nil {
-		return domain.CreateWalletCommand{}, apperr.ErrInvalidHolderID
+		return domain.CreateWalletCommand{}, pkg.ErrInvalidHolderID
 	}
 	return domain.CreateWalletCommand{
 		WalletID:  walletID,
@@ -38,18 +38,18 @@ type TransferFundsDTO struct {
 func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand, error) {
 	transferID, err := valueobject.NewID(dto.TransferID)
 	if err != nil {
-		return domain.TransferFundsCommand{}, apperr.ErrInvalidTransferID
+		return domain.TransferFundsCommand{}, pkg.ErrInvalidTransferID
 	}
 	toWalletID, err := valueobject.NewID(dto.ToWalletID)
 	if err != nil {
-		return domain.TransferFundsCommand{}, apperr.ErrInvalidToWalletID
+		return domain.TransferFundsCommand{}, pkg.ErrInvalidToWalletID
 	}
 	amount, err := valueobject.NewMoney(dto.AmountInCents)
 	if err != nil {
 		return domain.TransferFundsCommand{}, err
 	}
 	if amount.Amount() == 0 {
-		return domain.TransferFundsCommand{}, apperr.ErrNonPositiveAmount
+		return domain.TransferFundsCommand{}, pkg.ErrNonPositiveAmount
 	}
 	return domain.TransferFundsCommand{
 		Amount:     amount,
@@ -68,18 +68,18 @@ type MockTransferDTO struct {
 func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTransferCommand, error) {
 	transferID, err := valueobject.NewID(dto.TransferID)
 	if err != nil {
-		return domain.ReceiveFundsTransferCommand{}, apperr.ErrInvalidTransferID
+		return domain.ReceiveFundsTransferCommand{}, pkg.ErrInvalidTransferID
 	}
 	fromWalletID, err := valueobject.NewID(dto.FromWalletID)
 	if err != nil {
-		return domain.ReceiveFundsTransferCommand{}, apperr.ErrInvalidFromWalletID
+		return domain.ReceiveFundsTransferCommand{}, pkg.ErrInvalidFromWalletID
 	}
 	amount, err := valueobject.NewMoney(dto.AmountInCents)
 	if err != nil {
 		return domain.ReceiveFundsTransferCommand{}, err
 	}
 	if amount.Amount() == 0 {
-		return domain.ReceiveFundsTransferCommand{}, apperr.ErrNonPositiveAmount
+		return domain.ReceiveFundsTransferCommand{}, pkg.ErrNonPositiveAmount
 	}
 	return domain.ReceiveFundsTransferCommand{
 		Amount:       amount,

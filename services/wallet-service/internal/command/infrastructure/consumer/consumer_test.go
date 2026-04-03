@@ -10,7 +10,7 @@ import (
 	"wallet/wallet-service/config"
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg/domain/valueobject"
 
 	"github.com/joho/godotenv"
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"

@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg/domain/valueobject"
 )
 
 const (

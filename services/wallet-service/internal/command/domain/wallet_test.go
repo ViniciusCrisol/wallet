@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/domain/valueobject"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -67,7 +67,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Timestamp:  time.Now(),
 		})
 
-		assert.ErrorIs(t, err, apperr.ErrInsufficientBalance)
+		assert.ErrorIs(t, err, pkg.ErrInsufficientBalance)
 	})
 
 	t.Run("It should deduct balance and log an event when funds are transferred", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			ToWalletID: valueobject.GenerateID(),
 			Timestamp:  time.Now(),
 		})
-		assert.ErrorIs(t, err, apperr.ErrDuplicateTransfer)
+		assert.ErrorIs(t, err, pkg.ErrDuplicateTransfer)
 		assert.Equal(t, 900, wallet.Balance().Amount())
 	})
 }
@@ -183,7 +183,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Timestamp:    time.Now(),
 		})
 
-		assert.ErrorIs(t, err, apperr.ErrBalanceLimitExceeded)
+		assert.ErrorIs(t, err, pkg.ErrBalanceLimitExceeded)
 	})
 
 	t.Run("It should accept funds when new balance equals the limit", func(t *testing.T) {
@@ -242,7 +242,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			FromWalletID: valueobject.GenerateID(),
 			Timestamp:    time.Now(),
 		})
-		assert.ErrorIs(t, err, apperr.ErrDuplicateTransfer)
+		assert.ErrorIs(t, err, pkg.ErrDuplicateTransfer)
 		assert.Equal(t, 500, wallet.Balance().Amount())
 	})
 }

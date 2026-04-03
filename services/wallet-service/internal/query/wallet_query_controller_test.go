@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"wallet/wallet-service/pkg/uuid"
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg/domain/valueobject"
+	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/stretchr/testify/assert"
 )

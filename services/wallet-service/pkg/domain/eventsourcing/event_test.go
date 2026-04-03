@@ -2,8 +2,7 @@ package eventsourcing
 
 import (
 	"testing"
-
-	"wallet/wallet-service/pkg/integrationevent"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,11 +14,16 @@ func TestParsedEvent_ToJSON(t *testing.T) {
 		t.Parallel()
 
 		event := ParsedEvent{
-			Body: integrationevent.WalletCreatedEvent{
+			Body: struct {
+				WalletID  string    `json:"wallet_id"`
+				HolderID  string    `json:"holder_id"`
+				CreatedAt time.Time `json:"created_at"`
+				UpdatedAt time.Time `json:"updated_at"`
+			}{
 				WalletID: "wallet-123",
 				HolderID: "holder-456",
 			},
-			Name: integrationevent.WalletCreatedEventName,
+			Name: "wallet:wallet_created_event",
 		}
 
 		result, err := event.ToJSON()

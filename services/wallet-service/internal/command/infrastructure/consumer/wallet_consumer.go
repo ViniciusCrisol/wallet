@@ -6,9 +6,9 @@ import (
 
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/eventsourcing"
-	"wallet/wallet-service/pkg/integrationevent"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/platform/integrationevent"
+	"wallet/wallet-service/pkg/platform/subscriber"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
@@ -32,7 +32,7 @@ func NewWalletKurrentDBConsumer(
 }
 
 func (consumer *WalletKurrentDBConsumer) Start(ctx context.Context) {
-	eventsourcing.SubscribeAndConsume(ctx, consumer.group, consumer.client, consumer.handle)
+	subscriber.SubscribeAndConsume(ctx, consumer.group, consumer.client, consumer.handle)
 }
 
 func (consumer *WalletKurrentDBConsumer) handle(ctx context.Context, eventBody []byte, eventName string) error {
@@ -58,7 +58,7 @@ func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Contex
 		slog.Error("destination wallet not found for funds transfer",
 			slog.String("to_wallet_id", event.ToWalletID.String()),
 			slog.String("transfer_id", event.TransferID.String()))
-		return apperr.ErrWalletNotFound
+		return pkg.ErrWalletNotFound
 	}
 	command := domain.ReceiveFundsTransferCommand{
 		Amount:       event.Amount,

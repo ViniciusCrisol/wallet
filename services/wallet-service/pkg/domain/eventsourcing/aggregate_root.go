@@ -1,6 +1,6 @@
 package eventsourcing
 
-import "wallet/wallet-service/pkg/valueobject"
+import "wallet/wallet-service/pkg/domain/valueobject"
 
 type AggregateRoot struct {
 	id                valueobject.ID

@@ -8,10 +8,10 @@ import (
 	"math"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/eventsourcing"
-	"wallet/wallet-service/pkg/uuid"
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/domain/valueobject"
+	"wallet/wallet-service/pkg/platform/subscriber"
+	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
@@ -63,11 +63,11 @@ func (handler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain
 		handler.buildStreamName(wallet.ID()),
 		kurrentdb.AppendToStreamOptions{StreamState: streamState}, events...,
 	); err != nil {
-		if eventsourcing.IsKurrentDBConcurrencyError(err) {
+		if subscriber.IsKurrentDBConcurrencyError(err) {
 			slog.Warn("optimistic concurrency conflict on wallet stream",
 				slog.String("wallet_id", wallet.ID().String()),
 				slog.String("error", err.Error()))
-			return apperr.ErrConflict
+			return pkg.ErrConflict
 		}
 		slog.Error("failed to append events to wallet stream",
 			slog.String("wallet_id", wallet.ID().String()),
@@ -89,7 +89,7 @@ func (handler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobjec
 			Direction: kurrentdb.Forwards,
 		}, math.MaxUint64)
 	if err != nil {
-		if eventsourcing.IsKurrentDBNotFoundError(err) {
+		if subscriber.IsKurrentDBNotFoundError(err) {
 			slog.Info("wallet stream not found", slog.String("wallet_id", id.String()))
 			return domain.Wallet{}, false, nil
 		}
@@ -107,7 +107,7 @@ func (handler *WalletKurrentDBESHandler) Find(ctx context.Context, id valueobjec
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			if eventsourcing.IsKurrentDBNotFoundError(err) {
+			if subscriber.IsKurrentDBNotFoundError(err) {
 				slog.Info("wallet stream not found", slog.String("wallet_id", id.String()))
 				return domain.Wallet{}, false, nil
 			}

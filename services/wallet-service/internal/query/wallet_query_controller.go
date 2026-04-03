@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/uuid"
-	"wallet/wallet-service/pkg/web"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/platform/uuid"
+	"wallet/wallet-service/pkg/platform/web"
 )
 
 type WalletResponse struct {
@@ -32,7 +32,7 @@ func NewWalletQueryController(db *sql.DB) *WalletQueryController {
 func (controller *WalletQueryController) FindByID(response http.ResponseWriter, request *http.Request) {
 	walletID := request.PathValue("id")
 	if !uuid.IsValid(walletID) {
-		web.RespondWithError(response, apperr.ErrInvalidWalletID)
+		web.RespondWithError(response, pkg.ErrInvalidWalletID)
 		return
 	}
 
@@ -49,7 +49,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 		&wallet.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
-		web.RespondWithError(response, apperr.ErrWalletNotFound)
+		web.RespondWithError(response, pkg.ErrWalletNotFound)
 		return
 	}
 	if err != nil {
@@ -65,7 +65,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
 	holderID := request.URL.Query().Get("holder_id")
 	if !uuid.IsValid(holderID) {
-		web.RespondWithError(response, apperr.ErrInvalidHolderID)
+		web.RespondWithError(response, pkg.ErrInvalidHolderID)
 		return
 	}
 

@@ -1,4 +1,4 @@
-package eventsourcing
+package subscriber
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"wallet/wallet-service/pkg/apperr"
+	"wallet/wallet-service/pkg"
 
 	"github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
@@ -34,7 +34,7 @@ func SubscribeAndConsume(
 				return
 			}
 			err := consumeSubscription(ctx, group, client, eventHandler)
-			if !errors.Is(err, apperr.ErrSubscriptionFailed) {
+			if !errors.Is(err, pkg.ErrSubscriptionFailed) {
 				delay = baseDelay
 			}
 			slog.Warn("subscription ended, reconnecting", slog.String("group", group), slog.String("error", err.Error()))
@@ -56,7 +56,7 @@ func consumeSubscription(
 		slog.Error("failed to subscribe",
 			slog.String("group", group),
 			slog.String("error", err.Error()))
-		return apperr.ErrSubscriptionFailed
+		return pkg.ErrSubscriptionFailed
 	}
 	defer subscription.Close()
 
@@ -75,7 +75,7 @@ func consumeSubscription(
 		event := msg.EventAppeared.Event
 		if err := eventHandler(ctx, event.Event.Data, event.Event.EventType); err != nil {
 			nack := kurrentdb.NackActionRetry
-			if apperr.IsPermanentError(err) {
+			if pkg.IsPermanentError(err) {
 				nack = kurrentdb.NackActionPark
 			}
 			if err := subscription.Nack(err.Error(), nack, event); err != nil {

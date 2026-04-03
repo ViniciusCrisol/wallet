@@ -1,4 +1,4 @@
-package eventsourcing
+package subscriber
 
 import (
 	"errors"

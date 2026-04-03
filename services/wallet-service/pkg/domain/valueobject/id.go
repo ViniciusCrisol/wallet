@@ -1,8 +1,8 @@
 package valueobject
 
 import (
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/uuid"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/platform/uuid"
 )
 
 type ID struct {
@@ -11,7 +11,7 @@ type ID struct {
 
 func NewID(value string) (ID, error) {
 	if !uuid.IsValid(value) {
-		return ID{}, apperr.ErrInvalidUUID
+		return ID{}, pkg.ErrInvalidUUID
 	}
 	return ID{value: value}, nil
 }

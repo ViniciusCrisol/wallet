@@ -6,23 +6,23 @@ import (
 	"log/slog"
 	"net/http"
 
-	"wallet/wallet-service/pkg/apperr"
+	"wallet/wallet-service/pkg"
 )
 
 func RespondWithError(response http.ResponseWriter, err error) {
 	var status int
 	switch {
-	case errors.Is(err, apperr.ErrNotFound):
+	case errors.Is(err, pkg.ErrNotFound):
 		status = http.StatusNotFound
-	case errors.Is(err, apperr.ErrConflict):
+	case errors.Is(err, pkg.ErrConflict):
 		status = http.StatusConflict
-	case errors.Is(err, apperr.ErrValidation):
+	case errors.Is(err, pkg.ErrValidation):
 		status = http.StatusBadRequest
-	case errors.Is(err, apperr.ErrUnprocessableEntity):
+	case errors.Is(err, pkg.ErrUnprocessableEntity):
 		status = http.StatusUnprocessableEntity
 	default:
 		status = http.StatusInternalServerError
-		err = apperr.ErrInternal
+		err = pkg.ErrInternal
 	}
 	RespondWithJSON(response, status, map[string]string{"error": err.Error()})
 }

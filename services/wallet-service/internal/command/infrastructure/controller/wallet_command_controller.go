@@ -6,9 +6,9 @@ import (
 
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/valueobject"
-	"wallet/wallet-service/pkg/web"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/domain/valueobject"
+	"wallet/wallet-service/pkg/platform/web"
 )
 
 type WalletCommandController struct {
@@ -27,7 +27,7 @@ func (controller *WalletCommandController) Create(response http.ResponseWriter, 
 	request.Body = http.MaxBytesReader(response, request.Body, maxRequestBodySize)
 	var dto CreateWalletDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		web.RespondWithError(response, apperr.ErrUnprocessableEntity)
+		web.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
 	command, err := dto.CreateWalletCommand()
@@ -50,12 +50,12 @@ func (controller *WalletCommandController) TransferFunds(response http.ResponseW
 	request.Body = http.MaxBytesReader(response, request.Body, maxRequestBodySize)
 	var dto TransferFundsDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		web.RespondWithError(response, apperr.ErrUnprocessableEntity)
+		web.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
 	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
-		web.RespondWithError(response, apperr.ErrInvalidWalletID)
+		web.RespondWithError(response, pkg.ErrInvalidWalletID)
 		return
 	}
 	command, err := dto.TransferFundsCommand()
@@ -70,7 +70,7 @@ func (controller *WalletCommandController) TransferFunds(response http.ResponseW
 		return
 	}
 	if !found {
-		web.RespondWithError(response, apperr.ErrWalletNotFound)
+		web.RespondWithError(response, pkg.ErrWalletNotFound)
 		return
 	}
 	if err := wallet.TransferFunds(command); err != nil {
@@ -89,12 +89,12 @@ func (controller *WalletCommandController) MockTransfer(response http.ResponseWr
 	request.Body = http.MaxBytesReader(response, request.Body, maxRequestBodySize)
 	var dto MockTransferDTO
 	if err := json.NewDecoder(request.Body).Decode(&dto); err != nil {
-		web.RespondWithError(response, apperr.ErrUnprocessableEntity)
+		web.RespondWithError(response, pkg.ErrUnprocessableEntity)
 		return
 	}
 	walletID, err := valueobject.NewID(request.PathValue("id"))
 	if err != nil {
-		web.RespondWithError(response, apperr.ErrInvalidWalletID)
+		web.RespondWithError(response, pkg.ErrInvalidWalletID)
 		return
 	}
 	command, err := dto.ReceiveFundsTransferCommand()
@@ -109,7 +109,7 @@ func (controller *WalletCommandController) MockTransfer(response http.ResponseWr
 		return
 	}
 	if !found {
-		web.RespondWithError(response, apperr.ErrWalletNotFound)
+		web.RespondWithError(response, pkg.ErrWalletNotFound)
 		return
 	}
 	if err := wallet.ReceiveFundsTransfer(command); err != nil {

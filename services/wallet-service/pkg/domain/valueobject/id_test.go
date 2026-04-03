@@ -3,8 +3,8 @@ package valueobject
 import (
 	"testing"
 
-	"wallet/wallet-service/pkg/apperr"
-	"wallet/wallet-service/pkg/uuid"
+	"wallet/wallet-service/pkg"
+	"wallet/wallet-service/pkg/platform/uuid"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,14 +25,14 @@ func TestNewID(t *testing.T) {
 		t.Parallel()
 
 		_, err := NewID("")
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
 	})
 
 	t.Run("It should return an error when value is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := NewID("not-a-uuid")
-		assert.ErrorIs(t, err, apperr.ErrInvalidUUID)
+		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
 	})
 }
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	googleuuid "github.com/google/uuid"
-
 	"github.com/stretchr/testify/assert"
 )
 

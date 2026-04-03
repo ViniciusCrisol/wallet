@@ -16,7 +16,7 @@ import (
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
 	"wallet/wallet-service/internal/projector"
 	"wallet/wallet-service/internal/query"
-	"wallet/wallet-service/pkg/eventsourcing"
+	"wallet/wallet-service/pkg/platform/subscriber"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -64,7 +64,7 @@ func main() {
 				Prefixes: []string{"wallet:"},
 			},
 		},
-	); err != nil && !eventsourcing.IsKurrentDBAlreadyExistsError(err) {
+	); err != nil && !subscriber.IsKurrentDBAlreadyExistsError(err) {
 		slog.Error("failed to create projection subscription", slog.String("group", cfg.WalletProjectionGroupName), slog.String("error", err.Error()))
 		os.Exit(1)
 	}
@@ -77,7 +77,7 @@ func main() {
 				Prefixes: []string{"wallet:funds_transferred_event"},
 			},
 		},
-	); err != nil && !eventsourcing.IsKurrentDBAlreadyExistsError(err) {
+	); err != nil && !subscriber.IsKurrentDBAlreadyExistsError(err) {
 		slog.Error("failed to create command subscription", slog.String("group", cfg.WalletCommandGroupName), slog.String("error", err.Error()))
 		os.Exit(1)
 	}

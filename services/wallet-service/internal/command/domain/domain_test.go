@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"wallet/wallet-service/pkg/valueobject"
+	"wallet/wallet-service/pkg/domain/valueobject"
 
 	"github.com/stretchr/testify/assert"
 )
