@@ -1,0 +1,22 @@
+info:
+    name: Get transfers
+    type: http
+    seq: 6
+
+http:
+    method: get
+    url: http://localhost:8080/wallets/ea2c4e44-d4ed-4f35-8640-e9fa380da877/transfers?limit=100&offset=0
+    params:
+        - name: limit
+          value: "100"
+          type: query
+        - name: offset
+          value: "0"
+          type: query
+    auth: inherit
+
+settings:
+    encodeUrl: false
+    timeout: 0
+    followRedirects: true
+    maxRedirects: 5

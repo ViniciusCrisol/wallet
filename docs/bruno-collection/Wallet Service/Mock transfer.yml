@@ -15,7 +15,7 @@ http:
             {
               "amount_in_cents": 1000,
               "transfer_id": "5bc686d0-cc3e-4555-aced-7cc0d3fe0e5b",
-              "from_wallet_id": "59045cf5-db12-4356-af6d-281589efe137"
+              "from_wallet_id": "ea2c4e44-d4ed-4f35-8640-e9fa380da877"
             }
     auth: inherit
 

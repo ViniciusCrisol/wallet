@@ -31,14 +31,14 @@ async function createWallets() {
 }
 
 async function populateWallets() {
-	for (const wallet in wallets) {
+	for (const wallet of wallets) {
 		const amountInCents = 999_999;
 
 		await fetch(`${BASE_URL}/wallets/${wallet}/mock-transfer`, {
 			method: "post",
 			body: JSON.stringify({
 				transfer_id: randomUUID(),
-				from_wallet_id: randomUUID(),
+				from_wallet_id: wallet,
 				amount_in_cents: amountInCents,
 			}),
 			headers: { "content-type": "application/json" },
