@@ -46,6 +46,7 @@ func TestWalletKurrentDBConsumer_Start(t *testing.T) {
 			ToWalletID:    targetWallet.ID().String(),
 			FromWalletID:  fromWalletID,
 			AmountInCents: 500,
+			Category:      domain.CategoryFood,
 			Timestamp:     now,
 		})
 		require.NoError(t, err)
@@ -91,6 +92,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 			ToWalletID:    targetWallet.ID().String(),
 			FromWalletID:  fromWalletID,
 			AmountInCents: 500,
+			Category:      domain.CategoryFood,
 			Timestamp:     now,
 		})
 		assert.NoError(t, err)

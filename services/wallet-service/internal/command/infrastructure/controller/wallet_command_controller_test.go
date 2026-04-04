@@ -134,6 +134,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			Amount:       amount,
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     domain.CategoryUnclassified,
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
@@ -280,6 +281,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			Amount:       amount,
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     domain.CategoryUnclassified,
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)

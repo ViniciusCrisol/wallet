@@ -55,6 +55,7 @@ func createTestWalletWithBalance(t *testing.T, esHandler *persistence.WalletKurr
 			Amount:       amount,
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     domain.CategoryUnclassified,
 			Timestamp:    time.Now(),
 		}))
 	}

@@ -22,6 +22,7 @@ type WalletResponse struct {
 type TransferResponse struct {
 	TransferID    string    `json:"transfer_id"`
 	Direction     string    `json:"direction"`
+	Category      string    `json:"category"`
 	AmountInCents int       `json:"amount_in_cents"`
 	TransferredAt time.Time `json:"transferred_at"`
 }
@@ -135,7 +136,7 @@ func (controller *WalletQueryController) FindTransfersByWalletID(response http.R
 		request.Context(),
 		`
 			SELECT
-				transfer_id, direction, amount_in_cents, transferred_at
+				transfer_id, direction, category, amount_in_cents, transferred_at
 			FROM
 				transfer_projections
 			WHERE
@@ -162,6 +163,7 @@ func (controller *WalletQueryController) FindTransfersByWalletID(response http.R
 		if err := rows.Scan(
 			&transfer.TransferID,
 			&transfer.Direction,
+			&transfer.Category,
 			&transfer.AmountInCents,
 			&transfer.TransferredAt,
 		); err != nil {

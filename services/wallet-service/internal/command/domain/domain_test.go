@@ -35,6 +35,7 @@ func newTestWalletWithBalance(t *testing.T, amountInCents int) Wallet {
 		Amount:       newMoney(t, amountInCents),
 		TransferID:   valueObject.GenerateID(),
 		FromWalletID: valueObject.GenerateID(),
+		Category:     CategoryUnclassified,
 		Timestamp:    time.Now(),
 	})
 	assert.NoError(t, err)

@@ -85,6 +85,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 			ToWalletID:    toWalletID,
 			FromWalletID:  walletID,
 			AmountInCents: 1000,
+			Category:      "food",
 			Timestamp:     now,
 		})
 		require.NoError(t, err)
@@ -111,6 +112,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		row, _ := getTestTransferProjection(t, walletID, transferID)
 		assert.Equal(t, 1000, row.AmountInCents)
 		assert.Equal(t, "outgoing", row.Direction)
+		assert.Equal(t, "food", row.Category)
 		assert.Equal(t, toWalletID, row.CounterpartWalletID)
 	})
 
@@ -133,6 +135,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 			TransferID:    transferID,
 			FromWalletID:  fromWalletID,
 			AmountInCents: 2500,
+			Category:      "fuel",
 			Timestamp:     now,
 		})
 		require.NoError(t, err)
@@ -159,6 +162,7 @@ func TestWalletKurrentDBProjectorConsumer_Start(t *testing.T) {
 		row, _ := getTestTransferProjection(t, walletID, transferID)
 		assert.Equal(t, 2500, row.AmountInCents)
 		assert.Equal(t, "incoming", row.Direction)
+		assert.Equal(t, "fuel", row.Category)
 		assert.Equal(t, fromWalletID, row.CounterpartWalletID)
 	})
 }

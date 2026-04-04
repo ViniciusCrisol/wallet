@@ -3,6 +3,7 @@ package controller
 import (
 	"testing"
 
+	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/pkg"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
@@ -97,7 +98,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		transferID := valueObject.GenerateID().String()
 		toWalletID := valueObject.GenerateID().String()
-		dto := TransferFundsDTO{AmountInCents: 500, TransferID: transferID, ToWalletID: toWalletID, TransferredAt: "2025-01-15T10:30:00Z"}
+		dto := TransferFundsDTO{AmountInCents: 500, TransferID: transferID, ToWalletID: toWalletID, Category: "food", TransferredAt: "2025-01-15T10:30:00Z"}
 
 		command, err := dto.TransferFundsCommand()
 
@@ -105,6 +106,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 		assert.Equal(t, 500, command.Amount.Amount())
 		assert.Equal(t, transferID, command.TransferID.String())
 		assert.Equal(t, toWalletID, command.ToWalletID.String())
+		assert.Equal(t, domain.CategoryFood, command.Category)
 		assert.False(t, command.Timestamp.IsZero())
 		assert.Equal(t, 2025, command.Timestamp.Year())
 	})
@@ -117,6 +119,27 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 		_, err := dto.TransferFundsCommand()
 
 		assert.ErrorIs(t, err, pkg.ErrInvalidTransferID)
+	})
+
+	t.Run("It should default category to unclassified when empty", func(t *testing.T) {
+		t.Parallel()
+
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String(), TransferredAt: "2025-01-15T10:30:00Z"}
+
+		command, err := dto.TransferFundsCommand()
+
+		assert.NoError(t, err)
+		assert.Equal(t, domain.CategoryUnclassified, command.Category)
+	})
+
+	t.Run("It should return an error when category is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String(), Category: "invalid", TransferredAt: "2025-01-15T10:30:00Z"}
+
+		_, err := dto.TransferFundsCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidCategory)
 	})
 
 	t.Run("It should return an error when to_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -191,6 +214,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 		assert.Equal(t, 300, command.Amount.Amount())
 		assert.Equal(t, transferID, command.TransferID.String())
 		assert.Equal(t, fromWalletID, command.FromWalletID.String())
+		assert.Equal(t, domain.CategoryUnclassified, command.Category)
 		assert.False(t, command.Timestamp.IsZero())
 		assert.Equal(t, 2025, command.Timestamp.Year())
 	})
@@ -208,6 +232,38 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 		_, err := dto.ReceiveFundsTransferCommand()
 
 		assert.ErrorIs(t, err, pkg.ErrInvalidTransferID)
+	})
+
+	t.Run("It should default category to unclassified when empty", func(t *testing.T) {
+		t.Parallel()
+
+		dto := MockTransferDTO{
+			AmountInCents: 100,
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
+		}
+
+		command, err := dto.ReceiveFundsTransferCommand()
+
+		assert.NoError(t, err)
+		assert.Equal(t, domain.CategoryUnclassified, command.Category)
+	})
+
+	t.Run("It should return an error when category is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		dto := MockTransferDTO{
+			AmountInCents: 100,
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
+			Category:      "invalid",
+			TransferredAt: "2025-01-15T10:30:00Z",
+		}
+
+		_, err := dto.ReceiveFundsTransferCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidCategory)
 	})
 
 	t.Run("It should return an error when from_wallet_id is not a valid UUID", func(t *testing.T) {

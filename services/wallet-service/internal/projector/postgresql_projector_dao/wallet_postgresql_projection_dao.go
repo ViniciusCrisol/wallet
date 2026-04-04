@@ -78,12 +78,13 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferred(ctx context.Cont
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, category, amount_in_cents, transferred_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		event.FromWalletID,
 		event.TransferID,
 		event.ToWalletID,
 		"outgoing",
+		event.Category,
 		event.AmountInCents,
 		event.Timestamp,
 	)
@@ -138,12 +139,13 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferReceived(ctx context
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, category, amount_in_cents, transferred_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		event.WalletID,
 		event.TransferID,
 		event.FromWalletID,
 		"incoming",
+		event.Category,
 		event.AmountInCents,
 		event.Timestamp,
 	)

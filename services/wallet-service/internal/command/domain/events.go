@@ -18,6 +18,7 @@ type FundsTransferredEvent struct {
 	TransferID   valueObject.ID
 	ToWalletID   valueObject.ID
 	FromWalletID valueObject.ID
+	Category     string
 	Timestamp    time.Time
 }
 
@@ -26,5 +27,6 @@ type FundsTransferReceivedEvent struct {
 	WalletID     valueObject.ID
 	TransferID   valueObject.ID
 	FromWalletID valueObject.ID
+	Category     string
 	Timestamp    time.Time
 }

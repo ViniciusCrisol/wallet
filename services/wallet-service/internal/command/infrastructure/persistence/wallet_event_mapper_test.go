@@ -53,6 +53,7 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 			ToWalletID:   walletID,
 			FromWalletID: fromWalletID,
 			Amount:       amount,
+			Category:     domain.CategoryFood,
 			Timestamp:    now,
 		}
 
@@ -64,6 +65,7 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 			ToWalletID:    walletID.String(),
 			FromWalletID:  fromWalletID.String(),
 			AmountInCents: amount.Amount(),
+			Category:      domain.CategoryFood,
 			Timestamp:     now,
 		}, result.Body)
 		assert.Equal(t, integrationEvent.FundsTransferredEventName, result.Name)
@@ -77,6 +79,7 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 			TransferID:   transferID,
 			FromWalletID: fromWalletID,
 			Amount:       amount,
+			Category:     domain.CategoryFuel,
 			Timestamp:    now,
 		}
 
@@ -88,6 +91,7 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 			TransferID:    transferID.String(),
 			FromWalletID:  fromWalletID.String(),
 			AmountInCents: amount.Amount(),
+			Category:      domain.CategoryFuel,
 			Timestamp:     now,
 		}, result.Body)
 		assert.Equal(t, integrationEvent.FundsTransferReceivedEventName, result.Name)
@@ -169,6 +173,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			ToWalletID:    walletID.String(),
 			FromWalletID:  fromWalletID.String(),
 			AmountInCents: 500,
+			Category:      domain.CategoryFood,
 			Timestamp:     now,
 		})
 
@@ -181,6 +186,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 		assert.Equal(t, walletID.String(), event.ToWalletID.String())
 		assert.Equal(t, fromWalletID.String(), event.FromWalletID.String())
 		assert.Equal(t, 500, event.Amount.Amount())
+		assert.Equal(t, domain.CategoryFood, event.Category)
 		assert.Equal(t, now, event.Timestamp)
 	})
 
@@ -225,6 +231,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			TransferID:    transferID.String(),
 			FromWalletID:  fromWalletID.String(),
 			AmountInCents: 300,
+			Category:      domain.CategoryFuel,
 			Timestamp:     now,
 		})
 
@@ -237,6 +244,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 		assert.Equal(t, transferID.String(), event.TransferID.String())
 		assert.Equal(t, fromWalletID.String(), event.FromWalletID.String())
 		assert.Equal(t, 300, event.Amount.Amount())
+		assert.Equal(t, domain.CategoryFuel, event.Category)
 		assert.Equal(t, now, event.Timestamp)
 	})
 

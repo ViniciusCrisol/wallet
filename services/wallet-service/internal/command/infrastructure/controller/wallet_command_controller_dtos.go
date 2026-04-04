@@ -38,6 +38,7 @@ type TransferFundsDTO struct {
 	AmountInCents int    `json:"amount_in_cents"`
 	TransferID    string `json:"transfer_id"`
 	ToWalletID    string `json:"to_wallet_id"`
+	Category      string `json:"category"`
 	TransferredAt string `json:"transferred_at"`
 }
 
@@ -57,6 +58,13 @@ func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand,
 	if amount.Amount() == 0 {
 		return domain.TransferFundsCommand{}, pkg.ErrNonPositiveAmount
 	}
+	category := dto.Category
+	if category == "" {
+		category = domain.CategoryUnclassified
+	}
+	if !domain.IsValidCategory(category) {
+		return domain.TransferFundsCommand{}, pkg.ErrInvalidCategory
+	}
 	transferredAt, err := time.Parse(time.RFC3339, dto.TransferredAt)
 	if err != nil {
 		return domain.TransferFundsCommand{}, pkg.ErrInvalidTransferredAt
@@ -65,6 +73,7 @@ func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand,
 		Amount:     amount,
 		TransferID: transferID,
 		ToWalletID: toWalletID,
+		Category:   category,
 		Timestamp:  transferredAt,
 	}, nil
 }
@@ -73,6 +82,7 @@ type MockTransferDTO struct {
 	AmountInCents int    `json:"amount_in_cents"`
 	TransferID    string `json:"transfer_id"`
 	FromWalletID  string `json:"from_wallet_id"`
+	Category      string `json:"category"`
 	TransferredAt string `json:"transferred_at"`
 }
 
@@ -92,6 +102,13 @@ func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTra
 	if amount.Amount() == 0 {
 		return domain.ReceiveFundsTransferCommand{}, pkg.ErrNonPositiveAmount
 	}
+	category := dto.Category
+	if category == "" {
+		category = domain.CategoryUnclassified
+	}
+	if !domain.IsValidCategory(category) {
+		return domain.ReceiveFundsTransferCommand{}, pkg.ErrInvalidCategory
+	}
 	transferredAt, err := time.Parse(time.RFC3339, dto.TransferredAt)
 	if err != nil {
 		return domain.ReceiveFundsTransferCommand{}, pkg.ErrInvalidTransferredAt
@@ -100,6 +117,7 @@ func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTra
 		Amount:       amount,
 		TransferID:   transferID,
 		FromWalletID: fromWalletID,
+		Category:     category,
 		Timestamp:    transferredAt,
 	}, nil
 }

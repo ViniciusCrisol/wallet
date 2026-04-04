@@ -45,6 +45,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 			Amount:       amount,
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     domain.CategoryUnclassified,
 			Timestamp:    time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), wallet))
@@ -106,6 +107,7 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 			Amount:       amount,
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     domain.CategoryUnclassified,
 			Timestamp:    time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), wallet))
@@ -129,6 +131,7 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 			Amount:       received,
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     domain.CategoryUnclassified,
 			Timestamp:    time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), wallet))
@@ -143,6 +146,7 @@ func TestWalletKurrentDBESHandler_Find(t *testing.T) {
 			Amount:     transferred,
 			TransferID: valueObject.GenerateID(),
 			ToWalletID: valueObject.GenerateID(),
+			Category:   domain.CategoryUnclassified,
 			Timestamp:  time.Now(),
 		}))
 		assert.NoError(t, esHandler.Save(context.Background(), reloaded))

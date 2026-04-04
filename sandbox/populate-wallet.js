@@ -42,6 +42,7 @@ async function populateWallets() {
 				transfer_id: randomUUID(),
 				from_wallet_id: wallet,
 				amount_in_cents: amountInCents,
+				category: "unclassified",
 				transferred_at: transferredAt.toISOString(),
 			}),
 			headers: { "content-type": "application/json" },
@@ -96,6 +97,7 @@ async function transferBetweenWallets() {
 						transfer_id: randomUUID(),
 						to_wallet_id: toWalletID,
 						amount_in_cents: amountInCents,
+						category: randomCategory(),
 						transferred_at: transferredAt.toISOString(),
 					}),
 					headers: { "content-type": "application/json" },
@@ -136,6 +138,26 @@ function randomUUID() {
 	return [...bytes]
 		.map((b, i) => (i === 4 || i === 6 || i === 8 || i === 10 ? "-" : "") + b.toString(16).padStart(2, "0"))
 		.join("");
+}
+
+function randomCategory() {
+	const categories = {
+		food: 25,
+		fuel: 10,
+		sports: 5,
+		health: 5,
+		travel: 5,
+		essentials: 10,
+		entertainment: 10,
+		unclassified: 30,
+	};
+	let remaining = Math.random() * 100;
+	for (const category in categories) {
+		const weight = categories[category];
+		remaining -= weight;
+		if (remaining <= 0) return category;
+	}
+	return "unclassified";
 }
 
 main();

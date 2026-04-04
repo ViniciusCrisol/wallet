@@ -11,6 +11,7 @@ CREATE TABLE transfer_projections (
 	transfer_id           VARCHAR(36)                 NOT NULL,
 	counterpart_wallet_id VARCHAR(36)                 NOT NULL,
 	direction             VARCHAR(10)                 NOT NULL,
+	category              VARCHAR(20)                 NOT NULL DEFAULT 'unclassified',
 	amount_in_cents       INT                         NOT NULL,
 	transferred_at        TIMESTAMP(6) WITH TIME ZONE NOT NULL,
 	PRIMARY KEY (wallet_id, transfer_id),

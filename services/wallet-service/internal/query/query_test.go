@@ -58,18 +58,20 @@ func createTestTransfer(
 	transferID string,
 	counterpartWalletID string,
 	direction string,
+	category string,
 	amountInCents int,
 	transferredAt time.Time,
 ) {
 	t.Helper()
 
 	_, err := db.Exec(
-		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, category, amount_in_cents, transferred_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		walletID,
 		transferID,
 		counterpartWalletID,
 		direction,
+		category,
 		amountInCents,
 		transferredAt,
 	)

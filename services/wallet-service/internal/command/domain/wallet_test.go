@@ -64,6 +64,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Amount:     newMoney(t, 100),
 			TransferID: valueObject.GenerateID(),
 			ToWalletID: valueObject.GenerateID(),
+			Category:   CategoryFood,
 			Timestamp:  time.Now(),
 		})
 
@@ -79,6 +80,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Amount:     newMoney(t, 300),
 			TransferID: valueObject.GenerateID(),
 			ToWalletID: valueObject.GenerateID(),
+			Category:   CategoryFood,
 			Timestamp:  time.Now(),
 		})
 
@@ -98,6 +100,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Amount:     newMoney(t, 500),
 			TransferID: valueObject.GenerateID(),
 			ToWalletID: valueObject.GenerateID(),
+			Category:   CategoryFood,
 			Timestamp:  time.Now(),
 		})
 
@@ -115,6 +118,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Amount:     newMoney(t, 100),
 			TransferID: valueObject.GenerateID(),
 			ToWalletID: valueObject.GenerateID(),
+			Category:   CategoryFood,
 			Timestamp:  transferTime,
 		})
 
@@ -132,6 +136,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Amount:     newMoney(t, 100),
 			TransferID: transferID,
 			ToWalletID: valueObject.GenerateID(),
+			Category:   CategoryFood,
 			Timestamp:  time.Now(),
 		})
 		assert.NoError(t, err)
@@ -141,6 +146,7 @@ func TestWallet_TransferFunds(t *testing.T) {
 			Amount:     newMoney(t, 100),
 			TransferID: transferID,
 			ToWalletID: valueObject.GenerateID(),
+			Category:   CategoryFood,
 			Timestamp:  time.Now(),
 		})
 		assert.ErrorIs(t, err, pkg.ErrDuplicateTransfer)
@@ -161,6 +167,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Amount:       newMoney(t, 500),
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFood,
 			Timestamp:    time.Now(),
 		})
 
@@ -180,6 +187,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Amount:       newMoney(t, 2),
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFood,
 			Timestamp:    time.Now(),
 		})
 
@@ -195,6 +203,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Amount:       newMoney(t, 1),
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFood,
 			Timestamp:    time.Now(),
 		})
 
@@ -213,6 +222,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Amount:       newMoney(t, 200),
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFood,
 			Timestamp:    receiveTime,
 		})
 
@@ -231,6 +241,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Amount:       newMoney(t, 500),
 			TransferID:   transferID,
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFood,
 			Timestamp:    time.Now(),
 		})
 		assert.NoError(t, err)
@@ -240,6 +251,7 @@ func TestWallet_ReceiveFundsTransfer(t *testing.T) {
 			Amount:       newMoney(t, 500),
 			TransferID:   transferID,
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFood,
 			Timestamp:    time.Now(),
 		})
 		assert.ErrorIs(t, err, pkg.ErrDuplicateTransfer)
@@ -283,6 +295,7 @@ func TestWallet_Replay(t *testing.T) {
 			TransferID:   valueObject.GenerateID(),
 			ToWalletID:   valueObject.GenerateID(),
 			FromWalletID: wallet.ID(),
+			Category:     CategoryFood,
 			Timestamp:    transferTime,
 		}))
 
@@ -301,6 +314,7 @@ func TestWallet_Replay(t *testing.T) {
 			WalletID:     wallet.ID(),
 			TransferID:   valueObject.GenerateID(),
 			FromWalletID: valueObject.GenerateID(),
+			Category:     CategoryFuel,
 			Timestamp:    receiveTime,
 		}))
 

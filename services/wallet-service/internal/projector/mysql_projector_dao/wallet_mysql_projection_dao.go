@@ -78,12 +78,13 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferred(ctx context.Context, 
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, category, amount_in_cents, transferred_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		event.FromWalletID,
 		event.TransferID,
 		event.ToWalletID,
 		"outgoing",
+		event.Category,
 		event.AmountInCents,
 		event.Timestamp,
 	)
@@ -138,12 +139,13 @@ func (dao *WalletMySQLProjectionDAO) ApplyFundsTransferReceived(ctx context.Cont
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at)
-		VALUES (?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO transfer_projections (wallet_id, transfer_id, counterpart_wallet_id, direction, category, amount_in_cents, transferred_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		event.WalletID,
 		event.TransferID,
 		event.FromWalletID,
 		"incoming",
+		event.Category,
 		event.AmountInCents,
 		event.Timestamp,
 	)

@@ -150,8 +150,8 @@ func TestWalletQueryController_FindTransfersByWalletID(t *testing.T) {
 		counterpartID := uuid.NewUUID()
 		createTestWallet(t, walletID, uuid.NewUUID())
 		createTestWallet(t, counterpartID, uuid.NewUUID())
-		createTestTransfer(t, walletID, transferID1, counterpartID, "outgoing", 1000, now.Add(-time.Minute))
-		createTestTransfer(t, walletID, transferID2, counterpartID, "incoming", 500, now)
+		createTestTransfer(t, walletID, transferID1, counterpartID, "outgoing", "food", 1000, now.Add(-time.Minute))
+		createTestTransfer(t, walletID, transferID2, counterpartID, "incoming", "fuel", 500, now)
 
 		req := httptest.NewRequest(http.MethodGet, "/wallets/"+walletID+"/transfers?limit=100&offset=0", nil)
 		rec := httptest.NewRecorder()
@@ -190,7 +190,7 @@ func TestWalletQueryController_FindTransfersByWalletID(t *testing.T) {
 		createTestWallet(t, counterpartID, uuid.NewUUID())
 		for i := range 5 {
 			transferredAt := now.Add(time.Duration(i) * time.Second)
-			createTestTransfer(t, walletID, uuid.NewUUID(), counterpartID, "outgoing", 100, transferredAt)
+			createTestTransfer(t, walletID, uuid.NewUUID(), counterpartID, "outgoing", "unclassified", 100, transferredAt)
 		}
 		req := httptest.NewRequest(http.MethodGet, "/wallets/"+walletID+"/transfers?limit=2&offset=0", nil)
 		rec := httptest.NewRecorder()
@@ -215,7 +215,7 @@ func TestWalletQueryController_FindTransfersByWalletID(t *testing.T) {
 		for i := range 3 {
 			transferIDs[i] = uuid.NewUUID()
 			transferredAt := now.Add(time.Duration(i) * time.Second)
-			createTestTransfer(t, walletID, transferIDs[i], counterpartID, "outgoing", 100, transferredAt)
+			createTestTransfer(t, walletID, transferIDs[i], counterpartID, "outgoing", "unclassified", 100, transferredAt)
 		}
 		req := httptest.NewRequest(http.MethodGet, "/wallets/"+walletID+"/transfers?limit=10&offset=1", nil)
 		rec := httptest.NewRecorder()

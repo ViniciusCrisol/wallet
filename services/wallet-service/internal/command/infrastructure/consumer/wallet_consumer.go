@@ -64,6 +64,7 @@ func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Contex
 		Amount:       event.Amount,
 		TransferID:   event.TransferID,
 		FromWalletID: event.FromWalletID,
+		Category:     event.Category,
 		Timestamp:    event.Timestamp,
 	}
 	if err := wallet.ReceiveFundsTransfer(command); err != nil {

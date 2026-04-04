@@ -191,6 +191,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 			FromWalletID:  walletID,
 			ToWalletID:    toWalletID,
 			AmountInCents: 1000,
+			Category:      "food",
 			Timestamp:     time.Now(),
 		}
 		assert.NoError(t, dao.ApplyFundsTransferred(context.Background(), event))
@@ -199,6 +200,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferred(t *testing.T) {
 		assert.True(t, found)
 		assert.Equal(t, 1000, row.AmountInCents)
 		assert.Equal(t, "outgoing", row.Direction)
+		assert.Equal(t, "food", row.Category)
 		assert.Equal(t, toWalletID, row.CounterpartWalletID)
 	})
 }
@@ -341,6 +343,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 			TransferID:    transferID,
 			FromWalletID:  fromWalletID,
 			AmountInCents: 2000,
+			Category:      "fuel",
 			Timestamp:     time.Now(),
 		}
 		assert.NoError(t, dao.ApplyFundsTransferReceived(context.Background(), event))
@@ -349,6 +352,7 @@ func TestWalletMySQLProjectionDAO_ApplyFundsTransferReceived(t *testing.T) {
 		assert.True(t, found)
 		assert.Equal(t, 2000, row.AmountInCents)
 		assert.Equal(t, "incoming", row.Direction)
+		assert.Equal(t, "fuel", row.Category)
 		assert.Equal(t, fromWalletID, row.CounterpartWalletID)
 	})
 }

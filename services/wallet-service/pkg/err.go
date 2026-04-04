@@ -32,6 +32,7 @@ var (
 	ErrInvalidTransferredAt    = fmt.Errorf("%w: transferred_at must be a valid RFC3339 timestamp", ErrValidation)
 	ErrInvalidPaginationOffset = fmt.Errorf("%w: offset must be a non-negative integer", ErrValidation)
 	ErrInvalidPaginationLimit  = fmt.Errorf("%w: limit must be a positive integer no greater than 100", ErrValidation)
+	ErrInvalidCategory         = fmt.Errorf("%w: category must be one of: food, fuel, sports, health, travel, essentials, entertainment, unclassified", ErrValidation)
 
 	ErrInternal           = errors.New("internal server error")
 	ErrUnknownEventType   = fmt.Errorf("%w: unknown event type", ErrInternal)

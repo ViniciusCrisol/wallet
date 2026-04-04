@@ -20,6 +20,7 @@ type FundsTransferredEvent struct {
 	ToWalletID    string    `json:"to_wallet_id"`
 	FromWalletID  string    `json:"from_wallet_id"`
 	AmountInCents int       `json:"amount_in_cents"`
+	Category      string    `json:"category"`
 	Timestamp     time.Time `json:"timestamp"`
 }
 
@@ -28,5 +29,6 @@ type FundsTransferReceivedEvent struct {
 	TransferID    string    `json:"transfer_id"`
 	FromWalletID  string    `json:"from_wallet_id"`
 	AmountInCents int       `json:"amount_in_cents"`
+	Category      string    `json:"category"`
 	Timestamp     time.Time `json:"timestamp"`
 }

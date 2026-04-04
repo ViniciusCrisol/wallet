@@ -16,6 +16,7 @@ type TransferFundsCommand struct {
 	Amount     valueObject.Money
 	TransferID valueObject.ID
 	ToWalletID valueObject.ID
+	Category   string
 	Timestamp  time.Time
 }
 
@@ -23,5 +24,6 @@ type ReceiveFundsTransferCommand struct {
 	Amount       valueObject.Money
 	TransferID   valueObject.ID
 	FromWalletID valueObject.ID
+	Category     string
 	Timestamp    time.Time
 }

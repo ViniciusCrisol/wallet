@@ -23,6 +23,7 @@ type transferProjectionRow struct {
 	TransferID          string
 	CounterpartWalletID string
 	Direction           string
+	Category            string
 	AmountInCents       int
 	TransferredAt       time.Time
 }
@@ -86,7 +87,7 @@ func getTestTransferProjection(
 	err := db.QueryRow(
 		`
 			SELECT
-				wallet_id, transfer_id, counterpart_wallet_id, direction, amount_in_cents, transferred_at
+				wallet_id, transfer_id, counterpart_wallet_id, direction, category, amount_in_cents, transferred_at
 			FROM
 				transfer_projections
 			WHERE
@@ -97,6 +98,7 @@ func getTestTransferProjection(
 		&row.TransferID,
 		&row.CounterpartWalletID,
 		&row.Direction,
+		&row.Category,
 		&row.AmountInCents,
 		&row.TransferredAt,
 	)

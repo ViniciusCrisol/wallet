@@ -32,6 +32,7 @@ func walletDomainToIntegrationEvent(event eventSourcing.Event) (eventSourcing.Pa
 				ToWalletID:    e.ToWalletID.String(),
 				FromWalletID:  e.FromWalletID.String(),
 				AmountInCents: e.Amount.Amount(),
+				Category:      e.Category,
 				Timestamp:     e.Timestamp,
 			},
 			Name: integrationEvent.FundsTransferredEventName,
@@ -44,6 +45,7 @@ func walletDomainToIntegrationEvent(event eventSourcing.Event) (eventSourcing.Pa
 				TransferID:    e.TransferID.String(),
 				FromWalletID:  e.FromWalletID.String(),
 				AmountInCents: e.Amount.Amount(),
+				Category:      e.Category,
 				Timestamp:     e.Timestamp,
 			},
 			Name: integrationEvent.FundsTransferReceivedEventName,
@@ -139,6 +141,7 @@ func fundsTransferredToDomain(body []byte) (eventSourcing.Event, error) {
 		TransferID:   transferID,
 		ToWalletID:   toWalletID,
 		FromWalletID: fromWalletID,
+		Category:     event.Category,
 		Timestamp:    event.Timestamp,
 	}, nil
 }
@@ -182,6 +185,7 @@ func fundsTransferReceivedToDomain(body []byte) (eventSourcing.Event, error) {
 		WalletID:     walletID,
 		TransferID:   transferID,
 		FromWalletID: fromWalletID,
+		Category:     event.Category,
 		Timestamp:    event.Timestamp,
 	}, nil
 }

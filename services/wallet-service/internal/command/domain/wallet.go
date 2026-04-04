@@ -48,6 +48,7 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 		TransferID:   command.TransferID,
 		ToWalletID:   command.ToWalletID,
 		FromWalletID: wallet.ID(),
+		Category:     command.Category,
 		Timestamp:    command.Timestamp,
 	}
 	if err := wallet.applyFundsTransferred(event); err != nil {
@@ -79,6 +80,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 		WalletID:     wallet.ID(),
 		TransferID:   command.TransferID,
 		FromWalletID: command.FromWalletID,
+		Category:     command.Category,
 		Timestamp:    command.Timestamp,
 	}
 	if err := wallet.applyFundsTransferReceived(event); err != nil {
@@ -125,7 +127,11 @@ func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
 	}
 	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
-	wallet.transfers = append(wallet.transfers, NewOutgoingTransfer(event.TransferID, event.Amount, event.Timestamp))
+	category := event.Category
+	if category == "" {
+		category = CategoryUnclassified
+	}
+	wallet.transfers = append(wallet.transfers, NewOutgoingTransfer(event.TransferID, event.Amount, category, event.Timestamp))
 	return nil
 }
 
@@ -139,7 +145,11 @@ func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEven
 	}
 	wallet.balance = balance
 	wallet.updatedAt = event.Timestamp
-	wallet.transfers = append(wallet.transfers, NewIncomingTransfer(event.TransferID, event.Amount, event.Timestamp))
+	category := event.Category
+	if category == "" {
+		category = CategoryUnclassified
+	}
+	wallet.transfers = append(wallet.transfers, NewIncomingTransfer(event.TransferID, event.Amount, category, event.Timestamp))
 	return nil
 }
 

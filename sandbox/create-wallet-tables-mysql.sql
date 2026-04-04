@@ -11,6 +11,7 @@ CREATE TABLE wallet.transfer_projections (
 	transfer_id           VARCHAR(36) NOT NULL,
 	counterpart_wallet_id VARCHAR(36) NOT NULL,
 	direction             VARCHAR(10) NOT NULL,
+	category              VARCHAR(20) NOT NULL,
 	amount_in_cents       INT         NOT NULL,
 	transferred_at        DATETIME(6) NOT NULL,
 	PRIMARY KEY (wallet_id, transfer_id),
