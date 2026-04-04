@@ -9,8 +9,9 @@ import (
 )
 
 type CreateWalletDTO struct {
-	WalletID string `json:"wallet_id"`
-	HolderID string `json:"holder_id"`
+	WalletID  string `json:"wallet_id"`
+	HolderID  string `json:"holder_id"`
+	CreatedAt string `json:"created_at"`
 }
 
 func (dto CreateWalletDTO) CreateWalletCommand() (domain.CreateWalletCommand, error) {
@@ -22,10 +23,14 @@ func (dto CreateWalletDTO) CreateWalletCommand() (domain.CreateWalletCommand, er
 	if err != nil {
 		return domain.CreateWalletCommand{}, pkg.ErrInvalidHolderID
 	}
+	createdAt, err := time.Parse(time.RFC3339, dto.CreatedAt)
+	if err != nil {
+		return domain.CreateWalletCommand{}, pkg.ErrInvalidCreatedAt
+	}
 	return domain.CreateWalletCommand{
 		WalletID:  walletID,
 		HolderID:  holderID,
-		Timestamp: time.Now(),
+		Timestamp: createdAt,
 	}, nil
 }
 
@@ -33,6 +38,7 @@ type TransferFundsDTO struct {
 	AmountInCents int    `json:"amount_in_cents"`
 	TransferID    string `json:"transfer_id"`
 	ToWalletID    string `json:"to_wallet_id"`
+	TransferredAt string `json:"transferred_at"`
 }
 
 func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand, error) {
@@ -51,11 +57,15 @@ func (dto TransferFundsDTO) TransferFundsCommand() (domain.TransferFundsCommand,
 	if amount.Amount() == 0 {
 		return domain.TransferFundsCommand{}, pkg.ErrNonPositiveAmount
 	}
+	transferredAt, err := time.Parse(time.RFC3339, dto.TransferredAt)
+	if err != nil {
+		return domain.TransferFundsCommand{}, pkg.ErrInvalidTransferredAt
+	}
 	return domain.TransferFundsCommand{
 		Amount:     amount,
 		TransferID: transferID,
 		ToWalletID: toWalletID,
-		Timestamp:  time.Now(),
+		Timestamp:  transferredAt,
 	}, nil
 }
 
@@ -63,6 +73,7 @@ type MockTransferDTO struct {
 	AmountInCents int    `json:"amount_in_cents"`
 	TransferID    string `json:"transfer_id"`
 	FromWalletID  string `json:"from_wallet_id"`
+	TransferredAt string `json:"transferred_at"`
 }
 
 func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTransferCommand, error) {
@@ -81,10 +92,14 @@ func (dto MockTransferDTO) ReceiveFundsTransferCommand() (domain.ReceiveFundsTra
 	if amount.Amount() == 0 {
 		return domain.ReceiveFundsTransferCommand{}, pkg.ErrNonPositiveAmount
 	}
+	transferredAt, err := time.Parse(time.RFC3339, dto.TransferredAt)
+	if err != nil {
+		return domain.ReceiveFundsTransferCommand{}, pkg.ErrInvalidTransferredAt
+	}
 	return domain.ReceiveFundsTransferCommand{
 		Amount:       amount,
 		TransferID:   transferID,
 		FromWalletID: fromWalletID,
-		Timestamp:    time.Now(),
+		Timestamp:    transferredAt,
 	}, nil
 }

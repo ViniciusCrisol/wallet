@@ -14,7 +14,8 @@ http:
         data: |-
             {
               "wallet_id": "ea2c4e44-d4ed-4f35-8640-e9fa380da877",
-              "holder_id": "25dfc9e2-e664-454a-b935-a56bcadfdcff"
+              "holder_id": "25dfc9e2-e664-454a-b935-a56bcadfdcff",
+              "created_at": "2025-01-15T10:30:00Z"
             }
     auth: inherit
 

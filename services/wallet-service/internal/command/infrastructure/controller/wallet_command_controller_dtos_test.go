@@ -17,7 +17,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		walletID := valueObject.GenerateID().String()
 		holderID := valueObject.GenerateID().String()
-		dto := CreateWalletDTO{WalletID: walletID, HolderID: holderID}
+		dto := CreateWalletDTO{WalletID: walletID, HolderID: holderID, CreatedAt: "2025-01-15T10:30:00Z"}
 
 		command, err := dto.CreateWalletCommand()
 
@@ -25,12 +25,13 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 		assert.Equal(t, walletID, command.WalletID.String())
 		assert.Equal(t, holderID, command.HolderID.String())
 		assert.False(t, command.Timestamp.IsZero())
+		assert.Equal(t, 2025, command.Timestamp.Year())
 	})
 
 	t.Run("It should return an error when wallet_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: "not-a-uuid", HolderID: valueObject.GenerateID().String()}
+		dto := CreateWalletDTO{WalletID: "not-a-uuid", HolderID: valueObject.GenerateID().String(), CreatedAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -40,7 +41,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when holder_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: "not-a-uuid"}
+		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: "not-a-uuid", CreatedAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -50,7 +51,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when wallet_id is empty", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: "", HolderID: valueObject.GenerateID().String()}
+		dto := CreateWalletDTO{WalletID: "", HolderID: valueObject.GenerateID().String(), CreatedAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.CreateWalletCommand()
 
@@ -60,11 +61,31 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 	t.Run("It should return an error when holder_id is empty", func(t *testing.T) {
 		t.Parallel()
 
-		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: ""}
+		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: "", CreatedAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.CreateWalletCommand()
 
 		assert.ErrorIs(t, err, pkg.ErrInvalidHolderID)
+	})
+
+	t.Run("It should return an error when created_at is not a valid RFC3339 timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: valueObject.GenerateID().String(), CreatedAt: "not-a-date"}
+
+		_, err := dto.CreateWalletCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidCreatedAt)
+	})
+
+	t.Run("It should return an error when created_at is empty", func(t *testing.T) {
+		t.Parallel()
+
+		dto := CreateWalletDTO{WalletID: valueObject.GenerateID().String(), HolderID: valueObject.GenerateID().String(), CreatedAt: ""}
+
+		_, err := dto.CreateWalletCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidCreatedAt)
 	})
 }
 
@@ -76,7 +97,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		transferID := valueObject.GenerateID().String()
 		toWalletID := valueObject.GenerateID().String()
-		dto := TransferFundsDTO{AmountInCents: 500, TransferID: transferID, ToWalletID: toWalletID}
+		dto := TransferFundsDTO{AmountInCents: 500, TransferID: transferID, ToWalletID: toWalletID, TransferredAt: "2025-01-15T10:30:00Z"}
 
 		command, err := dto.TransferFundsCommand()
 
@@ -85,12 +106,13 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 		assert.Equal(t, transferID, command.TransferID.String())
 		assert.Equal(t, toWalletID, command.ToWalletID.String())
 		assert.False(t, command.Timestamp.IsZero())
+		assert.Equal(t, 2025, command.Timestamp.Year())
 	})
 
 	t.Run("It should return an error when transfer_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: 100, TransferID: "not-a-uuid", ToWalletID: valueObject.GenerateID().String()}
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: "not-a-uuid", ToWalletID: valueObject.GenerateID().String(), TransferredAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -100,7 +122,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when to_wallet_id is not a valid UUID", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: "not-a-uuid"}
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: "not-a-uuid", TransferredAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -110,7 +132,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: 0, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String()}
+		dto := TransferFundsDTO{AmountInCents: 0, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String(), TransferredAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.TransferFundsCommand()
 
@@ -120,11 +142,31 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
 		t.Parallel()
 
-		dto := TransferFundsDTO{AmountInCents: -1, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String()}
+		dto := TransferFundsDTO{AmountInCents: -1, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String(), TransferredAt: "2025-01-15T10:30:00Z"}
 
 		_, err := dto.TransferFundsCommand()
 
 		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+	})
+
+	t.Run("It should return an error when transferred_at is not a valid RFC3339 timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String(), TransferredAt: "not-a-date"}
+
+		_, err := dto.TransferFundsCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
+	})
+
+	t.Run("It should return an error when transferred_at is empty", func(t *testing.T) {
+		t.Parallel()
+
+		dto := TransferFundsDTO{AmountInCents: 100, TransferID: valueObject.GenerateID().String(), ToWalletID: valueObject.GenerateID().String(), TransferredAt: ""}
+
+		_, err := dto.TransferFundsCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
 	})
 }
 
@@ -140,6 +182,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 			AmountInCents: 300,
 			TransferID:    transferID,
 			FromWalletID:  fromWalletID,
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		command, err := dto.ReceiveFundsTransferCommand()
@@ -149,6 +192,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 		assert.Equal(t, transferID, command.TransferID.String())
 		assert.Equal(t, fromWalletID, command.FromWalletID.String())
 		assert.False(t, command.Timestamp.IsZero())
+		assert.Equal(t, 2025, command.Timestamp.Year())
 	})
 
 	t.Run("It should return an error when transfer_id is not a valid UUID", func(t *testing.T) {
@@ -158,6 +202,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    "not-a-uuid",
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()
@@ -172,6 +217,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  "not-a-uuid",
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()
@@ -186,6 +232,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 			AmountInCents: 0,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()
@@ -200,10 +247,41 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 			AmountInCents: -1,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
 		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+	})
+
+	t.Run("It should return an error when transferred_at is not a valid RFC3339 timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		dto := MockTransferDTO{
+			AmountInCents: 100,
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "not-a-date",
+		}
+
+		_, err := dto.ReceiveFundsTransferCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
+	})
+
+	t.Run("It should return an error when transferred_at is empty", func(t *testing.T) {
+		t.Parallel()
+
+		dto := MockTransferDTO{
+			AmountInCents: 100,
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "",
+		}
+
+		_, err := dto.ReceiveFundsTransferCommand()
+
+		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
 	})
 }

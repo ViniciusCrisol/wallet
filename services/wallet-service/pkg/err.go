@@ -28,6 +28,8 @@ var (
 	ErrInvalidTransferID       = fmt.Errorf("%w: transfer_id must be a valid UUID", ErrValidation)
 	ErrInvalidToWalletID       = fmt.Errorf("%w: to_wallet_id must be a valid UUID", ErrValidation)
 	ErrInvalidFromWalletID     = fmt.Errorf("%w: from_wallet_id must be a valid UUID", ErrValidation)
+	ErrInvalidCreatedAt        = fmt.Errorf("%w: created_at must be a valid RFC3339 timestamp", ErrValidation)
+	ErrInvalidTransferredAt    = fmt.Errorf("%w: transferred_at must be a valid RFC3339 timestamp", ErrValidation)
 	ErrInvalidPaginationOffset = fmt.Errorf("%w: offset must be a non-negative integer", ErrValidation)
 	ErrInvalidPaginationLimit  = fmt.Errorf("%w: limit must be a positive integer no greater than 100", ErrValidation)
 

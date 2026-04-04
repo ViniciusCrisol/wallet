@@ -22,8 +22,9 @@ func TestWalletCommandController_Create(t *testing.T) {
 
 		controller := newTestController(t)
 		body := marshalBody(t, CreateWalletDTO{
-			WalletID: valueObject.GenerateID().String(),
-			HolderID: valueObject.GenerateID().String(),
+			WalletID:  valueObject.GenerateID().String(),
+			HolderID:  valueObject.GenerateID().String(),
+			CreatedAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
 		rec := httptest.NewRecorder()
@@ -48,8 +49,9 @@ func TestWalletCommandController_Create(t *testing.T) {
 
 		controller := newTestController(t)
 		body := marshalBody(t, CreateWalletDTO{
-			WalletID: "not-a-uuid",
-			HolderID: valueObject.GenerateID().String(),
+			WalletID:  "not-a-uuid",
+			HolderID:  valueObject.GenerateID().String(),
+			CreatedAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
 		rec := httptest.NewRecorder()
@@ -63,8 +65,25 @@ func TestWalletCommandController_Create(t *testing.T) {
 
 		controller := newTestController(t)
 		body := marshalBody(t, CreateWalletDTO{
-			WalletID: valueObject.GenerateID().String(),
-			HolderID: "not-a-uuid",
+			WalletID:  valueObject.GenerateID().String(),
+			HolderID:  "not-a-uuid",
+			CreatedAt: "2025-01-15T10:30:00Z",
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
+		rec := httptest.NewRecorder()
+		newCreateMux(controller).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 400 when created_at is not a valid RFC3339 timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		controller := newTestController(t)
+		body := marshalBody(t, CreateWalletDTO{
+			WalletID:  valueObject.GenerateID().String(),
+			HolderID:  valueObject.GenerateID().String(),
+			CreatedAt: "not-a-date",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets", body)
 		rec := httptest.NewRecorder()
@@ -78,8 +97,9 @@ func TestWalletCommandController_Create(t *testing.T) {
 
 		controller := newTestController(t)
 		dto := CreateWalletDTO{
-			WalletID: valueObject.GenerateID().String(),
-			HolderID: valueObject.GenerateID().String(),
+			WalletID:  valueObject.GenerateID().String(),
+			HolderID:  valueObject.GenerateID().String(),
+			CreatedAt: "2025-01-15T10:30:00Z",
 		}
 
 		req1 := httptest.NewRequest(http.MethodPost, "/wallets", marshalBody(t, dto))
@@ -123,6 +143,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			AmountInCents: 500,
 			TransferID:    valueObject.GenerateID().String(),
 			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", body)
 		rec := httptest.NewRecorder()
@@ -152,6 +173,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    valueObject.GenerateID().String(),
 			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/not-a-uuid/transfer", body)
@@ -170,6 +192,26 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			AmountInCents: 0,
 			TransferID:    valueObject.GenerateID().String(),
 			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/transfer", body)
+		rec := httptest.NewRecorder()
+		newTransferMux(controller).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 400 when transferred_at is not a valid RFC3339 timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		controller := newTestController(t)
+		nonExistentID := valueObject.GenerateID().String()
+		body := marshalBody(t, TransferFundsDTO{
+			AmountInCents: 100,
+			TransferID:    valueObject.GenerateID().String(),
+			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "not-a-date",
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/transfer", body)
@@ -188,6 +230,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    valueObject.GenerateID().String(),
 			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/transfer", body)
@@ -212,6 +255,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			AmountInCents: 500,
 			TransferID:    valueObject.GenerateID().String(),
 			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", body)
 		rec := httptest.NewRecorder()
@@ -246,6 +290,7 @@ func TestWalletCommandController_TransferFunds(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    transferID,
 			ToWalletID:    valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		req1 := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/transfer", marshalBody(t, dto))
@@ -278,6 +323,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 500,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -306,6 +352,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/not-a-uuid/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -323,6 +370,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    "not-a-uuid",
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -340,6 +388,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  "not-a-uuid",
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -357,6 +406,25 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 0,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
+		})
+		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
+		rec := httptest.NewRecorder()
+		newMockTransferMux(controller).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("It should return 400 when transferred_at is not a valid RFC3339 timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		controller := newTestController(t)
+		nonExistentID := valueObject.GenerateID().String()
+		body := marshalBody(t, MockTransferDTO{
+			AmountInCents: 100,
+			TransferID:    valueObject.GenerateID().String(),
+			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "not-a-date",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -374,6 +442,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+nonExistentID+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -407,6 +476,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 2,
 			TransferID:    valueObject.GenerateID().String(),
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		})
 		req := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", body)
 		rec := httptest.NewRecorder()
@@ -431,6 +501,7 @@ func TestWalletCommandController_MockTransfer(t *testing.T) {
 			AmountInCents: 100,
 			TransferID:    transferID,
 			FromWalletID:  valueObject.GenerateID().String(),
+			TransferredAt: "2025-01-15T10:30:00Z",
 		}
 
 		req1 := httptest.NewRequest(http.MethodPost, "/wallets/"+wallet.ID().String()+"/mock-transfer", marshalBody(t, dto))
