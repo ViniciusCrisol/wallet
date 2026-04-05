@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 
@@ -102,7 +102,7 @@ func TestWalletDomainToIntegrationEvent(t *testing.T) {
 
 		type unknownEvent struct{}
 		_, err := walletDomainToIntegrationEvent(unknownEvent{})
-		assert.ErrorIs(t, err, pkg.ErrUnknownEventType)
+		assert.ErrorIs(t, err, appErr.ErrUnknownEventType)
 	})
 }
 
@@ -151,7 +151,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			HolderID: holderID.String(),
 		})
 		_, err := WalletIntegrationToDomainEvent(body, integrationEvent.WalletCreatedEventName)
-		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return an error when event name is WalletCreatedEventName and HolderID is not a valid UUID", func(t *testing.T) {
@@ -162,7 +162,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			HolderID: "not-a-uuid",
 		})
 		_, err := WalletIntegrationToDomainEvent(body, integrationEvent.WalletCreatedEventName)
-		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return a FundsTransferredEvent when event name is FundsTransferredEventName and body is valid", func(t *testing.T) {
@@ -207,7 +207,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			AmountInCents: 500,
 		})
 		_, err := WalletIntegrationToDomainEvent(body, integrationEvent.FundsTransferredEventName)
-		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return an error when event name is FundsTransferredEventName and amount is invalid", func(t *testing.T) {
@@ -220,7 +220,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			AmountInCents: -1,
 		})
 		_, err := WalletIntegrationToDomainEvent(body, integrationEvent.FundsTransferredEventName)
-		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, err, appErr.ErrNegativeAmount)
 	})
 
 	t.Run("It should return a FundsTransferReceivedEvent when event name is FundsTransferReceivedEventName and body is valid", func(t *testing.T) {
@@ -265,7 +265,7 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			AmountInCents: 300,
 		})
 		_, err := WalletIntegrationToDomainEvent(body, integrationEvent.FundsTransferReceivedEventName)
-		assert.ErrorIs(t, err, pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return an error when event name is FundsTransferReceivedEventName and amount is invalid", func(t *testing.T) {
@@ -278,13 +278,13 @@ func TestWalletIntegrationToDomainEvent(t *testing.T) {
 			AmountInCents: -1,
 		})
 		_, err := WalletIntegrationToDomainEvent(body, integrationEvent.FundsTransferReceivedEventName)
-		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, err, appErr.ErrNegativeAmount)
 	})
 
 	t.Run("It should return an error when event name is unknown", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := WalletIntegrationToDomainEvent([]byte("{}"), "unknown:event")
-		assert.ErrorIs(t, err, pkg.ErrUnknownEventType)
+		assert.ErrorIs(t, err, appErr.ErrUnknownEventType)
 	})
 }

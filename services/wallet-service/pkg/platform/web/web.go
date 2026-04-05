@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 )
 
 func GetIntQueryParam(request *http.Request, key string) (int, bool) {
@@ -25,17 +25,17 @@ func GetIntQueryParam(request *http.Request, key string) (int, bool) {
 func RespondWithError(response http.ResponseWriter, err error) {
 	var status int
 	switch {
-	case errors.Is(err, pkg.ErrNotFound):
+	case errors.Is(err, appErr.ErrNotFound):
 		status = http.StatusNotFound
-	case errors.Is(err, pkg.ErrConflict):
+	case errors.Is(err, appErr.ErrConflict):
 		status = http.StatusConflict
-	case errors.Is(err, pkg.ErrValidation):
+	case errors.Is(err, appErr.ErrValidation):
 		status = http.StatusBadRequest
-	case errors.Is(err, pkg.ErrUnprocessableEntity):
+	case errors.Is(err, appErr.ErrUnprocessableEntity):
 		status = http.StatusUnprocessableEntity
 	default:
 		status = http.StatusInternalServerError
-		err = pkg.ErrInternal
+		err = appErr.ErrInternal
 	}
 	RespondWithJSON(response, status, map[string]string{"error": err.Error()})
 }

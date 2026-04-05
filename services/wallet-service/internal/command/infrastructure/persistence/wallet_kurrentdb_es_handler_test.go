@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
@@ -63,7 +63,7 @@ func TestWalletKurrentDBESHandler_Save(t *testing.T) {
 			HolderID:  valueObject.GenerateID(),
 			Timestamp: time.Now(),
 		})
-		assert.True(t, errors.Is(esHandler.Save(context.Background(), conflictWallet), pkg.ErrConflict))
+		assert.True(t, errors.Is(esHandler.Save(context.Background(), conflictWallet), appErr.ErrConflict))
 	})
 }
 

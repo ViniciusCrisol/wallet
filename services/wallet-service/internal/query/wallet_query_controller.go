@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	"wallet/wallet-service/pkg/platform/uuid"
 	"wallet/wallet-service/pkg/platform/web"
 )
@@ -40,7 +40,7 @@ func NewWalletQueryController(db *sql.DB) *WalletQueryController {
 func (controller *WalletQueryController) FindByID(response http.ResponseWriter, request *http.Request) {
 	walletID := request.PathValue("id")
 	if !uuid.IsValid(walletID) {
-		web.RespondWithError(response, pkg.ErrInvalidWalletID)
+		web.RespondWithError(response, appErr.ErrInvalidWalletID)
 		return
 	}
 
@@ -57,7 +57,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 		&wallet.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
-		web.RespondWithError(response, pkg.ErrWalletNotFound)
+		web.RespondWithError(response, appErr.ErrWalletNotFound)
 		return
 	}
 	if err != nil {
@@ -73,7 +73,7 @@ func (controller *WalletQueryController) FindByID(response http.ResponseWriter, 
 func (controller *WalletQueryController) FindByHolderID(response http.ResponseWriter, request *http.Request) {
 	holderID := request.URL.Query().Get("holder_id")
 	if !uuid.IsValid(holderID) {
-		web.RespondWithError(response, pkg.ErrInvalidHolderID)
+		web.RespondWithError(response, appErr.ErrInvalidHolderID)
 		return
 	}
 
@@ -118,17 +118,17 @@ func (controller *WalletQueryController) FindByHolderID(response http.ResponseWr
 func (controller *WalletQueryController) FindTransfersByWalletID(response http.ResponseWriter, request *http.Request) {
 	walletID := request.PathValue("id")
 	if !uuid.IsValid(walletID) {
-		web.RespondWithError(response, pkg.ErrInvalidWalletID)
+		web.RespondWithError(response, appErr.ErrInvalidWalletID)
 		return
 	}
 	limit, ok := web.GetIntQueryParam(request, "limit")
 	if !ok || limit <= 0 || limit > 100 {
-		web.RespondWithError(response, pkg.ErrInvalidPaginationLimit)
+		web.RespondWithError(response, appErr.ErrInvalidPaginationLimit)
 		return
 	}
 	offset, ok := web.GetIntQueryParam(request, "offset")
 	if !ok || offset < 0 {
-		web.RespondWithError(response, pkg.ErrInvalidPaginationOffset)
+		web.RespondWithError(response, appErr.ErrInvalidPaginationOffset)
 		return
 	}
 

@@ -1,4 +1,4 @@
-package pkg
+package app_err
 
 import (
 	"errors"

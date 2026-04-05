@@ -6,7 +6,7 @@ import (
 
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/subscriber"
 
@@ -58,7 +58,7 @@ func (consumer *WalletKurrentDBConsumer) receiveFundsTransfer(ctx context.Contex
 		slog.Error("destination wallet not found for funds transfer",
 			slog.String("to_wallet_id", event.ToWalletID.String()),
 			slog.String("transfer_id", event.TransferID.String()))
-		return pkg.ErrWalletNotFound
+		return appErr.ErrWalletNotFound
 	}
 	command := domain.ReceiveFundsTransferCommand{
 		Amount:       event.Amount,

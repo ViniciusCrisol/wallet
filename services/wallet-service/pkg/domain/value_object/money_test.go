@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -32,14 +32,14 @@ func TestNewMoney(t *testing.T) {
 		t.Parallel()
 
 		_, err := NewMoney(-50)
-		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, err, appErr.ErrNegativeAmount)
 	})
 
 	t.Run("It should return an error when amount equals math.MaxInt", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := NewMoney(math.MaxInt)
-		assert.ErrorIs(t, err, pkg.ErrAmountOverflow)
+		assert.ErrorIs(t, err, appErr.ErrAmountOverflow)
 	})
 }
 
@@ -73,7 +73,7 @@ func TestMoney_Sum(t *testing.T) {
 		a, _ := NewMoney(math.MaxInt - 1)
 		b, _ := NewMoney(1)
 		_, err := a.Sum(b)
-		assert.ErrorIs(t, err, pkg.ErrAmountOverflow)
+		assert.ErrorIs(t, err, appErr.ErrAmountOverflow)
 	})
 }
 
@@ -106,7 +106,7 @@ func TestMoney_Sub(t *testing.T) {
 		a, _ := NewMoney(50)
 		b, _ := NewMoney(100)
 		_, err := a.Sub(b)
-		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, err, appErr.ErrNegativeAmount)
 	})
 }
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 
 	"github.com/stretchr/testify/assert"
@@ -36,7 +36,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidWalletID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidWalletID)
 	})
 
 	t.Run("It should return an error when holder_id is not a valid UUID", func(t *testing.T) {
@@ -46,7 +46,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidHolderID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidHolderID)
 	})
 
 	t.Run("It should return an error when wallet_id is empty", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidWalletID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidWalletID)
 	})
 
 	t.Run("It should return an error when holder_id is empty", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidHolderID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidHolderID)
 	})
 
 	t.Run("It should return an error when created_at is not a valid RFC3339 timestamp", func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidCreatedAt)
+		assert.ErrorIs(t, err, appErr.ErrInvalidCreatedAt)
 	})
 
 	t.Run("It should return an error when created_at is empty", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestCreateWalletDTO_CreateWalletCommand(t *testing.T) {
 
 		_, err := dto.CreateWalletCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidCreatedAt)
+		assert.ErrorIs(t, err, appErr.ErrInvalidCreatedAt)
 	})
 }
 
@@ -118,7 +118,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidTransferID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidTransferID)
 	})
 
 	t.Run("It should default category to unclassified when empty", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidCategory)
+		assert.ErrorIs(t, err, appErr.ErrInvalidCategory)
 	})
 
 	t.Run("It should return an error when to_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidToWalletID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidToWalletID)
 	})
 
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
@@ -159,7 +159,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrNonPositiveAmount)
+		assert.ErrorIs(t, err, appErr.ErrNonPositiveAmount)
 	})
 
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
@@ -169,7 +169,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, err, appErr.ErrNegativeAmount)
 	})
 
 	t.Run("It should return an error when transferred_at is not a valid RFC3339 timestamp", func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
+		assert.ErrorIs(t, err, appErr.ErrInvalidTransferredAt)
 	})
 
 	t.Run("It should return an error when transferred_at is empty", func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestTransferFundsDTO_TransferFundsCommand(t *testing.T) {
 
 		_, err := dto.TransferFundsCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
+		assert.ErrorIs(t, err, appErr.ErrInvalidTransferredAt)
 	})
 }
 
@@ -231,7 +231,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidTransferID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidTransferID)
 	})
 
 	t.Run("It should default category to unclassified when empty", func(t *testing.T) {
@@ -263,7 +263,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidCategory)
+		assert.ErrorIs(t, err, appErr.ErrInvalidCategory)
 	})
 
 	t.Run("It should return an error when from_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -278,7 +278,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidFromWalletID)
+		assert.ErrorIs(t, err, appErr.ErrInvalidFromWalletID)
 	})
 
 	t.Run("It should return an error when amount_in_cents is zero", func(t *testing.T) {
@@ -293,7 +293,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrNonPositiveAmount)
+		assert.ErrorIs(t, err, appErr.ErrNonPositiveAmount)
 	})
 
 	t.Run("It should return an error when amount_in_cents is negative", func(t *testing.T) {
@@ -308,7 +308,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, err, appErr.ErrNegativeAmount)
 	})
 
 	t.Run("It should return an error when transferred_at is not a valid RFC3339 timestamp", func(t *testing.T) {
@@ -323,7 +323,7 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
+		assert.ErrorIs(t, err, appErr.ErrInvalidTransferredAt)
 	})
 
 	t.Run("It should return an error when transferred_at is empty", func(t *testing.T) {
@@ -338,6 +338,6 @@ func TestMockTransferDTO_ReceiveFundsTransferCommand(t *testing.T) {
 
 		_, err := dto.ReceiveFundsTransferCommand()
 
-		assert.ErrorIs(t, err, pkg.ErrInvalidTransferredAt)
+		assert.ErrorIs(t, err, appErr.ErrInvalidTransferredAt)
 	})
 }

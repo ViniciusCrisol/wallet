@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -68,9 +68,9 @@ func TestRespondWithError(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		var body map[string]string
-		RespondWithError(rec, pkg.ErrNegativeAmount)
+		RespondWithError(rec, appErr.ErrNegativeAmount)
 		json.Unmarshal(rec.Body.Bytes(), &body)
-		assert.Equal(t, pkg.ErrNegativeAmount.Error(), body["error"])
+		assert.Equal(t, appErr.ErrNegativeAmount.Error(), body["error"])
 	})
 
 	t.Run("It should mask the original error message for 500 responses", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestRespondWithError(t *testing.T) {
 		RespondWithError(rec, errors.New("database connection refused"))
 		var body map[string]string
 		json.Unmarshal(rec.Body.Bytes(), &body)
-		assert.Equal(t, pkg.ErrInternal.Error(), body["error"])
+		assert.Equal(t, appErr.ErrInternal.Error(), body["error"])
 		assert.NotContains(t, body["error"], "database connection refused")
 	})
 
@@ -88,7 +88,7 @@ func TestRespondWithError(t *testing.T) {
 		t.Parallel()
 
 		rec := httptest.NewRecorder()
-		RespondWithError(rec, pkg.ErrWalletNotFound)
+		RespondWithError(rec, appErr.ErrWalletNotFound)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
 
@@ -96,7 +96,7 @@ func TestRespondWithError(t *testing.T) {
 		t.Parallel()
 
 		rec := httptest.NewRecorder()
-		RespondWithError(rec, pkg.ErrConflict)
+		RespondWithError(rec, appErr.ErrConflict)
 		assert.Equal(t, http.StatusConflict, rec.Code)
 	})
 
@@ -104,7 +104,7 @@ func TestRespondWithError(t *testing.T) {
 		t.Parallel()
 
 		rec := httptest.NewRecorder()
-		RespondWithError(rec, pkg.ErrNegativeAmount)
+		RespondWithError(rec, appErr.ErrNegativeAmount)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
@@ -112,7 +112,7 @@ func TestRespondWithError(t *testing.T) {
 		t.Parallel()
 
 		rec := httptest.NewRecorder()
-		RespondWithError(rec, pkg.ErrUnprocessableEntity)
+		RespondWithError(rec, appErr.ErrUnprocessableEntity)
 		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
 	})
 

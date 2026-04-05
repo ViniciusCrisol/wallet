@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	eventSourcing "wallet/wallet-service/pkg/domain/event_sourcing"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
@@ -53,7 +53,7 @@ func walletDomainToIntegrationEvent(event eventSourcing.Event) (eventSourcing.Pa
 
 	default:
 		slog.Error("unknown domain event type", slog.String("event_type", fmt.Sprintf("%T", event)), slog.Any("event", event))
-		return eventSourcing.ParsedEvent{}, pkg.ErrUnknownEventType
+		return eventSourcing.ParsedEvent{}, appErr.ErrUnknownEventType
 	}
 }
 
@@ -70,7 +70,7 @@ func WalletIntegrationToDomainEvent(
 		return fundsTransferReceivedToDomain(eventBody)
 	default:
 		slog.Error("unknown integration event type", slog.String("event_type", eventName), slog.Any("event", string(eventBody)))
-		return nil, pkg.ErrUnknownEventType
+		return nil, appErr.ErrUnknownEventType
 	}
 }
 
@@ -78,7 +78,7 @@ func walletCreatedToDomain(body []byte) (eventSourcing.Event, error) {
 	var event integrationEvent.WalletCreatedEvent
 	if err := json.Unmarshal(body, &event); err != nil {
 		slog.Error("failed to unmarshal wallet created event", slog.String("error", err.Error()))
-		return nil, pkg.ErrUnprocessableEntity
+		return nil, appErr.ErrUnprocessableEntity
 	}
 	walletID, err := valueObject.NewID(event.WalletID)
 	if err != nil {
@@ -106,7 +106,7 @@ func fundsTransferredToDomain(body []byte) (eventSourcing.Event, error) {
 	var event integrationEvent.FundsTransferredEvent
 	if err := json.Unmarshal(body, &event); err != nil {
 		slog.Error("failed to unmarshal funds transferred event", slog.String("error", err.Error()))
-		return nil, pkg.ErrUnprocessableEntity
+		return nil, appErr.ErrUnprocessableEntity
 	}
 	transferID, err := valueObject.NewID(event.TransferID)
 	if err != nil {
@@ -150,7 +150,7 @@ func fundsTransferReceivedToDomain(body []byte) (eventSourcing.Event, error) {
 	var event integrationEvent.FundsTransferReceivedEvent
 	if err := json.Unmarshal(body, &event); err != nil {
 		slog.Error("failed to unmarshal funds transfer received event", slog.String("error", err.Error()))
-		return nil, pkg.ErrUnprocessableEntity
+		return nil, appErr.ErrUnprocessableEntity
 	}
 	walletID, err := valueObject.NewID(event.WalletID)
 	if err != nil {

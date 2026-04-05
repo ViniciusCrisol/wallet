@@ -8,7 +8,7 @@ import (
 
 	"wallet/wallet-service/internal/command/domain"
 	"wallet/wallet-service/internal/command/infrastructure/persistence"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/uuid"
 
@@ -142,7 +142,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return error when transfer_id is not a valid UUID", func(t *testing.T) {
@@ -160,7 +160,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return error when from_wallet_id is not a valid UUID", func(t *testing.T) {
@@ -178,7 +178,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrInvalidUUID)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), appErr.ErrInvalidUUID)
 	})
 
 	t.Run("It should return error when amount_in_cents is zero", func(t *testing.T) {
@@ -215,7 +215,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrNegativeAmount)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), appErr.ErrNegativeAmount)
 	})
 
 	t.Run("It should return error when target wallet is not found", func(t *testing.T) {
@@ -233,7 +233,7 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrWalletNotFound)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), appErr.ErrWalletNotFound)
 	})
 
 	t.Run("It should return error when balance limit would be exceeded", func(t *testing.T) {
@@ -252,6 +252,6 @@ func TestWalletKurrentDBConsumer_Handle(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), pkg.ErrBalanceLimitExceeded)
+		assert.ErrorIs(t, consumer.handle(context.Background(), body, integrationEvent.FundsTransferredEventName), appErr.ErrBalanceLimitExceeded)
 	})
 }

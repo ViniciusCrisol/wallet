@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 )
 
@@ -73,7 +73,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferred(ctx context.Cont
 		slog.Warn("wallet projection not found for funds transferred",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.FromWalletID))
-		return pkg.ErrWalletProjectionNotFound
+		return appErr.ErrWalletProjectionNotFound
 	}
 
 	_, err = tx.ExecContext(
@@ -134,7 +134,7 @@ func (dao *WalletPostgreSQLProjectionDAO) ApplyFundsTransferReceived(ctx context
 		slog.Warn("wallet projection not found for funds transfer received",
 			slog.String("transfer_id", event.TransferID),
 			slog.String("wallet_id", event.WalletID))
-		return pkg.ErrWalletProjectionNotFound
+		return appErr.ErrWalletProjectionNotFound
 	}
 
 	_, err = tx.ExecContext(

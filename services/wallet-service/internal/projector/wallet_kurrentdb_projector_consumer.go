@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	integrationEvent "wallet/wallet-service/pkg/platform/integration_event"
 	"wallet/wallet-service/pkg/platform/subscriber"
 
@@ -48,7 +48,7 @@ func (consumer *WalletKurrentDBProjectorConsumer) handle(ctx context.Context, ev
 			slog.Error("failed to unmarshal wallet created event",
 				slog.String("event_name", eventName),
 				slog.String("error", err.Error()))
-			return pkg.ErrUnprocessableEntity
+			return appErr.ErrUnprocessableEntity
 		}
 		return consumer.projectionDAO.CreateWallet(ctx, event)
 
@@ -58,7 +58,7 @@ func (consumer *WalletKurrentDBProjectorConsumer) handle(ctx context.Context, ev
 			slog.Error("failed to unmarshal funds transferred event",
 				slog.String("event_name", eventName),
 				slog.String("error", err.Error()))
-			return pkg.ErrUnprocessableEntity
+			return appErr.ErrUnprocessableEntity
 		}
 		return consumer.projectionDAO.ApplyFundsTransferred(ctx, event)
 
@@ -68,7 +68,7 @@ func (consumer *WalletKurrentDBProjectorConsumer) handle(ctx context.Context, ev
 			slog.Error("failed to unmarshal funds transfer received event",
 				slog.String("event_name", eventName),
 				slog.String("error", err.Error()))
-			return pkg.ErrUnprocessableEntity
+			return appErr.ErrUnprocessableEntity
 		}
 		return consumer.projectionDAO.ApplyFundsTransferReceived(ctx, event)
 

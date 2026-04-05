@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	eventSourcing "wallet/wallet-service/pkg/domain/event_sourcing"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 )
@@ -40,7 +40,7 @@ func (wallet *Wallet) TransferFunds(command TransferFundsCommand) error {
 			slog.String("wallet_id", wallet.ID().String()),
 			slog.Int("balance_in_cents", wallet.balance.Amount()),
 			slog.Int("amount_in_cents", command.Amount.Amount()))
-		return pkg.ErrInsufficientBalance
+		return appErr.ErrInsufficientBalance
 	}
 
 	event := FundsTransferredEvent{
@@ -72,7 +72,7 @@ func (wallet *Wallet) ReceiveFundsTransfer(command ReceiveFundsTransferCommand) 
 			slog.String("wallet_id", wallet.ID().String()),
 			slog.Int("amount_in_cents", command.Amount.Amount()),
 			slog.Int("current_balance_in_cents", wallet.balance.Amount()))
-		return pkg.ErrBalanceLimitExceeded
+		return appErr.ErrBalanceLimitExceeded
 	}
 
 	event := FundsTransferReceivedEvent{
@@ -104,7 +104,7 @@ func (wallet *Wallet) Replay(event eventSourcing.Event) error {
 		}
 	default:
 		slog.Error("unknown event type", slog.String("event_type", fmt.Sprintf("%T", event)), slog.Any("event", event))
-		return pkg.ErrUnknownEventType
+		return appErr.ErrUnknownEventType
 	}
 	wallet.IncrementVersion()
 	return nil
@@ -119,7 +119,7 @@ func (wallet *Wallet) applyWalletCreated(event WalletCreatedEvent) {
 
 func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
 	if wallet.hasTransfer(event.TransferID) {
-		return pkg.ErrDuplicateTransfer
+		return appErr.ErrDuplicateTransfer
 	}
 	balance, err := wallet.balance.Sub(event.Amount)
 	if err != nil {
@@ -137,7 +137,7 @@ func (wallet *Wallet) applyFundsTransferred(event FundsTransferredEvent) error {
 
 func (wallet *Wallet) applyFundsTransferReceived(event FundsTransferReceivedEvent) error {
 	if wallet.hasTransfer(event.TransferID) {
-		return pkg.ErrDuplicateTransfer
+		return appErr.ErrDuplicateTransfer
 	}
 	balance, err := wallet.balance.Sum(event.Amount)
 	if err != nil {

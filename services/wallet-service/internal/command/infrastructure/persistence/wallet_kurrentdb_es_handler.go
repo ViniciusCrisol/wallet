@@ -8,7 +8,7 @@ import (
 	"math"
 
 	"wallet/wallet-service/internal/command/domain"
-	"wallet/wallet-service/pkg"
+	appErr "wallet/wallet-service/pkg/app_err"
 	valueObject "wallet/wallet-service/pkg/domain/value_object"
 	"wallet/wallet-service/pkg/platform/subscriber"
 	"wallet/wallet-service/pkg/platform/uuid"
@@ -67,7 +67,7 @@ func (handler *WalletKurrentDBESHandler) Save(ctx context.Context, wallet domain
 			slog.Warn("optimistic concurrency conflict on wallet stream",
 				slog.String("wallet_id", wallet.ID().String()),
 				slog.String("error", err.Error()))
-			return pkg.ErrConflict
+			return appErr.ErrConflict
 		}
 		slog.Error("failed to append events to wallet stream",
 			slog.String("wallet_id", wallet.ID().String()),
