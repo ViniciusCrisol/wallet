@@ -1,0 +1,12 @@
+wallet_analytics:
+    target: dev
+    outputs:
+        dev:
+            type: postgres
+            user: "{{ env_var('DBT_WALLET_USER', 'root') }}"
+            port: "{{ env_var('DBT_WALLET_PORT', '5432') }}"
+            host: "{{ env_var('DBT_WALLET_HOST', 'localhost') }}"
+            dbname: "{{ env_var('DBT_WALLET_DBNAME', 'wallet') }}"
+            password: "{{ env_var('DBT_WALLET_PASSWORD', 'root') }}"
+            schema: analytics
+            threads: 4

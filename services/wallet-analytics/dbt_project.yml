@@ -1,0 +1,26 @@
+name: wallet_analytics
+version: "1.0.0"
+config-version: 2
+
+profile: wallet_analytics
+
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+    - "target"
+    - "dbt_packages"
+
+models:
+    wallet_analytics:
+        staging:
+            +materialized: view
+            +schema: staging
+        marts:
+            +materialized: table
+            +schema: marts
