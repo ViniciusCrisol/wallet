@@ -13,6 +13,12 @@ $(VENV)/bin/activate: requirements.txt
 	$(PIP) install -r requirements.txt
 	@touch $(VENV)/bin/activate
 
+deps:
+	$(DBT) deps --profiles-dir .
+
+clean:
+	rm -rf target/ dbt_packages/ logs/ $(VENV)/
+
 run:
 	$(DBT) run --profiles-dir .
 
@@ -22,12 +28,6 @@ test:
 docs:
 	$(DBT) docs generate --profiles-dir .
 	$(DBT) docs serve --profiles-dir .
-
-deps:
-	$(DBT) deps --profiles-dir .
-
-clean:
-	rm -rf target/ dbt_packages/ logs/ $(VENV)/
 
 debug:
 	$(DBT) debug --profiles-dir .

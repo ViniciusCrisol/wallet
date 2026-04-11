@@ -1,11 +1,12 @@
 # pyc cache
-__pycache__/
 *.pyc
+__pycache__/
 
 # dbt artifacts
+logs/
 target/
 dbt_packages/
-logs/
+dbt_internal_packages/
 
 # Python virtual environment
 .venv/

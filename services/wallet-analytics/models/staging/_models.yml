@@ -1,0 +1,62 @@
+version: 2
+
+models:
+    - name: stg_wallet_projections
+      description: "Staging view of wallet projection records"
+      columns:
+          - name: wallet_id
+            description: "UUID of the wallet"
+            data_tests:
+                - not_null
+                - unique
+          - name: holder_id
+            description: "UUID of the wallet holder"
+            data_tests:
+                - not_null
+          - name: balance_in_cents
+            description: "Current balance in cents"
+            data_tests:
+                - not_null
+          - name: created_at
+            description: "Timestamp when the wallet was created"
+            data_tests:
+                - not_null
+          - name: updated_at
+            description: "Timestamp of the last state update"
+            data_tests:
+                - not_null
+
+    - name: stg_transfer_projections
+      description: "Staging view of transfer projection records"
+      columns:
+          - name: transfer_id
+            description: "UUID of the transfer"
+            data_tests:
+                - not_null
+          - name: wallet_id
+            description: "UUID of the wallet this row belongs to"
+            data_tests:
+                - not_null
+          - name: counterpart_wallet_id
+            description: "UUID of the other wallet involved in the transfer"
+            data_tests:
+                - not_null
+          - name: direction
+            description: "Direction of the transfer: 'incoming' or 'outgoing'"
+            data_tests:
+                - not_null
+                - accepted_values:
+                      arguments:
+                          values: [incoming, outgoing]
+          - name: category
+            description: "Category of the transfer"
+            data_tests:
+                - not_null
+          - name: amount_in_cents
+            description: "Amount transferred in cents"
+            data_tests:
+                - not_null
+          - name: transferred_at
+            description: "Timestamp when the transfer occurred"
+            data_tests:
+                - not_null

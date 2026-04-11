@@ -4,7 +4,7 @@ wallet_analytics:
         dev:
             type: postgres
             user: "{{ env_var('DBT_WALLET_USER', 'root') }}"
-            port: "{{ env_var('DBT_WALLET_PORT', '5432') }}"
+            port: "{{ env_var('DBT_WALLET_PORT', '5432') | int }}"
             host: "{{ env_var('DBT_WALLET_HOST', 'localhost') }}"
             dbname: "{{ env_var('DBT_WALLET_DBNAME', 'wallet') }}"
             password: "{{ env_var('DBT_WALLET_PASSWORD', 'root') }}"
