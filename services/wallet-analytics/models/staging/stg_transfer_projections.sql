@@ -6,8 +6,8 @@ SELECT
     wallet_id,
     transfer_id,
     counterpart_wallet_id,
-    direction,
     category,
+    direction,
     amount_in_cents,
     transferred_at
 FROM
